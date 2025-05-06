@@ -1,10 +1,20 @@
 package util.PIDController;
 
-public class ControllerGains {
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+public class ControllerGains{
 
     private PIDGains pidGains = new PIDGains();
     private ControllerConstrains controllerConstrains = new ControllerConstrains();
     private ControllerFeedForwards controllerFeedForwards = new ControllerFeedForwards();
+
+    private TrapezoidProfile.Constraints controllerProfile =
+            new TrapezoidProfile.Constraints(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
     public ControllerGains(){}
 
@@ -62,5 +72,10 @@ public class ControllerGains {
 
     public void setControllerFeedForwards(ControllerFeedForwards controllerFeedForwards) {
         this.controllerFeedForwards = controllerFeedForwards;
+    }
+
+    public void publishToDashboard(String name){
+        SmartDashboard.putData(name + " PID", pidGains);
+        ProfiledPIDController
     }
 }

@@ -44,4 +44,6 @@ public class ControllerConstrains {
     public double getMaxValue() {
         return maxValue;
     }
+
+
 }
