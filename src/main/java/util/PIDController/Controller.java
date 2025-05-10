@@ -3,9 +3,11 @@ package util.PIDController;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.function.BooleanConsumer;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import util.PIDController.Gains.ControllerGains;
 
-public class Controller {
+public class Controller implements Sendable {
 
 
     private final ControllerGains controllerGains;
@@ -31,22 +33,49 @@ public class Controller {
         return controllerGains;
     }
 
+    /**
+     * sets the reference of the controller
+     * @param request the request of the controller
+     */
     public void setReference(ControllerRequest request) {
        this.request = request;
     }
 
+    /**
+     * sets the reference of the controller
+     * @param setpoint the setpoint of the controller
+     * @param requestType the request type of the controller
+     */
     public void setReference(double setpoint, RequestType requestType) {
         setReference(new ControllerRequest(setpoint, requestType));
     }
 
+    /**
+     * sets the reference of the controller
+     * @param setpoint the setpoint of the controller
+     * @param setpointVelocity the setpoint velocity of the controller (used for profiled position and velocity)
+     * @param requestType the request type of the controller
+     */
     public void setReference(double setpoint, double setpointVelocity, RequestType requestType) {
         setReference(new ControllerRequest(setpoint, setpointVelocity, requestType));
     }
 
+    /**
+     * sets the reference of the controller
+     * @param setpoint the setpoint of the controller
+     * @param requestType the request type of the controller
+     */
     public void setReference(TrapezoidProfile.State setpoint, RequestType requestType) {
         setReference(new ControllerRequest(setpoint, requestType));
     }
 
+    /**
+     * calculates the output of the controller without the PID controller
+     * this is used when the pid of the motor is running on the motor controller
+     * @param measurement the measurement of the controller (depending on the request type)
+     * @param dt the time since the last calculation
+     * @return the output of the controller in volts
+     */
     public double calculateWithOutPID(double measurement, double dt) {
         if(request.requestType == RequestType.STOP) return 0;
 
@@ -62,12 +91,23 @@ public class Controller {
         return calculateFeedForward(directionOfTravel);
     }
 
+    /**
+     * calculates the output of the controller
+     * @param measurement the measurement of the controller (depending on the request type)
+     * @param dt the time since the last calculation
+     * @return the output of the controller in volts
+     */
     private double calculate(double measurement, double dt) {
         double value = calculateWithOutPID(measurement, dt);
 
         return value + calculatePID(measurement);
     }
 
+    /**
+     * calculates the PID of the controller
+     * @param measurement the measurement of the controller (depending on the request type)
+     * @return the output PID of the controller in volts
+     */
     private double calculatePID(double measurement) {
         double value = this.pidController.calculate(measurement, this.setpoint.position);
 
@@ -78,6 +118,11 @@ public class Controller {
         return Math.max(pidGains.getMinOutput(), Math.min(pidGains.getMaxOutput(), value));
     }
 
+    /**
+     * calculates the feed forward of the controller
+     * @param directionOfTravel the direction of travel of the motor (used to calculate the friction feed forward)
+     * @return the feed forward of the controller in volts
+     */
     private double calculateFeedForward(double directionOfTravel) {
         var feedForwards = this.controllerGains.getControllerFeedForwards();
 
@@ -87,6 +132,11 @@ public class Controller {
                 feedForwards.getCalculatedFeedForward(setpoint.position);
     }
 
+    /**
+     * calculates the profile of movement
+     * @param dt the time since the last calculation
+     * @return the new setpoint of the controller
+     */
     private TrapezoidProfile.State calculateProfile(double dt){
         if(!request.requestType.isProfiled())
             return new TrapezoidProfile.State(request.goal.position, request.goal.velocity);
@@ -96,6 +146,10 @@ public class Controller {
         return profile.calculate(dt, setpoint, request.goal);
     }
 
+    /**
+     * calculates the constraints of the controller based on the measurement and the last request
+     * @param measurement the measurement of the controller (depending on the request type)
+     */
     private void calculateConstraints(double measurement) {
         this.controllerGains.getControllerConstrains().calculate(measurement, request);
     }
@@ -105,6 +159,26 @@ public class Controller {
      */
     public void reset() {
         this.pidController.reset();
+        this.setpoint = new TrapezoidProfile.State();
+    }
+
+    /**
+     * gets the current setpoint of the controller
+     * @return the current setpoint of the controller
+     */
+    public TrapezoidProfile.State getSetpoint() {
+        return setpoint;
+    }
+
+    @Override
+    public void initSendable(SendableBuilder builder) {
+        controllerGains.initSendable(builder);
+
+        builder.addDoubleProperty("goal", () -> request.goal.position,
+                (value) -> setReference(value, request.requestType));
+
+        builder.addDoubleProperty("setpoint", () -> setpoint.position,
+                (value) -> setReference(value, request.requestType));
     }
 
     /**
