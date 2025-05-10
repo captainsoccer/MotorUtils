@@ -1,24 +1,31 @@
-package util.PIDController;
+package util.PIDController.Gains;
 
 
 import java.util.function.Function;
 
 public class ControllerFeedForwards {
+
+    public enum ChangeType {
+        SIMPLE_FEED_FORWARD,
+        FRICTION_FEED_FORWARD,
+        K_V
+    }
+
     /**\
      * a simple feed forward gain (adds constant voltage to the output)
      * can also be used as k_g
      */
-    private final double simpleFeedForward;
+    private double simpleFeedForward;
 
     /**
      * a feed forward gain for the friction (adds constant voltage to the output) based on the direction of the motor
      */
-    private final double frictionFeedForward;
+    private double frictionFeedForward;
 
     /**
      * a feed forward gain that is multiplied by the setpoint of the controller
      */
-    private final double k_V;
+    private double k_V;
 
     /**
      * a feed forward that is given the setpoint and returns a value
@@ -86,5 +93,19 @@ public class ControllerFeedForwards {
      */
     public double getCalculatedFeedForward(double setpoint) {
         return feedForwardFunction.apply(setpoint);
+    }
+
+    public void updateFeedForwards(double value, ChangeType type) {
+        switch (type) {
+            case SIMPLE_FEED_FORWARD:
+                simpleFeedForward = value;
+                break;
+            case FRICTION_FEED_FORWARD:
+                frictionFeedForward = value;
+                break;
+            case K_V:
+                k_V = value;
+                break;
+        }
     }
 }

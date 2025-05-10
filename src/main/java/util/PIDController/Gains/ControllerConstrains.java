@@ -1,0 +1,89 @@
+package util.PIDController.Gains;
+
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import util.PIDController.Controller;
+
+public class ControllerConstrains {
+    public enum ConstraintType {
+        CONTINUOUS,
+        LIMITED,
+        NONE
+    }
+
+    private final ConstraintType constraintType;
+
+    private final double minValue;
+    private final double maxValue;
+
+    /**
+     * creates a constrains object with the given type and limits
+     *
+     * @param type     type of the constrains (continuous, limited, none)
+     * @param minValue the minimum value of the constrains (if continuous is the minimum value to round to,
+     *                 if limited is the minimum value of the limits)
+     * @param maxValue the maximum value of the constrains (if continuous is the maximum value to round to,
+     *                 if limited is the maximum value of the limits)
+     */
+    public ControllerConstrains(ConstraintType type, double minValue, double maxValue) {
+        this.constraintType = type;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+    }
+
+    public void calculate(double measurement, Controller.ControllerRequest request) {
+        if (constraintType == ConstraintType.NONE) return;
+
+        if (constraintType == ConstraintType.LIMITED) {
+            if (request.requestType().isPositionControl()) {
+                if (request.goal().position >= maxValue) {
+                    request.goal().position = maxValue;
+                    request.goal().velocity = 0;
+                }
+                if (request.goal().position <= minValue) {
+                    request.goal().position = minValue;
+                    request.goal().velocity = 0;
+                }
+
+                return;
+            }
+
+            if (measurement <= minValue && request.goal().position < 0) {
+                request.goal().position = 0;
+                request.goal().velocity = 0;
+            }
+            if (measurement >= maxValue && request.goal().position > 0) {
+                request.goal().position = 0;
+                request.goal().velocity = 0;
+            }
+        } else {
+            if (!request.requestType().isPositionControl()) return;
+
+            double errorBound = (maxValue - minValue) / 2.0;
+
+            request.goal().position =
+                    MathUtil.inputModulus(request.goal().position - measurement, -errorBound, errorBound) + measurement;
+        }
+    }
+
+    /**
+     * creates an empty constrains object (no limits and no continuity)
+     */
+    public ControllerConstrains() {
+        this(ConstraintType.NONE, 0, 0);
+    }
+
+    public ConstraintType getConstraintType() {
+        return constraintType;
+    }
+
+    public double getMinValue() {
+        return minValue;
+    }
+
+    public double getMaxValue() {
+        return maxValue;
+    }
+
+
+}
