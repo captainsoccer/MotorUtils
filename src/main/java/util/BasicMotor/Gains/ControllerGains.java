@@ -1,4 +1,4 @@
-package util.PIDController.Gains;
+package util.BasicMotor.Gains;
 
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;

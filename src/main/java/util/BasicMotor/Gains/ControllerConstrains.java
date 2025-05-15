@@ -1,7 +1,7 @@
-package util.PIDController.Gains;
+package util.BasicMotor.Gains;
 
 import edu.wpi.first.math.MathUtil;
-import util.PIDController.Controller;
+import util.BasicMotor.Controller;
 
 public class ControllerConstrains {
     public enum ConstraintType {

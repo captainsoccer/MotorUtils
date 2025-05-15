@@ -1,10 +1,10 @@
-package util.PIDController;
+package util.BasicMotor;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import util.PIDController.Gains.ControllerGains;
+import util.BasicMotor.Gains.ControllerGains;
 
 public class Controller implements Sendable {
     private final ControllerGains controllerGains;
@@ -24,6 +24,10 @@ public class Controller implements Sendable {
             controllerGains.getPidGains().getK_D()
         );
         updatePIDGains();
+    }
+
+    public Controller(Runnable hasPIDGainsChangedConsumer) {
+        this(new ControllerGains(), hasPIDGainsChangedConsumer);
     }
 
     public ControllerGains getControllerGains() {

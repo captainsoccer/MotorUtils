@@ -1,4 +1,4 @@
-package util.PIDController.Gains;
+package util.BasicMotor.Gains;
 
 public class PIDGains{
 
