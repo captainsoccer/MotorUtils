@@ -1,7 +1,6 @@
 package util.PIDController.Gains;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import util.PIDController.Controller;
 
 public class ControllerConstrains {

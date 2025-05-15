@@ -2,7 +2,6 @@ package util.PIDController.Gains;
 
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.util.sendable.SendableBuilder;
 
 public class ControllerGains{
@@ -17,9 +16,9 @@ public class ControllerGains{
     private TrapezoidProfile controllerProfile =
             new TrapezoidProfile(profileConstraints);
 
-    private BooleanConsumer setHasPIDGainsChanged;
+    private Runnable setHasPIDGainsChanged;
 
-    public void setHasPIDGainsChanged(BooleanConsumer hasPIDGainsChanged) {
+    public void setHasPIDGainsChanged(Runnable hasPIDGainsChanged) {
         if(this.setHasPIDGainsChanged != null) return;
         this.setHasPIDGainsChanged = hasPIDGainsChanged;
     }
@@ -124,7 +123,9 @@ public class ControllerGains{
     }
 
     private void updatePIDGains(double value, PIDGains.ChangeType changeType){
-        setHasPIDGainsChanged.accept(pidGains.updatePIDGains(value, changeType));
+        if(pidGains.updatePIDGains(value, changeType)){
+            setHasPIDGainsChanged.run();
+        }
     }
 
 

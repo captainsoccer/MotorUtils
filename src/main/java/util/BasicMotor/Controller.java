@@ -2,14 +2,11 @@ package util.PIDController;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import util.PIDController.Gains.ControllerGains;
 
 public class Controller implements Sendable {
-
-
     private final ControllerGains controllerGains;
 
     private final PIDController pidController;
@@ -17,7 +14,7 @@ public class Controller implements Sendable {
     private ControllerRequest request;
     private TrapezoidProfile.State setpoint;
 
-    public Controller(ControllerGains controllerGains, BooleanConsumer hasPIDGainsChangedConsumer) {
+    public Controller(ControllerGains controllerGains, Runnable hasPIDGainsChangedConsumer) {
         this.controllerGains = controllerGains;
         this.controllerGains.setHasPIDGainsChanged(hasPIDGainsChangedConsumer);
 
@@ -97,7 +94,7 @@ public class Controller implements Sendable {
      * @param dt the time since the last calculation
      * @return the output of the controller in volts
      */
-    private double calculate(double measurement, double dt) {
+    public double calculate(double measurement, double dt) {
         double value = calculateWithOutPID(measurement, dt);
 
         return value + calculatePID(measurement);
