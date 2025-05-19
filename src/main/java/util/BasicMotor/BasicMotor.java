@@ -6,86 +6,101 @@ import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.MotorManager.ControllerLocation;
 
 public abstract class BasicMotor {
-  private final Controller controller;
-  private Measurements measurements;
-  private final LogFrameAutoLogged logFrame = new LogFrameAutoLogged();
-  private final MotorManager.ControllerLocation controllerLocation;
+    private final Controller controller;
+    private Measurements measurements;
+    private final LogFrameAutoLogged logFrame = new LogFrameAutoLogged();
+    private final MotorManager.ControllerLocation controllerLocation;
 
-  private boolean hasPIDGainsChanged = false;
-
-
+    private boolean hasPIDGainsChanged = false;
 
 
-  private void setHasPIDGainsChanged() {
-    hasPIDGainsChanged = true;
-  }
-
-  protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
-
-  public void setMeasurements(Measurements measurements) {
-    this.measurements = measurements;
-  }
-
-  public Measurements getMeasurements() {
-    return measurements;
-  }
-
-  public Controller getController() {
-    return controller;
-  }
-
-  public LogFrameAutoLogged getLatestFrame() {
-    return logFrame;
-  }
-
-  public void run() {
-    var measurement = measurements.update(0.02);
-    logFrame.measurement = measurement;
-
-    LogFrame.ControllerFrame motorOutput;
-    if(controllerLocation == ControllerLocation.RIO){
-      motorOutput = controller.calculate(measurement, 1 / controllerLocation.HZ);
-      setMotorVoltage(motorOutput.totalOutput());
+    private void setHasPIDGainsChanged() {
+        hasPIDGainsChanged = true;
     }
-    else{
-      motorOutput = controller.calculateWithOutPID(measurement, 1 / controllerLocation.HZ);
-      setMotorOutput(motorOutput.setpoint(), motorOutput.totalOutput(), motorOutput.mode());
+
+    protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
+
+    public void setMeasurements(Measurements measurements) {
+        this.measurements = measurements;
     }
-    logFrame.controllerFrame = motorOutput;
 
-  }
-
-  public void updateSensorData() {
-    logFrame.sensorData = getSensorData();
-
-    if (hasPIDGainsChanged) {
-      hasPIDGainsChanged = false;
-      updatePIDGainsToMotor(controller.getControllerGains().getPidGains());
+    public Measurements getMeasurements() {
+        return measurements;
     }
-  }
 
-  protected abstract void setMotorVoltage(double voltage);
-  protected abstract void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode);
+    public Controller getController() {
+        return controller;
+    }
 
-  protected abstract LogFrame.SensorData getSensorData();
+    public LogFrameAutoLogged getLatestFrame() {
+        return logFrame;
+    }
 
-  public BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
-    controller = new Controller(controllerGains, this::setHasPIDGainsChanged);
+    public void run() {
+        var measurement = measurements.update(1 / controllerLocation.HZ);
+        logFrame.measurement = measurement;
 
-    initializeMotor();
-    measurements = initializeMeasurements();
+        LogFrame.ControllerFrame motorOutput;
+        if (!controller.getRequestType().requiresPID()) {
+            var request = controller.getRequestType();
+            double output = controller.getRequest().goal().position;
 
-    this.controllerLocation = controllerLocation;
+            if(request == Controller.RequestType.VOLTAGE){
+                motorOutput = new LogFrame.ControllerFrame(output, output, measurement.position(), request);
+                setMotorVoltage(output);
+            }
+            else{
+                double precentOut = output / logFrame.sensorData.voltageInput();
 
-    MotorManager.getInstance().registerMotor(this, name, controllerLocation);
-  }
+                motorOutput = new LogFrame.ControllerFrame(precentOut, output, measurement.position(), request);
+                setMotorOutput(precentOut, 0, request);
+            }
+        }
+        else {
+            if (controllerLocation == ControllerLocation.RIO) {
+                motorOutput = controller.calculate(measurement, 1 / controllerLocation.HZ);
+                setMotorVoltage(motorOutput.totalOutput());
+            } else {
+                motorOutput = controller.calculateWithOutPID(measurement, 1 / controllerLocation.HZ);
+                setMotorOutput(motorOutput.setpoint(), motorOutput.totalOutput(), motorOutput.mode());
+            }
+        }
+        logFrame.controllerFrame = motorOutput;
 
-  public BasicMotor(String name) {
-    this(new ControllerGains(), name, ControllerLocation.MOTOR);
-  }
+    }
 
-  protected abstract void initializeMotor();
+    public void updateSensorData() {
+        logFrame.sensorData = getSensorData();
 
-  protected abstract Measurements initializeMeasurements();
+        if (hasPIDGainsChanged) {
+            hasPIDGainsChanged = false;
+            updatePIDGainsToMotor(controller.getControllerGains().getPidGains());
+        }
+    }
+
+    protected abstract void setMotorVoltage(double voltage);
+
+    protected abstract void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode);
+
+    protected abstract LogFrame.SensorData getSensorData();
+
+    public BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
+        controller = new Controller(controllerGains, this::setHasPIDGainsChanged);
+
+        initializeMotor();
+        measurements = initializeMeasurements();
+
+        this.controllerLocation = controllerLocation;
+
+        MotorManager.getInstance().registerMotor(this, name, controllerLocation);
+    }
+
+    public BasicMotor(String name) {
+        this(new ControllerGains(), name, ControllerLocation.MOTOR);
+    }
+
+    protected abstract void initializeMotor();
+
+    protected abstract Measurements initializeMeasurements();
 
 }
