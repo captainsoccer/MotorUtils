@@ -31,7 +31,12 @@ public class ControllerConstrains {
     this.maxValue = maxValue;
   }
 
-  public void calculate(Measurements.Measurement measurement, Controller.ControllerRequest request) {
+  /** creates an empty constrains object (no limits and no continuity) */
+  public ControllerConstrains() {
+    this(ConstraintType.NONE, 0, 0);
+  }
+
+  public void calculateConstraints(Measurements.Measurement measurement, Controller.ControllerRequest request) {
     if (constraintType == ConstraintType.NONE) return;
 
     if (constraintType == ConstraintType.LIMITED) {
@@ -65,11 +70,6 @@ public class ControllerConstrains {
           MathUtil.inputModulus(request.goal().position - measurement.position(), -errorBound, errorBound)
               + measurement.position();
     }
-  }
-
-  /** creates an empty constrains object (no limits and no continuity) */
-  public ControllerConstrains() {
-    this(ConstraintType.NONE, 0, 0);
   }
 
   public ConstraintType getConstraintType() {
