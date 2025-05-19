@@ -8,25 +8,57 @@ import util.BasicMotor.LogFrame.FeedForwardOutput;
 import util.BasicMotor.Measurements.Measurements;
 
 public class Controller implements Sendable {
+  /**
+   * the gains of the controller
+   * pid, feedforward, constraints and profile
+   */
   private final ControllerGains controllerGains;
 
+    /**
+     * the controller of the controller
+     * this is used to calculate the output of the controller
+     * pid, feedforward, constraints and profile
+     */
   private final BasicPIDController pidController;
 
+  /**
+   * the latest request of the controller
+   * this contains the control mode and the goal
+   */
   private ControllerRequest request;
+  /**
+   * the setpoint of the controller
+   * this is used when using profiled position and velocity
+   */
   private TrapezoidProfile.State setpoint;
 
-  public Controller(ControllerGains controllerGains, Runnable hasPIDGainsChangedConsumer) {
+    /**
+     * creates a controller with the given gains
+     *
+     * @param controllerGains the gains of the controller
+     * @param hasPIDGainsChangeRunnable the runnable that is called when the PID gains are changed
+     */
+  public Controller(ControllerGains controllerGains, Runnable hasPIDGainsChangeRunnable) {
     this.controllerGains = controllerGains;
-    this.controllerGains.setHasPIDGainsChanged(hasPIDGainsChangedConsumer);
+    this.controllerGains.setHasPIDGainsChanged(hasPIDGainsChangeRunnable);
 
     this.pidController = new BasicPIDController(controllerGains.getPidGains());
     updatePIDGains();
   }
 
+  /**
+   * creates a controller with empty gains (no pid, no feedforward, no constraints, no profile)
+   * @param hasPIDGainsChangedConsumer the runnable that is called when the PID gains are changed
+   */
   public Controller(Runnable hasPIDGainsChangedConsumer) {
     this(new ControllerGains(), hasPIDGainsChangedConsumer);
   }
 
+    /**
+     * gets the controller gains of the controller
+     *
+     * @return the controller gains of the controller
+     */
   public ControllerGains getControllerGains() {
     return controllerGains;
   }
@@ -65,11 +97,11 @@ public class Controller implements Sendable {
   /**
    * sets the reference of the controller
    *
-   * @param setpoint the setpoint of the controller
+   * @param goal the setpoint of the controller
    * @param requestType the request type of the controller
    */
-  public void setReference(TrapezoidProfile.State setpoint, RequestType requestType) {
-    setReference(new ControllerRequest(setpoint, requestType));
+  public void setReference(TrapezoidProfile.State goal, RequestType requestType) {
+    setReference(new ControllerRequest(goal, requestType));
   }
 
   /**
@@ -81,8 +113,7 @@ public class Controller implements Sendable {
    * @return the output of the controller in volts
    */
   public LogFrame.ControllerFrame calculateWithOutPID(Measurements.Measurement measurements, double dt) {
-    if (request.requestType == RequestType.STOP) return new LogFrame.ControllerFrame();
-
+    //gets the measurement of the controller
     double measurement = switch(request.requestType) {
       case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
       default -> measurements.position();
@@ -122,7 +153,6 @@ public class Controller implements Sendable {
    * @return the output of the controller in volts
    */
   public LogFrame.ControllerFrame calculate(Measurements.Measurement measurement, double dt) {
-    if (request.requestType == RequestType.STOP) return new LogFrame.ControllerFrame();
 
     var feedForwards = calculateWithOutPID(measurement, dt);
 
