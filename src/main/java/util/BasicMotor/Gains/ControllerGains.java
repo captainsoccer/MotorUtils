@@ -48,6 +48,7 @@ public class ControllerGains {
 
   public void setPidGains(PIDGains pidGains) {
     this.pidGains = pidGains;
+    setHasPIDGainsChanged.run();
   }
 
   public void setControllerConstrains(ControllerConstrains controllerConstrains) {
