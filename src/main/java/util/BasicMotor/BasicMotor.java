@@ -6,36 +6,123 @@ import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.MotorManager.ControllerLocation;
 
 public abstract class BasicMotor {
+    /**
+     * the controller of the motor
+     */
     private final Controller controller;
+
+    /**
+     * the measurements of the motor
+     */
     private Measurements measurements;
+
+    /**
+     * the log frame of the motor
+     */
     private final LogFrameAutoLogged logFrame = new LogFrameAutoLogged();
+
+    /**
+     * the location of the controller (RIO or motor controller)
+     */
     private final MotorManager.ControllerLocation controllerLocation;
 
+    /**
+     * if the PID gains have changed (then it updates the motor controller on the slower thread)
+     */
     private boolean hasPIDGainsChanged = false;
-
-
     private void setHasPIDGainsChanged() {
         hasPIDGainsChanged = true;
     }
-
     protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
 
+
+    //constructors
+
+    /**
+     * creates the motor
+     * @param controllerGains the gains of the controller
+     * @param id the id of the motor
+     * @param name the name of the motor (used for logging)
+     * @param controllerLocation the location of the controller (RIO or motor controller)
+     */
+    public BasicMotor(ControllerGains controllerGains, int id, String name, ControllerLocation controllerLocation) {
+        controller = new Controller(controllerGains, this::setHasPIDGainsChanged);
+
+        initializeMotor(id);
+        measurements = initializeMeasurements();
+
+        this.controllerLocation = controllerLocation;
+
+        MotorManager.getInstance().registerMotor(this, name, controllerLocation);
+    }
+
+    /**
+     * creates the motor with empty gains (no pid, no feedforward, no constraints, no profile)
+     * @param id the id of the motor
+     * @param name the name of the motor (used for logging)
+     */
+    public BasicMotor(int id, String name) {
+        this(new ControllerGains(), id, name, ControllerLocation.MOTOR);
+    }
+
+    /**
+     * initializes the motor (this is called in the constructor)
+     */
+    protected abstract void initializeMotor(int id);
+
+    /**
+     * initializes the measurements (this is called in the constructor)
+     */
+    protected abstract Measurements initializeMeasurements();
+
+    //getters and setters
+
+    /**
+     * sets the measurements of the motor this is used when you want to switch a source of the measurements
+     * @param measurements the new measurements
+     */
     public void setMeasurements(Measurements measurements) {
         this.measurements = measurements;
     }
 
+    /**
+     * gets the measurements of the motor
+     * @return the measurements of the motor
+     */
     public Measurements getMeasurements() {
         return measurements;
     }
 
+    /**
+     * gets the latest measurement of the motor
+     * @return the latest measurement of the motor
+     */
+    public Measurements.Measurement getMeasurement() {
+        return measurements.getMeasurement();
+    }
+
+    /**
+     * gets the controller of the motor
+     * @return the controller of the motor
+     */
     public Controller getController() {
         return controller;
     }
 
+    /**
+     * gets the latest log frame
+     * this is used for logging
+     * @return the latest log frame
+     */
     public LogFrameAutoLogged getLatestFrame() {
         return logFrame;
     }
 
+    /**
+     * this runs the main loop for the controller
+     * runs pid if needed and updates the measurements
+     * this is called on a separate thread
+     */
     public void run() {
         var measurement = measurements.update(1 / controllerLocation.HZ);
         logFrame.measurement = measurement;
@@ -72,7 +159,7 @@ public abstract class BasicMotor {
         }
         //if the controller is using PID, we need to calculate the output
         else {
-            //if calculating on the rio then calculate the output in volts and set it
+            //if calculating on the rio, then calculate the output in volts and set it
             if (controllerLocation == ControllerLocation.RIO) {
                 motorOutput = controller.calculate(measurement, 1 / controllerLocation.HZ);
 
@@ -109,33 +196,10 @@ public abstract class BasicMotor {
             updatePIDGainsToMotor(controller.getControllerGains().getPidGains());
         }
     }
-
-
+    /**
+     * gets the latest sensor data from the motor
+     * @return the latest sensor data
+     */
     protected abstract LogFrame.SensorData getSensorData();
-
-    public BasicMotor(ControllerGains controllerGains, int id, String name, ControllerLocation controllerLocation) {
-        controller = new Controller(controllerGains, this::setHasPIDGainsChanged);
-
-        initializeMotor(id);
-        measurements = initializeMeasurements();
-
-        this.controllerLocation = controllerLocation;
-
-        MotorManager.getInstance().registerMotor(this, name, controllerLocation);
-    }
-
-    public BasicMotor(int id, String name) {
-        this(new ControllerGains(), id, name, ControllerLocation.MOTOR);
-    }
-
-    /**
-     * initializes the motor (this is called in the constructor)
-     */
-    protected abstract void initializeMotor(int id);
-
-    /**
-     * initializes the measurements (this is called in the constructor)
-     */
-    protected abstract Measurements initializeMeasurements();
 
 }
