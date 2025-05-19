@@ -146,6 +146,35 @@ public class Controller implements Sendable {
   }
 
   /**
+   * gets the current setpoint of the controller
+   *
+   * @return the current setpoint of the controller
+   */
+  public TrapezoidProfile.State getSetpoint() {
+    return setpoint;
+  }
+
+  public RequestType getRequestType() {
+    return request.requestType;
+  }
+
+  public ControllerRequest getRequest() {
+    return request;
+  }
+
+  /** updates the PID gains of the PID controller */
+  public void updatePIDGains() {
+    this.pidController.setGains(controllerGains.getPidGains());
+  }
+
+  /** resets the integral sum and the previous error of the PID controller */
+  public void reset() {
+    this.pidController.reset();
+    this.setpoint = new TrapezoidProfile.State();
+  }
+
+  //calculations
+  /**
    * calculates the output of the controller
    *
    * @param measurement the measurement of the controller (depending on the request type)
@@ -215,24 +244,10 @@ public class Controller implements Sendable {
    * @param measurement the measurement of the controller (depending on the request type)
    */
   private void calculateConstraints(Measurements.Measurement measurement) {
-    this.controllerGains.getControllerConstrains().calculate(measurement, request);
+    this.controllerGains.getControllerConstrains().calculateConstraints(measurement, request);
   }
 
-  /** resets the integral sum and the previous error of the PID controller */
-  public void reset() {
-    this.pidController.reset();
-    this.setpoint = new TrapezoidProfile.State();
-  }
-
-  /**
-   * gets the current setpoint of the controller
-   *
-   * @return the current setpoint of the controller
-   */
-  public TrapezoidProfile.State getSetpoint() {
-    return setpoint;
-  }
-
+  // maintenance things
   @Override
   public void initSendable(SendableBuilder builder) {
     controllerGains.initSendable(builder);
@@ -242,11 +257,6 @@ public class Controller implements Sendable {
 
     builder.addDoubleProperty(
         "setpoint", () -> setpoint.position, (value) -> setReference(value, request.requestType));
-  }
-
-  /** updates the PID gains of the PID controller */
-  public void updatePIDGains() {
-    this.pidController.setGains(controllerGains.getPidGains());
   }
 
   public enum RequestType {
