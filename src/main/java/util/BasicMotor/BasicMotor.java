@@ -25,7 +25,7 @@ public abstract class BasicMotor {
     /**
      * the location of the controller (RIO or motor controller)
      */
-    private final MotorManager.ControllerLocation controllerLocation;
+    protected final MotorManager.ControllerLocation controllerLocation;
 
     /**
      * if the PID gains have changed (then it updates the motor controller on the slower thread)
@@ -40,41 +40,18 @@ public abstract class BasicMotor {
     //constructors
 
     /**
-     * creates the motor
+     * creates the motor.
+     * the motor child needs to register the measurements
      * @param controllerGains the gains of the controller
-     * @param id the id of the motor
      * @param name the name of the motor (used for logging)
      * @param controllerLocation the location of the controller (RIO or motor controller)
      */
-    public BasicMotor(ControllerGains controllerGains, int id, String name, ControllerLocation controllerLocation) {
-        controller = new Controller(controllerGains, this::setHasPIDGainsChanged);
-
-        initializeMotor(id);
-        measurements = initializeMeasurements();
-
+    public BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
         this.controllerLocation = controllerLocation;
+        controller = new Controller(controllerGains, this::setHasPIDGainsChanged);
 
         MotorManager.getInstance().registerMotor(this, name, controllerLocation);
     }
-
-    /**
-     * creates the motor with empty gains (no pid, no feedforward, no constraints, no profile)
-     * @param id the id of the motor
-     * @param name the name of the motor (used for logging)
-     */
-    public BasicMotor(int id, String name) {
-        this(new ControllerGains(), id, name, ControllerLocation.MOTOR);
-    }
-
-    /**
-     * initializes the motor (this is called in the constructor)
-     */
-    protected abstract void initializeMotor(int id);
-
-    /**
-     * initializes the measurements (this is called in the constructor)
-     */
-    protected abstract Measurements initializeMeasurements();
 
     //getters and setters
 
