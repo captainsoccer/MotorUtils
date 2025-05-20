@@ -1,7 +1,7 @@
 package util.BasicMotor.Gains;
 
 import edu.wpi.first.math.MathUtil;
-import util.BasicMotor.Controller;
+import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Measurements.Measurements;
 
 public class ControllerConstrains {

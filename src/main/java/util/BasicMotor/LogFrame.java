@@ -1,6 +1,7 @@
 package util.BasicMotor;
 
 import org.littletonrobotics.junction.AutoLog;
+import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Measurements.Measurements;
 
 @AutoLog

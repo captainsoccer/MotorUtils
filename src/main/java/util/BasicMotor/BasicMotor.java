@@ -1,5 +1,6 @@
 package util.BasicMotor;
 
+import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.Measurements.Measurements;

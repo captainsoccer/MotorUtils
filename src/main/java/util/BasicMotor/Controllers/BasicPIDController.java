@@ -1,7 +1,8 @@
-package util.BasicMotor;
+package util.BasicMotor.Controllers;
 
 import edu.wpi.first.math.MathUtil;
 import util.BasicMotor.Gains.PIDGains;
+import util.BasicMotor.LogFrame;
 
 public class BasicPIDController {
     private PIDGains gains;

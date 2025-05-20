@@ -1,9 +1,10 @@
-package util.BasicMotor;
+package util.BasicMotor.Controllers;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import util.BasicMotor.Gains.ControllerGains;
+import util.BasicMotor.LogFrame;
 import util.BasicMotor.LogFrame.FeedForwardOutput;
 import util.BasicMotor.Measurements.Measurements;
 
