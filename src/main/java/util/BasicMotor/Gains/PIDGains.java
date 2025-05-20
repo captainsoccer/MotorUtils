@@ -201,9 +201,9 @@ public class PIDGains {
                 k_P / gearRatio,
                 k_I / gearRatio,
                 K_D / gearRatio,
-                i_Zone / gearRatio,
-                i_maxAccum / gearRatio,
-                tolerance / gearRatio,
+                i_Zone * gearRatio,
+                i_maxAccum, //TODO check if this is correct
+                tolerance * gearRatio,
                 maxOutput,
                 minOutput
         );
@@ -215,7 +215,7 @@ public class PIDGains {
                 k_I / maxMotorOutput,
                 K_D / maxMotorOutput,
                 i_Zone,
-                i_maxAccum / maxMotorOutput,
+                i_maxAccum,
                 tolerance,
                 maxOutput / maxMotorOutput,
                 minOutput / maxMotorOutput
