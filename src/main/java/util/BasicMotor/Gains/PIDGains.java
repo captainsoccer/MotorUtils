@@ -2,7 +2,16 @@ package util.BasicMotor.Gains;
 
 public class PIDGains {
 
-    private static final double maxMotorOutput = 12.0;
+    /**
+     * the maximum output of the motor (in volts)
+     */
+    private static final double maxMotorOutput = 13.0;
+
+    /**
+     * the idle voltage fed into the motor when it is not moving (in volts)
+     * used for duty cycle calculations
+     */
+    private static final double motorIdleVoltage = 12;
 
     /**
      * what to change when updating the PID gains
@@ -211,14 +220,14 @@ public class PIDGains {
 
     public PIDGains convertToDutyCycle(){
         return new PIDGains(
-                k_P / maxMotorOutput,
-                k_I / maxMotorOutput,
-                K_D / maxMotorOutput,
+                k_P / motorIdleVoltage,
+                k_I / motorIdleVoltage,
+                K_D / motorIdleVoltage,
                 i_Zone,
                 i_maxAccum,
                 tolerance,
-                maxOutput / maxMotorOutput,
-                minOutput / maxMotorOutput
+                maxOutput / motorIdleVoltage,
+                minOutput / motorIdleVoltage
         );
     }
 

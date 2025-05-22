@@ -177,7 +177,11 @@ public abstract class BasicMotor {
         //if the pid has changed, then update the built-in motor pid
         if (hasPIDGainsChanged) {
             hasPIDGainsChanged = false;
-            updatePIDGainsToMotor(controller.getControllerGains().getPidGains());
+
+            var convertedGains =
+                    controller.getControllerGains().getPidGains().convertToMotorGains(measurements.getGearRatio());
+
+            updatePIDGainsToMotor(convertedGains);
         }
     }
     /**
