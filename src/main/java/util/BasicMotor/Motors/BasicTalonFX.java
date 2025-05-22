@@ -62,7 +62,7 @@ public class BasicTalonFX extends BasicMotor {
     }
 
     @Override
-    protected LogFrame.PIDOutput getPIDOutput() {
-        return sensors.getPIDOutput();
+    protected LogFrame.PIDOutput getPIDLatestOutput() {
+        return sensors.getPIDLatestOutput();
     }
 }

@@ -30,6 +30,11 @@ public class TalonFXSensors {
     private final BaseStatusSignal[] statusSignals;
 
     /**
+     * The latest PID output from the motor controller
+     * used for logging if the pid controller is on the motor controller
+     */
+    private LogFrame.PIDOutput latestPIDOutput = new LogFrame.PIDOutput();
+    /**
      * Constructor for TalonFX Sensors
      * @param motor the motor to get the sensors from
      * @param refreshHZ the refresh rate of the sensors (how often to update the sensors)
@@ -94,6 +99,22 @@ public class TalonFXSensors {
         double powerOutput = currentOutput * voltageOutput;
         double dutyCycle = dutyCycleSignal.getValueAsDouble();
 
+        //updates the latest pid output if the controller is on the motor controller
+        //used for logging
+        if(location == MotorManager.ControllerLocation.MOTOR){
+            double pOutput = kpOutput.getValueAsDouble();
+            double iOutput = kiOutput.getValueAsDouble();
+            double dOutput = kdOutput.getValueAsDouble();
+            double pidOutput = totalOutput.getValueAsDouble();
+
+            latestPIDOutput = new LogFrame.PIDOutput(
+                    pOutput,
+                    iOutput,
+                    dOutput,
+                    pidOutput
+            );
+        }
+
         return new LogFrame.SensorData(
                 temperature,
                 currentDraw,
@@ -107,17 +128,7 @@ public class TalonFXSensors {
         );
     }
 
-    public LogFrame.PIDOutput getPIDOutput() {
-        double pOutput = kpOutput.getValueAsDouble();
-        double iOutput = kiOutput.getValueAsDouble();
-        double dOutput = kdOutput.getValueAsDouble();
-        double pidOutput = totalOutput.getValueAsDouble();
-
-        return new LogFrame.PIDOutput(
-                pOutput,
-                iOutput,
-                dOutput,
-                pidOutput
-        );
+    public LogFrame.PIDOutput getPIDLatestOutput() {
+        return latestPIDOutput;
     }
 }

@@ -148,11 +148,16 @@ public abstract class BasicMotor {
             }
             //if calculating on the motor controller, then calculate the feedforward and the setpoint and give to the motor
             else {
-                motorOutput = controller.calculateWithOutPID(measurement, 1 / controllerLocation.HZ);
+                var feedForwardOutput = controller.calculateWithOutPID(measurement, 1 / controllerLocation.HZ);
+
+                //adds the pid output from the motor controller (could be outdated by a cycle or two)
+                motorOutput = new LogFrame.ControllerFrame(feedForwardOutput, getPIDLatestOutput());
 
                 reference = motorOutput.setpoint();
-                feedForward = motorOutput.totalOutput();
+                feedForward = motorOutput.feedForwardOutput().totalOutput();
                 outputMode = motorOutput.mode();
+
+
             }
         }
         //updates the log frame with the motor output
@@ -169,13 +174,6 @@ public abstract class BasicMotor {
     public void updateSensorData() {
         logFrame.sensorData = getSensorData();
 
-        //if the controller is on the motor, then we need to get the pid output from the motor
-        if(controllerLocation == ControllerLocation.MOTOR){
-            var controllerFrame = logFrame.controllerFrame;
-
-            logFrame.controllerFrame = new LogFrame.ControllerFrame(controllerFrame, getPIDOutput());
-        }
-
         //if the pid has changed, then update the built-in motor pid
         if (hasPIDGainsChanged) {
             hasPIDGainsChanged = false;
@@ -191,8 +189,9 @@ public abstract class BasicMotor {
     /**
      * gets the pid output of the built-in controller
      * used only when the pid is on the motor controller
+     * this returns the stored pid output that should be updated in {@link #getSensorData()} function
      * @return the pid output
      */
-    protected abstract LogFrame.PIDOutput getPIDOutput();
+    protected abstract LogFrame.PIDOutput getPIDLatestOutput();
 
 }
