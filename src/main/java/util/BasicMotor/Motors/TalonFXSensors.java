@@ -7,9 +7,13 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import util.BasicMotor.LogFrame;
+import util.BasicMotor.MotorManager;
+
+import java.util.ArrayList;
 
 public class TalonFXSensors {
     private final double refreshHZ;
+    private final MotorManager.ControllerLocation location;
 
     private final StatusSignal<Temperature> temperatureSignal;
     private final StatusSignal<Current> supplyCurrentSignal;
@@ -18,10 +22,22 @@ public class TalonFXSensors {
     private final StatusSignal<Voltage> supplyVoltageSignal;
     private final StatusSignal<Double> dutyCycleSignal;
 
+    private final StatusSignal<Double> totalOutput;
+    private final StatusSignal<Double> kpOutput;
+    private final StatusSignal<Double> kiOutput;
+    private final StatusSignal<Double> kdOutput;
+
     private final BaseStatusSignal[] statusSignals;
 
-    public TalonFXSensors(TalonFX motor, double refreshHZ) {
+    /**
+     * Constructor for TalonFX Sensors
+     * @param motor the motor to get the sensors from
+     * @param refreshHZ the refresh rate of the sensors (how often to update the sensors)
+     * @param location the location of the motor (if running on motor controller it will also update the pid output)
+     */
+    public TalonFXSensors(TalonFX motor, double refreshHZ, MotorManager.ControllerLocation location) {
         this.refreshHZ = refreshHZ;
+        this.location = location;
 
         temperatureSignal = motor.getDeviceTemp();
         supplyCurrentSignal = motor.getSupplyCurrent();
@@ -30,14 +46,34 @@ public class TalonFXSensors {
         supplyVoltageSignal = motor.getSupplyVoltage();
         dutyCycleSignal = motor.getDutyCycle();
 
-        statusSignals = new StatusSignal[]{
-                temperatureSignal,
-                supplyCurrentSignal,
-                statorCurrentSignal,
-                motorVoltageSignal,
-                supplyVoltageSignal,
-                dutyCycleSignal
-        };
+        kpOutput = motor.getClosedLoopProportionalOutput();
+        kiOutput = motor.getClosedLoopIntegratedOutput();
+        kdOutput = motor.getClosedLoopDerivativeOutput();
+        totalOutput = motor.getClosedLoopOutput();
+
+        if(location == MotorManager.ControllerLocation.RIO){
+            statusSignals = new BaseStatusSignal[]{
+                    temperatureSignal,
+                    supplyCurrentSignal,
+                    statorCurrentSignal,
+                    motorVoltageSignal,
+                    supplyVoltageSignal,
+                    dutyCycleSignal
+            };
+        } else {
+            statusSignals = new BaseStatusSignal[]{
+                    temperatureSignal,
+                    supplyCurrentSignal,
+                    statorCurrentSignal,
+                    motorVoltageSignal,
+                    supplyVoltageSignal,
+                    dutyCycleSignal,
+                    totalOutput,
+                    kpOutput,
+                    kiOutput,
+                    kdOutput
+            };
+        }
 
         for (BaseStatusSignal signal : statusSignals) {
             signal.setUpdateFrequency(refreshHZ);
@@ -68,6 +104,20 @@ public class TalonFXSensors {
                 powerOutput,
                 dutyCycle,
                 "Not supported by TalonFX" // TODO: Implement fault handling
+        );
+    }
+
+    public LogFrame.PIDOutput getPIDOutput() {
+        double pOutput = kpOutput.getValueAsDouble();
+        double iOutput = kiOutput.getValueAsDouble();
+        double dOutput = kdOutput.getValueAsDouble();
+        double pidOutput = totalOutput.getValueAsDouble();
+
+        return new LogFrame.PIDOutput(
+                pOutput,
+                iOutput,
+                dOutput,
+                pidOutput
         );
     }
 }

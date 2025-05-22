@@ -20,7 +20,7 @@ public abstract class BasicMotor {
     /**
      * the log frame of the motor
      */
-    private final LogFrameAutoLogged logFrame = new LogFrameAutoLogged();
+    protected final LogFrameAutoLogged logFrame = new LogFrameAutoLogged();
 
     /**
      * the location of the controller (RIO or motor controller)
@@ -102,6 +102,7 @@ public abstract class BasicMotor {
      * this is called on a separate thread
      */
     public void run() {
+        //updates the measurements
         var measurement = measurements.update(1 / controllerLocation.HZ);
         logFrame.measurement = measurement;
 
@@ -168,6 +169,13 @@ public abstract class BasicMotor {
     public void updateSensorData() {
         logFrame.sensorData = getSensorData();
 
+        //if the controller is on the motor, then we need to get the pid output from the motor
+        if(controllerLocation == ControllerLocation.MOTOR){
+            var controllerFrame = logFrame.controllerFrame;
+
+            logFrame.controllerFrame = new LogFrame.ControllerFrame(controllerFrame, getPIDOutput());
+        }
+
         //if the pid has changed, then update the built-in motor pid
         if (hasPIDGainsChanged) {
             hasPIDGainsChanged = false;
@@ -179,5 +187,12 @@ public abstract class BasicMotor {
      * @return the latest sensor data
      */
     protected abstract LogFrame.SensorData getSensorData();
+
+    /**
+     * gets the pid output of the built-in controller
+     * used only when the pid is on the motor controller
+     * @return the pid output
+     */
+    protected abstract LogFrame.PIDOutput getPIDOutput();
 
 }
