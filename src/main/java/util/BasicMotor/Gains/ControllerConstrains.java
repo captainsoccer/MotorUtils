@@ -75,22 +75,33 @@ public class ControllerConstrains {
      * @param request the request of the controller
      */
     public void calculateConstraints(Measurements.Measurement measurement, Controller.ControllerRequest request) {
-        if (constraintType == ConstraintType.NONE) return;
-
-        if (constraintType == ConstraintType.LIMITED) {
-            if (request.requestType().isPositionControl()) {
-                if (request.goal().position >= maxValue) {
-                    request.goal().position = maxValue;
-                    request.goal().velocity = 0;
-                }
-                if (request.goal().position <= minValue) {
-                    request.goal().position = minValue;
-                    request.goal().velocity = 0;
-                }
-
-                return;
+        switch (constraintType) {
+            case LIMITED -> calculateLimited(measurement, request);
+            case CONTINUOUS -> calculateContinuous(measurement, request);
+            default -> {
+                // do nothing
             }
+        }
+    }
 
+    public void calculateLimited(Measurements.Measurement measurement, Controller.ControllerRequest request) {
+        var controlMode = request.requestType();
+        // check if the request is a position control (then apply the limits to the setpoint)
+        if(controlMode.isPositionControl()){
+            // check if the request is in the limits of the motor
+            if (request.goal().position >= maxValue) {
+                request.goal().position = maxValue;
+                request.goal().velocity = 0;
+            }
+            if (request.goal().position <= minValue) {
+                request.goal().position = minValue;
+                request.goal().velocity = 0;
+            }
+        }
+        //if not position control,
+        // then check if the measurement is in the limits of the motor
+        // and make sure the direction is back to the zone
+        else{
             if (measurement.position() <= minValue && request.goal().position < 0) {
                 request.goal().position = 0;
                 request.goal().velocity = 0;
@@ -99,14 +110,28 @@ public class ControllerConstrains {
                 request.goal().position = 0;
                 request.goal().velocity = 0;
             }
-        } else {
-            if (!request.requestType().isPositionControl()) return;
+        }
+    }
 
-            double errorBound = (maxValue - minValue) / 2.0;
+    public void calculateContinuous(Measurements.Measurement measurement, Controller.ControllerRequest request) {
+        //check if the request is a position control (continuous constraints only work for position control)
+        if (!request.requestType().isPositionControl()) return;
 
-            request.goal().position =
-                    MathUtil.inputModulus(request.goal().position - measurement.position(), -errorBound, errorBound)
-                            + measurement.position();
+        // calculate the error bound
+        double errorBound = (maxValue - minValue) / 2.0;
+
+        // store the original position
+        double originalPosition = request.goal().position;
+
+        // wrap the goal around the limits
+        request.goal().position =
+                MathUtil.inputModulus(request.goal().position - measurement.position(), -errorBound, errorBound)
+                        + measurement.position();
+
+        // if the goal is in the opposite direction of the original position, reverse the velocity
+        if(Math.signum(request.goal().position - measurement.position())
+                != Math.signum(originalPosition - measurement.position())){
+            request.goal().velocity *= -1;
         }
     }
 
