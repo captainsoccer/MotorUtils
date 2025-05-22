@@ -84,6 +84,11 @@ public class ControllerConstrains {
         }
     }
 
+    /**
+     * calculates the limits of the controller with the limited mode
+     * @param measurement the measurement of the motor
+     * @param request the request of the controller
+     */
     public void calculateLimited(Measurements.Measurement measurement, Controller.ControllerRequest request) {
         var controlMode = request.requestType();
         // check if the request is a position control (then apply the limits to the setpoint)
@@ -113,6 +118,13 @@ public class ControllerConstrains {
         }
     }
 
+    /**
+     * calculates the limits of the controller with the continuous mode
+     * this means that the controller will wrap around the limits,
+     * for example, turn on a swerve module
+     * @param measurement the measurement of the motor
+     * @param request the request of the controller
+     */
     public void calculateContinuous(Measurements.Measurement measurement, Controller.ControllerRequest request) {
         //check if the request is a position control (continuous constraints only work for position control)
         if (!request.requestType().isPositionControl()) return;
@@ -135,14 +147,26 @@ public class ControllerConstrains {
         }
     }
 
+    /**
+     * gets the type of constraints
+     * @return the type of constraints
+     */
     public ConstraintType getConstraintType() {
         return constraintType;
     }
 
+    /**
+     * gets the minimum value of the constraints
+     * @return the minimum value of the constraints
+     */
     public double getMinValue() {
         return minValue;
     }
 
+    /**
+     * gets the maximum value of the constraints
+     * @return the maximum value of the constraints
+     */
     public double getMaxValue() {
         return maxValue;
     }
