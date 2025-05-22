@@ -52,10 +52,6 @@ public class BasicPIDController {
         if(Math.abs(error) <= gains.getTolerance()){
             totalOutput = 0;
         }
-        // clamp the output to the min and max output
-        else{
-            totalOutput = MathUtil.clamp(totalOutput, gains.getMinOutput(), gains.getMaxOutput());
-        }
 
         // create the PID output
         return new LogFrame.PIDOutput(

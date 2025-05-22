@@ -1,12 +1,6 @@
 package util.BasicMotor.Gains;
 
 public class PIDGains {
-
-    /**
-     * the maximum output of the motor (in volts)
-     */
-    private static final double maxMotorOutput = 13.0;
-
     /**
      * the idle voltage fed into the motor when it is not moving (in volts)
      * used for duty cycle calculations
@@ -44,11 +38,6 @@ public class PIDGains {
     private double tolerance;
 
     /**
-     * the maximum and minimum output of the PID controller (in volts)
-     */
-    private double maxOutput, minOutput;
-
-    /**
      * creates a PID gains object with the given values
      *
      * @param k_P        the proportional gain (>= 0)
@@ -64,9 +53,7 @@ public class PIDGains {
             double k_D,
             double i_Zone,
             double i_maxAccum,
-            double tolerance,
-            double maxOutput,
-            double minOutput)
+            double tolerance)
             throws IllegalArgumentException {
         if (k_P < 0) throw new IllegalArgumentException("k_P must be greater than zero");
         this.k_P = k_P;
@@ -85,19 +72,6 @@ public class PIDGains {
 
         if (tolerance < 0) throw new IllegalArgumentException("tolerance must be greater than zero");
         this.tolerance = tolerance;
-
-        if (maxOutput <= minOutput)
-            throw new IllegalArgumentException("maxOutput must be greater than minOutput");
-
-        if (maxOutput < -maxMotorOutput)
-            throw new IllegalArgumentException("maxOutput must be greater than " + -maxMotorOutput);
-        if (maxOutput > maxMotorOutput)
-            throw new IllegalArgumentException("maxOutput must be less than " + maxMotorOutput);
-        this.maxOutput = maxOutput;
-
-        if (minOutput < -maxMotorOutput)
-            throw new IllegalArgumentException("minOutput must be greater than " + -maxMotorOutput);
-        this.minOutput = minOutput;
     }
 
     /**
@@ -114,9 +88,7 @@ public class PIDGains {
                 k_D,
                 Double.POSITIVE_INFINITY,
                 Double.POSITIVE_INFINITY,
-                0,
-                maxMotorOutput,
-                -maxMotorOutput);
+                0);
     }
 
     /**
@@ -134,9 +106,7 @@ public class PIDGains {
                 k_D,
                 Double.POSITIVE_INFINITY,
                 Double.POSITIVE_INFINITY,
-                tolerance,
-                maxMotorOutput,
-                -maxMotorOutput);
+                tolerance);
     }
 
     /**
@@ -170,21 +140,13 @@ public class PIDGains {
         return tolerance;
     }
 
-    public double getMaxOutput() {
-        return maxOutput;
-    }
-
-    public double getMinOutput() {
-        return minOutput;
-    }
-
     /**
      * gets the gains in an array
      * used when updating from smart dashboard
      * @return the gains in an array
      */
     private Double[] getValues() {
-        return new Double[]{k_P, k_I, K_D, i_Zone, i_maxAccum, tolerance, maxOutput, minOutput};
+        return new Double[]{k_P, k_I, K_D, i_Zone, i_maxAccum, tolerance};
     }
 
     /**
@@ -201,8 +163,6 @@ public class PIDGains {
         this.i_Zone = values[3];
         this.i_maxAccum = values[4];
         this.tolerance = values[5];
-        this.maxOutput = values[6];
-        this.minOutput = values[7];
     }
 
     public PIDGains convertToMotorGains(double gearRatio){
@@ -212,9 +172,7 @@ public class PIDGains {
                 K_D / gearRatio,
                 i_Zone * gearRatio,
                 i_maxAccum, //TODO check if this is correct
-                tolerance * gearRatio,
-                maxOutput,
-                minOutput
+                tolerance * gearRatio
         );
     }
 
@@ -225,9 +183,7 @@ public class PIDGains {
                 K_D / motorIdleVoltage,
                 i_Zone,
                 i_maxAccum,
-                tolerance,
-                maxOutput / motorIdleVoltage,
-                minOutput / motorIdleVoltage
+                tolerance
         );
     }
 
