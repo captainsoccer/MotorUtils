@@ -30,7 +30,7 @@ public class BasicTalonFX extends BasicMotor {
                 controllerLocation.HZ,
                 gearRatio
         ));
-        sensors = new TalonFXSensors(motor, controllerLocation.HZ);
+        sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
 
         motor.optimizeBusUtilization();
 
@@ -43,6 +43,12 @@ public class BasicTalonFX extends BasicMotor {
 
         config.MotorOutput.PeakForwardDutyCycle = pidConfig.getMaxOutput();
         config.MotorOutput.PeakReverseDutyCycle = pidConfig.getMinOutput();
+
+        config.Slot0.kP = pidConfig.getK_P();
+        config.Slot0.kI = pidConfig.getK_I();
+        config.Slot0.kD = pidConfig.getK_D();
+        config.Voltage.PeakForwardVoltage = pidGains.getMaxOutput();
+        config.Voltage.PeakReverseVoltage = pidGains.getMinOutput();
     }
 
     @Override
@@ -53,5 +59,10 @@ public class BasicTalonFX extends BasicMotor {
     @Override
     protected LogFrame.SensorData getSensorData() {
         return sensors.getSensorData();
+    }
+
+    @Override
+    protected LogFrame.PIDOutput getPIDOutput() {
+        return sensors.getPIDOutput();
     }
 }
