@@ -5,15 +5,45 @@ import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Measurements.Measurements;
 
 public class ControllerConstrains {
+    /**
+     * which type of constraints to use
+     */
     public enum ConstraintType {
+        /**
+         * continuous constraints
+         * this means that the controller will wrap around the limits,
+         * for example, turn on a swerve module
+         */
         CONTINUOUS,
+        /**
+         * limited constraints
+         * this means that the controller will limit the output to the limits,
+         * for example, an elevator with an extension limit
+         */
         LIMITED,
+        /**
+         * no constraints
+         * this means that the controller will not limit the output,
+         * for example, a drive motor or a flywheel
+         */
         NONE
     }
 
+    /**
+     * the type of constraints to use
+     */
     private final ConstraintType constraintType;
 
+    /**
+     * the minimum value of the constraints
+     * this is used for limited and continuous constraints
+     */
     private final double minValue;
+
+    /**
+     * the maximum value of the constraints
+     * this is used for limited and continuous constraints
+     */
     private final double maxValue;
 
     /**
