@@ -4,32 +4,26 @@ import edu.wpi.first.math.MathUtil;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Measurements.Measurements;
 
-public class ControllerConstrains {
-    /**
-     * the maximum output of the motor (in volts)
-     */
-    private static final double defaultMaxMotorOutput = 13.0;
+import static util.BasicMotor.MotorManager.defaultMaxMotorOutput;
 
+public class ControllerConstrains {
     /**
      * which type of constraints to use
      */
     public enum ConstraintType {
         /**
-         * continuous constraints
-         * this means that the controller will wrap around the limits,
-         * for example, turn on a swerve module
+         * continuous constraints this means that the controller will wrap around the limits, for
+         * example, turn on a swerve module
          */
         CONTINUOUS,
         /**
-         * limited constraints
-         * this means that the controller will limit the output to the limits,
-         * for example, an elevator with an extension limit
+         * limited constraints this means that the controller will limit the output to the limits, for
+         * example, an elevator with an extension limit
          */
         LIMITED,
         /**
-         * no constraints
-         * this means that the controller will not limit the output,
-         * for example, a drive motor or a flywheel
+         * no constraints this means that the controller will not limit the output, for example, a drive
+         * motor or a flywheel
          */
         NONE
     }
@@ -40,50 +34,51 @@ public class ControllerConstrains {
     private final ConstraintType constraintType;
 
     /**
-     * the minimum value of the constraints
-     * this is used for limited and continuous constraints
+     * the minimum value of the constraints this is used for limited and continuous constraints
      */
     private final double minValue;
 
     /**
-     * the maximum value of the constraints
-     * this is used for limited and continuous constraints
+     * the maximum value of the constraints this is used for limited and continuous constraints
      */
     private final double maxValue;
 
     /**
-     * the maximum output of the motor (in volts)
-     * this is used for capping the output of the motor
+     * the maximum output of the motor (in volts) this is used for capping the output of the motor
      */
     private final double maxMotorOutput;
 
     /**
-     * the minimum output of the motor (in volts)
-     * this is used for capping the output of the motor
+     * the minimum output of the motor (in volts) this is used for capping the output of the motor
      */
     private final double minMotorOutput;
 
     /**
      * creates a constrains object with the given type and limits
      *
-     * @param type     type of the constrains (continuous, limited, none)
-     * @param minValue the minimum value of the constrains (if continuous is the minimum value to
-     *                 round to, if limited is the minimum value of the limits)
-     * @param maxValue the maximum value of the constrains (if continuous is the maximum value to
-     *                 round to, if limited is the maximum value of the limits)
-     * @param maxMotorOutput the maximum output of the motor (in volts)
-     *                       this is used for capping the output of the motor
-     *                       (default is 13.0)
-     * @param minMotorOutput the minimum output of the motor (in volts)
-     *                       this is used for capping the output of the motor
-     *                       (default is -13.0)
+     * @param type           type of the constrains (continuous, limited, none)
+     * @param minValue       the minimum value of the constrains (if continuous is the minimum value to
+     *                       round to, if limited is the minimum value of the limits)
+     * @param maxValue       the maximum value of the constrains (if continuous is the maximum value to
+     *                       round to, if limited is the maximum value of the limits)
+     * @param maxMotorOutput the maximum output of the motor (in volts) this is used for capping the
+     *                       output of the motor (default is 13.0)
+     * @param minMotorOutput the minimum output of the motor (in volts) this is used for capping the
+     *                       output of the motor (default is -13.0)
      */
-    public ControllerConstrains(ConstraintType type, double minValue, double maxValue, double maxMotorOutput, double minMotorOutput) {
+    public ControllerConstrains(
+            ConstraintType type,
+            double minValue,
+            double maxValue,
+            double maxMotorOutput,
+            double minMotorOutput) {
         this.constraintType = type;
         this.minValue = minValue;
         this.maxValue = maxValue;
-        this.maxMotorOutput = MathUtil.clamp(maxMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
-        this.minMotorOutput = MathUtil.clamp(minMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+        this.maxMotorOutput =
+                MathUtil.clamp(maxMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+        this.minMotorOutput =
+                MathUtil.clamp(minMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
     }
 
     /**
@@ -102,32 +97,32 @@ public class ControllerConstrains {
     /**
      * creates a constrains object with no limits and no continuity with set max and min motor output
      *
-     * @param maxMotorOutput the maximum output of the motor (in volts)
-     *      *                       this is used for capping the output of the motor
-     *      *                       (default is 13.0)
-     *
-     * @param minMotorOutput the minimum output of the motor (in volts)
-     *      *                       this is used for capping the output of the motor
-     *      *                       (default is -13.0)
+     * @param maxMotorOutput the maximum output of the motor (in volts) * this is used for capping the
+     *                       output of the motor * (default is 13.0)
+     * @param minMotorOutput the minimum output of the motor (in volts) * this is used for capping the
+     *                       output of the motor * (default is -13.0)
      */
     public ControllerConstrains(double maxMotorOutput, double minMotorOutput) {
         this(ConstraintType.NONE, 0, 0, maxMotorOutput, minMotorOutput);
     }
 
     /**
-     * creates an empty constrains object (no limits and no continuity) and the default max motor output
+     * creates an empty constrains object (no limits and no continuity) and the default max motor
+     * output
      */
     public ControllerConstrains() {
         this(ConstraintType.NONE, 0, 0, defaultMaxMotorOutput, -defaultMaxMotorOutput);
     }
 
     /**
-     * calculates the constraints of the controller
-     * checks if the request is in the limits of the motor or needs to be wrapped
+     * calculates the constraints of the controller checks if the request is in the limits of the
+     * motor or needs to be wrapped
+     *
      * @param measurement the measurement of the motor
-     * @param request the request of the controller
+     * @param request     the request of the controller
      */
-    public void calculateConstraints(Measurements.Measurement measurement, Controller.ControllerRequest request) {
+    public void calculateConstraints(
+            Measurements.Measurement measurement, Controller.ControllerRequest request) {
         switch (constraintType) {
             case LIMITED -> calculateLimited(measurement, request);
             case CONTINUOUS -> calculateContinuous(measurement, request);
@@ -139,13 +134,15 @@ public class ControllerConstrains {
 
     /**
      * calculates the limits of the controller with the limited mode
+     *
      * @param measurement the measurement of the motor
-     * @param request the request of the controller
+     * @param request     the request of the controller
      */
-    public void calculateLimited(Measurements.Measurement measurement, Controller.ControllerRequest request) {
+    public void calculateLimited(
+            Measurements.Measurement measurement, Controller.ControllerRequest request) {
         var controlMode = request.requestType();
         // check if the request is a position control (then apply the limits to the setpoint)
-        if(controlMode.isPositionControl()){
+        if (controlMode.isPositionControl()) {
             // check if the request is in the limits of the motor
             if (request.goal().position >= maxValue) {
                 request.goal().position = maxValue;
@@ -156,10 +153,10 @@ public class ControllerConstrains {
                 request.goal().velocity = 0;
             }
         }
-        //if not position control,
+        // if not position control,
         // then check if the measurement is in the limits of the motor
         // and make sure the direction is back to the zone
-        else{
+        else {
             if (measurement.position() <= minValue && request.goal().position < 0) {
                 request.goal().position = 0;
                 request.goal().velocity = 0;
@@ -172,14 +169,16 @@ public class ControllerConstrains {
     }
 
     /**
-     * calculates the limits of the controller with the continuous mode
-     * this means that the controller will wrap around the limits,
-     * for example, turn on a swerve module
+     * calculates the limits of the controller with the continuous mode this means that the controller
+     * will wrap around the limits, for example, turn on a swerve module
+     *
      * @param measurement the measurement of the motor
-     * @param request the request of the controller
+     * @param request     the request of the controller
      */
-    public void calculateContinuous(Measurements.Measurement measurement, Controller.ControllerRequest request) {
-        //check if the request is a position control (continuous constraints only work for position control)
+    public void calculateContinuous(
+            Measurements.Measurement measurement, Controller.ControllerRequest request) {
+        // check if the request is a position control (continuous constraints only work for position
+        // control)
         if (!request.requestType().isPositionControl()) return;
 
         // calculate the error bound
@@ -190,18 +189,20 @@ public class ControllerConstrains {
 
         // wrap the goal around the limits
         request.goal().position =
-                MathUtil.inputModulus(request.goal().position - measurement.position(), -errorBound, errorBound)
+                MathUtil.inputModulus(
+                        request.goal().position - measurement.position(), -errorBound, errorBound)
                         + measurement.position();
 
         // if the goal is in the opposite direction of the original position, reverse the velocity
-        if(Math.signum(request.goal().position - measurement.position())
-                != Math.signum(originalPosition - measurement.position())){
+        if (Math.signum(request.goal().position - measurement.position())
+                != Math.signum(originalPosition - measurement.position())) {
             request.goal().velocity *= -1;
         }
     }
 
     /**
      * clamps the motor output to the limits of the motor
+     *
      * @param output the output of the motor
      * @return the clamped output of the motor
      */
@@ -211,6 +212,7 @@ public class ControllerConstrains {
 
     /**
      * gets the type of constraints
+     *
      * @return the type of constraints
      */
     public ConstraintType getConstraintType() {
@@ -219,6 +221,7 @@ public class ControllerConstrains {
 
     /**
      * gets the minimum value of the constraints
+     *
      * @return the minimum value of the constraints
      */
     public double getMinValue() {
@@ -227,9 +230,28 @@ public class ControllerConstrains {
 
     /**
      * gets the maximum value of the constraints
+     *
      * @return the maximum value of the constraints
      */
     public double getMaxValue() {
         return maxValue;
+    }
+
+    /**
+     * gets the maximum output of the motor
+     *
+     * @return the maximum output of the motor
+     */
+    public double getMaxMotorOutput() {
+        return maxMotorOutput;
+    }
+
+    /**
+     * gets the minimum output of the motor
+     *
+     * @return the minimum output of the motor
+     */
+    public double getMinMotorOutput() {
+        return minMotorOutput;
     }
 }

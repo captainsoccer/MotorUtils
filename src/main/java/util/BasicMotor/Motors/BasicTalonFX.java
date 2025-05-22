@@ -4,10 +4,10 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Controllers.Controller;
+import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
-import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.MeasurementsCTRE;
 import util.BasicMotor.MotorManager;
 
@@ -17,19 +17,24 @@ public class BasicTalonFX extends BasicMotor {
 
     private final TalonFXSensors sensors;
 
-    public BasicTalonFX(ControllerGains controllerGains, int id, double gearRatio, String name, MotorManager.ControllerLocation controllerLocation) {
+    public BasicTalonFX(
+            ControllerGains controllerGains,
+            int id,
+            double gearRatio,
+            String name,
+            MotorManager.ControllerLocation controllerLocation) {
         super(controllerGains, name, controllerLocation);
 
         motor = new TalonFX(id);
         config = new TalonFXConfiguration();
 
-        setMeasurements(new MeasurementsCTRE(
-                motor.getPosition(),
-                motor.getVelocity(),
-                motor.getAcceleration(),
-                controllerLocation.HZ,
-                gearRatio
-        ));
+        setMeasurements(
+                new MeasurementsCTRE(
+                        motor.getPosition(),
+                        motor.getVelocity(),
+                        motor.getAcceleration(),
+                        controllerLocation.HZ,
+                        gearRatio));
         sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
 
         motor.optimizeBusUtilization();
@@ -41,19 +46,35 @@ public class BasicTalonFX extends BasicMotor {
     protected void updatePIDGainsToMotor(PIDGains pidGains) {
         var pidConfig = pidGains.convertToDutyCycle();
 
-        config.MotorOutput.PeakForwardDutyCycle = pidConfig.getMaxOutput();
-        config.MotorOutput.PeakReverseDutyCycle = pidConfig.getMinOutput();
-
         config.Slot0.kP = pidConfig.getK_P();
         config.Slot0.kI = pidConfig.getK_I();
         config.Slot0.kD = pidConfig.getK_D();
-        config.Voltage.PeakForwardVoltage = pidGains.getMaxOutput();
-        config.Voltage.PeakReverseVoltage = pidGains.getMinOutput();
+    }
+
+    private void updateConstraints(ControllerConstrains constraints) {
+        config.Voltage.PeakForwardVoltage = constraints.getMaxMotorOutput();
+        config.Voltage.PeakReverseVoltage = constraints.getMinMotorOutput();
+
+        config.MotorOutput.PeakForwardDutyCycle = constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage;
+        config.MotorOutput.PeakReverseDutyCycle = constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage;
+
+        if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
+            config.ClosedLoopGeneral.ContinuousWrap = false;
+            config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+            config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+            config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constraints.getMaxValue();
+            config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constraints.getMinValue();
+        }
+        else{
+            config.ClosedLoopGeneral.ContinuousWrap = true;
+            config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+            config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+        }
     }
 
     @Override
     protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
-
     }
 
     @Override

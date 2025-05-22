@@ -9,36 +9,26 @@ import util.BasicMotor.LogFrame.FeedForwardOutput;
 import util.BasicMotor.Measurements.Measurements;
 
 public class Controller implements Sendable {
-  /**
-   * the gains of the controller
-   * pid, feedforward, constraints and profile
-   */
+  /** the gains of the controller pid, feedforward, constraints and profile */
   private final ControllerGains controllerGains;
 
-    /**
-     * the controller of the controller
-     * this is used to calculate the output of the controller
-     * pid, feedforward, constraints and profile
-     */
+  /**
+   * the controller of the controller this is used to calculate the output of the controller pid,
+   * feedforward, constraints and profile
+   */
   private final BasicPIDController pidController;
 
-  /**
-   * the latest request of the controller
-   * this contains the control mode and the goal
-   */
+  /** the latest request of the controller this contains the control mode and the goal */
   private ControllerRequest request;
-  /**
-   * the setpoint of the controller
-   * this is used when using profiled position and velocity
-   */
+  /** the setpoint of the controller this is used when using profiled position and velocity */
   private TrapezoidProfile.State setpoint;
 
-    /**
-     * creates a controller with the given gains
-     *
-     * @param controllerGains the gains of the controller
-     * @param hasPIDGainsChangeRunnable the runnable that is called when the PID gains are changed
-     */
+  /**
+   * creates a controller with the given gains
+   *
+   * @param controllerGains the gains of the controller
+   * @param hasPIDGainsChangeRunnable the runnable that is called when the PID gains are changed
+   */
   public Controller(ControllerGains controllerGains, Runnable hasPIDGainsChangeRunnable) {
     this.controllerGains = controllerGains;
     this.controllerGains.setHasPIDGainsChanged(hasPIDGainsChangeRunnable);
@@ -49,17 +39,18 @@ public class Controller implements Sendable {
 
   /**
    * creates a controller with empty gains (no pid, no feedforward, no constraints, no profile)
+   *
    * @param hasPIDGainsChangedConsumer the runnable that is called when the PID gains are changed
    */
   public Controller(Runnable hasPIDGainsChangedConsumer) {
     this(new ControllerGains(), hasPIDGainsChangedConsumer);
   }
 
-    /**
-     * gets the controller gains of the controller
-     *
-     * @return the controller gains of the controller
-     */
+  /**
+   * gets the controller gains of the controller
+   *
+   * @return the controller gains of the controller
+   */
   public ControllerGains getControllerGains() {
     return controllerGains;
   }
@@ -133,7 +124,7 @@ public class Controller implements Sendable {
     this.setpoint = new TrapezoidProfile.State();
   }
 
-  //calculations
+  // calculations
   /**
    * calculates the output of the controller without the PID controller this is used when the pid of
    * the motor is running on the motor controller
@@ -142,37 +133,38 @@ public class Controller implements Sendable {
    * @param dt the time since the last calculation
    * @return the output of the controller in volts
    */
-  public LogFrame.ControllerFrame calculateWithOutPID(Measurements.Measurement measurements, double dt) {
-    //gets the measurement of the controller
-    double measurement = switch(request.requestType) {
-      case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
-      default -> measurements.position();
-    };
+  public LogFrame.ControllerFrame calculateWithOutPID(
+      Measurements.Measurement measurements, double dt) {
+    // gets the measurement of the controller
+    double measurement =
+        switch (request.requestType) {
+          case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
+          default -> measurements.position();
+        };
 
     calculateConstraints(measurements);
 
     setpoint = calculateProfile(dt);
 
     double directionOfTravel =
-            switch (request.requestType) {
-              case POSITION, PROFILED_POSITION -> setpoint.position > measurement ? 1 : -1;
-              default -> Math.signum(setpoint.position);
-            };
+        switch (request.requestType) {
+          case POSITION, PROFILED_POSITION -> setpoint.position > measurement ? 1 : -1;
+          default -> Math.signum(setpoint.position);
+        };
 
     var feedForward = calculateFeedForward(directionOfTravel);
 
     double error = request.requestType.requiresPID() ? setpoint.position - measurement : 0;
 
     return new LogFrame.ControllerFrame(
-            feedForward.totalOutput(),
-            new LogFrame.PIDOutput(),
-            feedForward,
-            setpoint.position,
-            measurement,
-            error,
-            request.goal.position,
-            request.requestType
-    );
+        feedForward.totalOutput(),
+        new LogFrame.PIDOutput(),
+        feedForward,
+        setpoint.position,
+        measurement,
+        error,
+        request.goal.position,
+        request.requestType);
   }
 
   /**
@@ -189,7 +181,8 @@ public class Controller implements Sendable {
     var pidOutput = calculatePID(measurement, dt);
 
     // also clamps the output of the controller;
-    return new LogFrame.ControllerFrame(feedForwards, pidOutput, controllerGains.getControllerConstrains());
+    return new LogFrame.ControllerFrame(
+        feedForwards, pidOutput, controllerGains.getControllerConstrains());
   }
 
   /**
@@ -199,10 +192,11 @@ public class Controller implements Sendable {
    * @return the output PID of the controller in volts
    */
   private LogFrame.PIDOutput calculatePID(Measurements.Measurement measurements, double dt) {
-    double measurement = switch (request.requestType){
-      case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
-      default -> measurements.position();
-    };
+    double measurement =
+        switch (request.requestType) {
+          case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
+          default -> measurements.position();
+        };
 
     return this.pidController.calculate(measurement, this.setpoint.position, dt);
   }
@@ -218,11 +212,10 @@ public class Controller implements Sendable {
     var feedForwards = this.controllerGains.getControllerFeedForwards();
 
     return new FeedForwardOutput(
-            feedForwards.getSimpleFeedForward(),
-            feedForwards.getFrictionFeedForward() * directionOfTravel,
-            feedForwards.getK_V() * setpoint.position,
-            feedForwards.getCalculatedFeedForward(setpoint.position)
-    );
+        feedForwards.getSimpleFeedForward(),
+        feedForwards.getFrictionFeedForward() * directionOfTravel,
+        feedForwards.getK_V() * setpoint.position,
+        feedForwards.getCalculatedFeedForward(setpoint.position));
   }
 
   /**

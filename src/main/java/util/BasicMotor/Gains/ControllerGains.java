@@ -138,16 +138,6 @@ public class ControllerGains {
         "tolerance",
         pidGains::getTolerance,
         (value) -> updatePIDGains(value, PIDGains.ChangeType.TOLERANCE));
-
-    builder.addDoubleProperty(
-        "maxOutput",
-        pidGains::getMaxOutput,
-        (value) -> updatePIDGains(value, PIDGains.ChangeType.MAX_OUTPUT));
-
-    builder.addDoubleProperty(
-        "minOutput",
-        pidGains::getMinOutput,
-        (value) -> updatePIDGains(value, PIDGains.ChangeType.MIN_OUTPUT));
   }
 
   private void updatePIDGains(double value, PIDGains.ChangeType changeType) {
