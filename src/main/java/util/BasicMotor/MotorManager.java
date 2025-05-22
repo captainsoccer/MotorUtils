@@ -11,7 +11,7 @@ public class MotorManager extends SubsystemBase {
 
     private static final double PID_LOOP_HZ = 100;
     private static final double PROFILE_LOOP_HZ = 50;
-    private static final double SENSOR_LOOP_HZ = 10;
+    private static final double SENSOR_LOOP_HZ = 4;
 
     private static MotorManager instance;
 
