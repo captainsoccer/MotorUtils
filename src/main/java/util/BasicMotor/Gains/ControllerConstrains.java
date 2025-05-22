@@ -6,6 +6,11 @@ import util.BasicMotor.Measurements.Measurements;
 
 public class ControllerConstrains {
     /**
+     * the maximum output of the motor (in volts)
+     */
+    private static final double defaultMaxMotorOutput = 13.0;
+
+    /**
      * which type of constraints to use
      */
     public enum ConstraintType {
@@ -47,7 +52,42 @@ public class ControllerConstrains {
     private final double maxValue;
 
     /**
+     * the maximum output of the motor (in volts)
+     * this is used for capping the output of the motor
+     */
+    private final double maxMotorOutput;
+
+    /**
+     * the minimum output of the motor (in volts)
+     * this is used for capping the output of the motor
+     */
+    private final double minMotorOutput;
+
+    /**
      * creates a constrains object with the given type and limits
+     *
+     * @param type     type of the constrains (continuous, limited, none)
+     * @param minValue the minimum value of the constrains (if continuous is the minimum value to
+     *                 round to, if limited is the minimum value of the limits)
+     * @param maxValue the maximum value of the constrains (if continuous is the maximum value to
+     *                 round to, if limited is the maximum value of the limits)
+     * @param maxMotorOutput the maximum output of the motor (in volts)
+     *                       this is used for capping the output of the motor
+     *                       (default is 13.0)
+     * @param minMotorOutput the minimum output of the motor (in volts)
+     *                       this is used for capping the output of the motor
+     *                       (default is -13.0)
+     */
+    public ControllerConstrains(ConstraintType type, double minValue, double maxValue, double maxMotorOutput, double minMotorOutput) {
+        this.constraintType = type;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+        this.maxMotorOutput = MathUtil.clamp(maxMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+        this.minMotorOutput = MathUtil.clamp(minMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+    }
+
+    /**
+     * creates a constrains object with the given type and limits with the default max motor output
      *
      * @param type     type of the constrains (continuous, limited, none)
      * @param minValue the minimum value of the constrains (if continuous is the minimum value to
@@ -56,16 +96,29 @@ public class ControllerConstrains {
      *                 round to, if limited is the maximum value of the limits)
      */
     public ControllerConstrains(ConstraintType type, double minValue, double maxValue) {
-        this.constraintType = type;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
+        this(type, minValue, maxValue, defaultMaxMotorOutput, -defaultMaxMotorOutput);
     }
 
     /**
-     * creates an empty constrains object (no limits and no continuity)
+     * creates a constrains object with no limits and no continuity with set max and min motor output
+     * 
+     * @param maxMotorOutput the maximum output of the motor (in volts)
+     *      *                       this is used for capping the output of the motor
+     *      *                       (default is 13.0)
+     *
+     * @param minMotorOutput the minimum output of the motor (in volts)
+     *      *                       this is used for capping the output of the motor
+     *      *                       (default is -13.0)
+     */
+    public ControllerConstrains(double maxMotorOutput, double minMotorOutput) {
+        this(ConstraintType.NONE, 0, 0, maxMotorOutput, minMotorOutput);
+    }
+
+    /**
+     * creates an empty constrains object (no limits and no continuity) and the default max motor output
      */
     public ControllerConstrains() {
-        this(ConstraintType.NONE, 0, 0);
+        this(ConstraintType.NONE, 0, 0, defaultMaxMotorOutput, -defaultMaxMotorOutput);
     }
 
     /**
@@ -145,6 +198,15 @@ public class ControllerConstrains {
                 != Math.signum(originalPosition - measurement.position())){
             request.goal().velocity *= -1;
         }
+    }
+
+    /**
+     * clamps the motor output to the limits of the motor
+     * @param output the output of the motor
+     * @return the clamped output of the motor
+     */
+    public double clampMotorOutput(double output) {
+        return MathUtil.clamp(output, minMotorOutput, maxMotorOutput);
     }
 
     /**
