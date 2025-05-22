@@ -101,7 +101,7 @@ public class ControllerConstrains {
 
     /**
      * creates a constrains object with no limits and no continuity with set max and min motor output
-     * 
+     *
      * @param maxMotorOutput the maximum output of the motor (in volts)
      *      *                       this is used for capping the output of the motor
      *      *                       (default is 13.0)

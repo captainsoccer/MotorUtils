@@ -1,7 +1,9 @@
 package util.BasicMotor;
 
+import frc.robot.Constants;
 import org.littletonrobotics.junction.AutoLog;
 import util.BasicMotor.Controllers.Controller;
+import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Measurements.Measurements;
 
 @AutoLog
@@ -82,6 +84,18 @@ public class LogFrame {
         public ControllerFrame(ControllerFrame frame, PIDOutput output) {
             this(
                     frame.totalOutput + output.totalOutput,
+                    output,
+                    frame.feedForwardOutput,
+                    frame.setpoint,
+                    frame.measurement,
+                    frame.error,
+                    frame.goal,
+                    frame.mode);
+        }
+
+        public ControllerFrame(ControllerFrame frame, PIDOutput output, ControllerConstrains constraint) {
+            this(
+                    constraint.clampMotorOutput(frame.totalOutput + output.totalOutput),
                     output,
                     frame.feedForwardOutput,
                     frame.setpoint,

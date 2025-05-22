@@ -106,47 +106,6 @@ public class Controller implements Sendable {
   }
 
   /**
-   * calculates the output of the controller without the PID controller this is used when the pid of
-   * the motor is running on the motor controller
-   *
-   * @param measurements the measurement of the controller (depending on the request type)
-   * @param dt the time since the last calculation
-   * @return the output of the controller in volts
-   */
-  public LogFrame.ControllerFrame calculateWithOutPID(Measurements.Measurement measurements, double dt) {
-    //gets the measurement of the controller
-    double measurement = switch(request.requestType) {
-      case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
-      default -> measurements.position();
-    };
-
-    calculateConstraints(measurements);
-
-    setpoint = calculateProfile(dt);
-
-    double directionOfTravel =
-        switch (request.requestType) {
-          case POSITION, PROFILED_POSITION -> setpoint.position > measurement ? 1 : -1;
-          default -> Math.signum(setpoint.position);
-        };
-
-    var feedForward = calculateFeedForward(directionOfTravel);
-
-    double error = request.requestType.requiresPID() ? setpoint.position - measurement : 0;
-
-    return new LogFrame.ControllerFrame(
-            feedForward.totalOutput(),
-            new LogFrame.PIDOutput(),
-            feedForward,
-            setpoint.position,
-            measurement,
-            error,
-            request.goal.position,
-            request.requestType
-    );
-  }
-
-  /**
    * gets the current setpoint of the controller
    *
    * @return the current setpoint of the controller
@@ -176,6 +135,47 @@ public class Controller implements Sendable {
 
   //calculations
   /**
+   * calculates the output of the controller without the PID controller this is used when the pid of
+   * the motor is running on the motor controller
+   *
+   * @param measurements the measurement of the controller (depending on the request type)
+   * @param dt the time since the last calculation
+   * @return the output of the controller in volts
+   */
+  public LogFrame.ControllerFrame calculateWithOutPID(Measurements.Measurement measurements, double dt) {
+    //gets the measurement of the controller
+    double measurement = switch(request.requestType) {
+      case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
+      default -> measurements.position();
+    };
+
+    calculateConstraints(measurements);
+
+    setpoint = calculateProfile(dt);
+
+    double directionOfTravel =
+            switch (request.requestType) {
+              case POSITION, PROFILED_POSITION -> setpoint.position > measurement ? 1 : -1;
+              default -> Math.signum(setpoint.position);
+            };
+
+    var feedForward = calculateFeedForward(directionOfTravel);
+
+    double error = request.requestType.requiresPID() ? setpoint.position - measurement : 0;
+
+    return new LogFrame.ControllerFrame(
+            feedForward.totalOutput(),
+            new LogFrame.PIDOutput(),
+            feedForward,
+            setpoint.position,
+            measurement,
+            error,
+            request.goal.position,
+            request.requestType
+    );
+  }
+
+  /**
    * calculates the output of the controller
    *
    * @param measurement the measurement of the controller (depending on the request type)
@@ -188,7 +188,8 @@ public class Controller implements Sendable {
 
     var pidOutput = calculatePID(measurement, dt);
 
-    return new LogFrame.ControllerFrame(feedForwards, pidOutput);
+    // also clamps the output of the controller;
+    return new LogFrame.ControllerFrame(feedForwards, pidOutput, controllerGains.getControllerConstrains());
   }
 
   /**
