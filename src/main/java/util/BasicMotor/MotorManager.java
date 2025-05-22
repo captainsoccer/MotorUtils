@@ -3,6 +3,8 @@ package util.BasicMotor;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
 public class MotorManager extends SubsystemBase {
@@ -51,7 +53,7 @@ public class MotorManager extends SubsystemBase {
   @Override
   public void periodic() {
     for (MotorHandler motor : motors) {
-      var frame = motor.motor.getLatestFrame();
+      var frame = motor.frameSupplier.get();
       Logger.processInputs("Motors/" + motor.motorName, frame);
     }
   }
@@ -68,8 +70,9 @@ public class MotorManager extends SubsystemBase {
     }
   }
 
-  public void registerMotor(BasicMotor motor, String name, ControllerLocation location) {
-    var handler = new MotorHandler(name, motor);
+  public void registerMotor(String name, ControllerLocation location,
+                            Runnable run, Runnable sensorLoopFunction, Supplier<LogFrameAutoLogged> frameSupplier) {
+    var handler = new MotorHandler(name, run, sensorLoopFunction, frameSupplier);
 
     motors.add(handler);
 
@@ -79,18 +82,20 @@ public class MotorManager extends SubsystemBase {
 
   private static class MotorHandler {
     private final String motorName;
-    private final BasicMotor motor;
 
     private final Notifier pidLoop;
     private final Notifier sensorLoop;
 
-    public MotorHandler(String motorName, BasicMotor motor) {
+    private final Supplier<LogFrameAutoLogged> frameSupplier;
+
+    public MotorHandler(String motorName, Runnable run, Runnable sensorLoopFunction,
+                        Supplier<LogFrameAutoLogged> frameSupplier) {
       this.motorName = motorName;
-      this.motor = motor;
 
-      pidLoop = new Notifier(motor::run);
+      pidLoop = new Notifier(run);
+      sensorLoop = new Notifier(sensorLoopFunction);
 
-      sensorLoop = new Notifier(motor::updateSensorData);
+        this.frameSupplier = frameSupplier;
     }
   }
 
