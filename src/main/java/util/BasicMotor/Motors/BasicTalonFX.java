@@ -21,10 +21,10 @@ public class BasicTalonFX extends BasicMotor {
 
     private final TalonFXSensors sensors;
 
-    private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withEnableFOC(false);
-    private final PositionVoltage positionRequest = new PositionVoltage(0).withEnableFOC(false);
-    private final VoltageOut voltageRequest = new VoltageOut(0);
-    private final DutyCycleOut dutyCycleRequest = new DutyCycleOut(0);
+    private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
+    private final PositionVoltage positionRequest = new PositionVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
+    private final VoltageOut voltageRequest = new VoltageOut(0).withUpdateFreqHz(0);
+    private final DutyCycleOut dutyCycleRequest = new DutyCycleOut(0).withUpdateFreqHz(0);
 
     public BasicTalonFX(
             ControllerGains controllerGains,
@@ -32,6 +32,7 @@ public class BasicTalonFX extends BasicMotor {
             double gearRatio,
             String name,
             MotorManager.ControllerLocation controllerLocation) {
+
         super(controllerGains, name, controllerLocation);
 
         motor = new TalonFX(id);
@@ -66,6 +67,9 @@ public class BasicTalonFX extends BasicMotor {
 
         config.MotorOutput.PeakForwardDutyCycle = constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage;
         config.MotorOutput.PeakReverseDutyCycle = constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage;
+
+        config.MotorOutput.DutyCycleNeutralDeadband = constraints.getVoltageDeadband() / MotorManager.motorIdleVoltage;
+
         config.ClosedLoopGeneral.ContinuousWrap = false;
 
         if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
