@@ -15,6 +15,24 @@ import util.BasicMotor.MotorManager.ControllerLocation;
  */
 public abstract class BasicMotor {
     /**
+     * what state is the motor in
+     */
+    public enum MotorState{
+        /**
+         * the motor is stopped
+         */
+        STOPPED,
+        /**
+         * the motor is running
+         */
+        RUNNING,
+        /**
+         * the motor is following another motor
+         */
+        FOLLOWING
+    }
+
+    /**
      * the controller of the motor
      */
     private final Controller controller;
@@ -37,7 +55,7 @@ public abstract class BasicMotor {
     /**
      * if the motor is running or not
      */
-    private boolean motorState;
+    private MotorState motorState;
 
     /**
      * if the PID gains have changed (then it updates the motor controller on the slower thread)
@@ -120,23 +138,29 @@ public abstract class BasicMotor {
      * is called on a separate thread
      */
     private void run() {
+        //doesn't need to do anything if the motor is following another motor
+        if(motorState == MotorState.FOLLOWING) {
+            return;
+        }
+
         // updates the measurements
         var measurement = measurements.update(1 / controllerLocation.HZ);
         logFrame.measurement = measurement;
 
         //checks if the motor is stopped or needs to be stopped
-        if (!motorState && controller.getRequestType() == Controller.RequestType.STOP) {
+        if (motorState == MotorState.STOPPED && controller.getRequestType() == Controller.RequestType.STOP) {
             return;
         } else if (controller.getRequestType() == Controller.RequestType.STOP) {
-            motorState = false;
+            motorState = MotorState.STOPPED;
             stopMotorOutput();
             logFrame.controllerFrame = new LogFrame.ControllerFrame();
             return;
         }
-        motorState = true;
+        motorState = MotorState.RUNNING;
 
         //TODO: decide if the controller should forget the setpoint when the robot goes into disabled mode
         if(RobotState.isDisabled()){
+            motorState = MotorState.STOPPED;
             stopMotorOutput();
             return;
         }
@@ -270,5 +294,38 @@ public abstract class BasicMotor {
      * some current limits are not supported on all motors
      * @param currentLimits the current limits of the motor
      */
-    public abstract void applyCurrentLimits(CurrentLimits currentLimits);
+    public abstract void setCurrentLimits(CurrentLimits currentLimits);
+
+    /**
+     * start following another motor
+     * this only works if the other motor is the same type as this motor
+     * this will disable pid control on this motor and measurements logging
+     * @param master the motor to follow
+     * @param inverted if the motor should be opposite of the master
+     */
+    public void followMotor(BasicMotor master, boolean inverted) {
+        if (master == this) {
+            return;
+        }
+
+        if(this.getClass() != master.getClass()) {
+            throw new IllegalArgumentException("Cannot follow a motor of a different type");
+        }
+
+        motorState = MotorState.FOLLOWING;
+        setMotorFollow(master, inverted);
+    }
+
+    protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
+    protected abstract void stopMotorFollow();
+
+    /**
+     * stops following the motor
+     * this will re-enable pid control on this motor and measurements logging
+     */
+    public void stopFollowing() {
+        motorState = MotorState.STOPPED;
+        stopMotorFollow();
+        stopMotorOutput();
+    }
 }
