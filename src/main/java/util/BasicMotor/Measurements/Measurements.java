@@ -1,5 +1,12 @@
 package util.BasicMotor.Measurements;
 
+import util.BasicMotor.BasicMotor;
+
+/**
+ * This class is used to get the measurements of the motor. It is used to get the position,
+ * velocity, and acceleration of the motor. It is used to get the measurements of the motor.
+ * this class is used by {@link BasicMotor} to get the measurements of the motor
+ */
 public abstract class Measurements {
   /**
    * The measurements of the motor
