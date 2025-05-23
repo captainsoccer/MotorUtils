@@ -268,6 +268,17 @@ public class ControllerConstrains {
     }
 
     /**
+     * checks the motor output and applies the deadband and clamps the output to the limits of the
+     * motor
+     *
+     * @param output the output of the motor
+     * @return the checked output of the motor
+     */
+    public double checkMotorOutput(double output) {
+        return deadbandMotorOutput(clampMotorOutput(output));
+    }
+
+    /**
      * gets the type of constraints
      *
      * @return the type of constraints
@@ -310,5 +321,14 @@ public class ControllerConstrains {
      */
     public double getMinMotorOutput() {
         return minMotorOutput;
+    }
+
+    /**
+     * gets the minimum output voltage of the motor
+     *
+     * @return the minimum output voltage of the motor
+     */
+    public double getVoltageDeadband() {
+        return voltageDeadband;
     }
 }
