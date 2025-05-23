@@ -2,6 +2,7 @@ package util.BasicMotor;
 
 import edu.wpi.first.wpilibj.RobotState;
 import util.BasicMotor.Controllers.Controller;
+import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Gains.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
@@ -22,6 +23,16 @@ public abstract class BasicMotor {
     RUNNING,
     /** the motor is following another motor */
     FOLLOWING
+  }
+
+  /**
+   * the mode of the motor when it is not running this is used to set the motor to brake or
+   */
+  public enum IdleMode {
+    /** the motor is in brake mode */
+    BRAKE,
+    /** the motor is in coast mode */
+    COAST
   }
 
   /** the controller of the motor */
@@ -48,6 +59,14 @@ public abstract class BasicMotor {
 
   protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
 
+  private boolean hasConstraintsChanged = false;
+
+  private void setHasConstraintsChanged() {
+    hasConstraintsChanged = true;
+  }
+
+  protected abstract void updateConstraints(ControllerConstrains constraints);
+
   // constructors
 
   /**
@@ -60,7 +79,9 @@ public abstract class BasicMotor {
   public BasicMotor(
       ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
     this.controllerLocation = controllerLocation;
-    controller = new Controller(controllerGains, this::setHasPIDGainsChanged);
+    controller =
+        new Controller(
+            controllerGains, this::setHasPIDGainsChanged, this::setHasConstraintsChanged);
 
     MotorManager.getInstance()
         .registerMotor(
@@ -250,6 +271,19 @@ public abstract class BasicMotor {
 
       updatePIDGainsToMotor(convertedGains);
     }
+
+    // if the constraints have changed, then update the built-in motor pid
+    if (hasConstraintsChanged) {
+      hasConstraintsChanged = false;
+
+      var convertedConstraints =
+          controller
+              .getControllerGains()
+              .getControllerConstrains()
+              .convertToMotorConstrains(measurements.getGearRatio());
+
+      updateConstraints(convertedConstraints);
+    }
   }
 
   /**
@@ -274,6 +308,13 @@ public abstract class BasicMotor {
    * @param currentLimits the current limits of the motor
    */
   public abstract void setCurrentLimits(CurrentLimits currentLimits);
+
+    /**
+     * sets the idle mode of the motor this is used to set the motor to brake or coast mode
+     *
+     * @param mode the idle mode of the motor
+     */
+  public abstract void setIdleMode(IdleMode mode);
 
   /**
    * start following another motor this only works if the other motor is the same type as this motor

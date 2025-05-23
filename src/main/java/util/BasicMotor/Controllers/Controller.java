@@ -33,21 +33,16 @@ public class Controller implements Sendable {
    * @param controllerGains the gains of the controller
    * @param hasPIDGainsChangeRunnable the runnable that is called when the PID gains are changed
    */
-  public Controller(ControllerGains controllerGains, Runnable hasPIDGainsChangeRunnable) {
+  public Controller(
+      ControllerGains controllerGains,
+      Runnable hasPIDGainsChangeRunnable,
+      Runnable hasConstraintsChangeRunnable) {
     this.controllerGains = controllerGains;
     this.controllerGains.setHasPIDGainsChanged(hasPIDGainsChangeRunnable);
+    this.controllerGains.setHasConstraintsChanged(hasConstraintsChangeRunnable);
 
     this.pidController = new BasicPIDController(controllerGains.getPidGains());
     updatePIDGains();
-  }
-
-  /**
-   * creates a controller with empty gains (no pid, no feedforward, no constraints, no profile)
-   *
-   * @param hasPIDGainsChangedConsumer the runnable that is called when the PID gains are changed
-   */
-  public Controller(Runnable hasPIDGainsChangedConsumer) {
-    this(new ControllerGains(), hasPIDGainsChangedConsumer);
   }
 
   /**

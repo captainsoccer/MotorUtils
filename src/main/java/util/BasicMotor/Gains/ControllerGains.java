@@ -33,6 +33,8 @@ public class ControllerGains {
    */
   private Runnable setHasPIDGainsChanged;
 
+  private Runnable setHasConstraintsChanged;
+
   /**
    * the function that is called when the PID gains are changed this is used to update the motor
    * controller on the slower thread
@@ -40,6 +42,11 @@ public class ControllerGains {
   public void setHasPIDGainsChanged(Runnable hasPIDGainsChanged) {
     if (this.setHasPIDGainsChanged != null) return;
     this.setHasPIDGainsChanged = hasPIDGainsChanged;
+  }
+
+  public void setHasConstraintsChanged(Runnable hasConstraintsChanged) {
+    if (this.setHasConstraintsChanged != null) return;
+    this.setHasConstraintsChanged = hasConstraintsChanged;
   }
 
   /**
@@ -97,6 +104,7 @@ public class ControllerGains {
    */
   public void setPidGains(double k_P, double k_I, double k_D) {
     this.pidGains = new PIDGains(k_P, k_I, k_D);
+    setHasPIDGainsChanged.run();
   }
 
   /**
@@ -116,6 +124,7 @@ public class ControllerGains {
    */
   public void setControllerConstrains(ControllerConstrains controllerConstrains) {
     this.controllerConstrains = controllerConstrains;
+    setHasConstraintsChanged.run();
   }
 
   /**

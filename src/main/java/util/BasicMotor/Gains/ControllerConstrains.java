@@ -328,4 +328,21 @@ public class ControllerConstrains {
   public double getVoltageDeadband() {
     return voltageDeadband;
   }
+
+  /**
+   * converts the constraints to motor constraints this is used for converting the constraints
+   *
+   * @param gearRatio the gear ratio of the motor (used to convert the constraints to motor
+   *     constraints)
+   * @return the motor constraints that are in the motor units
+   */
+  public ControllerConstrains convertToMotorConstrains(double gearRatio) {
+    return new ControllerConstrains(
+        constraintType,
+        minValue * gearRatio,
+        maxValue * gearRatio,
+        maxMotorOutput,
+        minMotorOutput,
+        voltageDeadband);
+  }
 }
