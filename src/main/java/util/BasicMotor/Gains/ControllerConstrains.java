@@ -54,6 +54,12 @@ public class ControllerConstrains {
     private final double minMotorOutput;
 
     /**
+     * the minimum output voltage of the motor,
+     * any output below this value will be ignored (absolute value)
+     */
+    private final double voltageDeadband;
+
+    /**
      * creates a constrains object with the given type and limits
      *
      * @param type           type of the constrains (continuous, limited, none)
@@ -71,7 +77,8 @@ public class ControllerConstrains {
             double minValue,
             double maxValue,
             double maxMotorOutput,
-            double minMotorOutput) {
+            double minMotorOutput,
+            double deadband) {
         this.constraintType = type;
         this.minValue = minValue;
         this.maxValue = maxValue;
@@ -79,6 +86,7 @@ public class ControllerConstrains {
                 MathUtil.clamp(maxMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
         this.minMotorOutput =
                 MathUtil.clamp(minMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+        this.voltageDeadband = Math.abs(deadband);
     }
 
     /**
@@ -91,7 +99,30 @@ public class ControllerConstrains {
      *                 round to, if limited is the maximum value of the limits)
      */
     public ControllerConstrains(ConstraintType type, double minValue, double maxValue) {
-        this(type, minValue, maxValue, defaultMaxMotorOutput, -defaultMaxMotorOutput);
+        this(type, minValue, maxValue, defaultMaxMotorOutput, -defaultMaxMotorOutput, 0);
+    }
+
+    /**
+     * creates a constrains object with the given type and limits with the default max motor output
+     * @param voltageDeadband the minimum output voltage of the motor, * any output below this value
+     */
+    public ControllerConstrains(double voltageDeadband) {
+        this(ConstraintType.NONE, 0, 0, defaultMaxMotorOutput, -defaultMaxMotorOutput, voltageDeadband);
+    }
+
+    /**
+     * creates a constrains object with the given type and limits with the default max motor output
+     *
+     * @param type     type of the constrains (continuous, limited, none)
+     * @param minValue the minimum value of the constrains (if continuous is the minimum value to
+     *                 round to, if limited is the minimum value of the limits)
+     * @param maxValue the maximum value of the constrains (if continuous is the maximum value to
+     *                 round to, if limited is the maximum value of the limits)
+     * @param voltageDeadband the minimum output voltage of the motor, * any output below this value
+     *                        will be ignored (absolute value)
+     */
+    public ControllerConstrains(ConstraintType type, double minValue, double maxValue, double voltageDeadband) {
+        this(type, minValue, maxValue, defaultMaxMotorOutput, -defaultMaxMotorOutput, voltageDeadband);
     }
 
     /**
@@ -103,7 +134,21 @@ public class ControllerConstrains {
      *                       output of the motor * (default is -13.0)
      */
     public ControllerConstrains(double maxMotorOutput, double minMotorOutput) {
-        this(ConstraintType.NONE, 0, 0, maxMotorOutput, minMotorOutput);
+        this(ConstraintType.NONE, 0, 0, maxMotorOutput, minMotorOutput, 0);
+    }
+
+    /**
+     * creates a constrains object with no limits and no continuity with set max and min motor output
+     *
+     * @param maxMotorOutput the maximum output of the motor (in volts) * this is used for capping the
+     *                       output of the motor * (default is 13.0)
+     * @param minMotorOutput the minimum output of the motor (in volts) * this is used for capping the
+     *                       output of the motor * (default is -13.0)
+     * @param voltageDeadband the minimum output voltage of the motor, * any output below this value
+     *                        will be ignored (absolute value)
+     */
+    public ControllerConstrains(double maxMotorOutput, double minMotorOutput, double voltageDeadband) {
+        this(ConstraintType.NONE, 0, 0, maxMotorOutput, minMotorOutput, voltageDeadband);
     }
 
     /**
@@ -111,7 +156,7 @@ public class ControllerConstrains {
      * output
      */
     public ControllerConstrains() {
-        this(ConstraintType.NONE, 0, 0, defaultMaxMotorOutput, -defaultMaxMotorOutput);
+        this(ConstraintType.NONE, 0, 0, defaultMaxMotorOutput, -defaultMaxMotorOutput, 0);
     }
 
     /**
@@ -208,6 +253,18 @@ public class ControllerConstrains {
      */
     public double clampMotorOutput(double output) {
         return MathUtil.clamp(output, minMotorOutput, maxMotorOutput);
+    }
+
+    /**
+     * apply the deadband to the motor output
+     * @param output the output of the motor
+     * @return the output of the motor with the deadband applied
+     */
+    public double deadbandMotorOutput(double output) {
+        if (Math.abs(output) < voltageDeadband) {
+            return 0;
+        }
+        return output;
     }
 
     /**
