@@ -384,6 +384,7 @@ public abstract class BasicMotor {
    *
    * @param setpoint the setpoint of the motor (units depending on the mode)
    * @param mode the mode of the motor (position, velocity, voltage, percent output)
+   * @param arbitraryFeedForward a voltage applied on top of the pid and other feedForwards
    */
   public void setReference(
       double setpoint, Controller.RequestType mode, double arbitraryFeedForward) {
