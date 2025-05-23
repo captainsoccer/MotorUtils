@@ -57,7 +57,7 @@ public class BasicTalonFX extends BasicMotor {
         config.Slot0.kI = pidGains.getK_I();
         config.Slot0.kD = pidGains.getK_D();
 
-//        config.
+        motor.getConfigurator().apply(config);
     }
 
     private void updateConstraints(ControllerConstrains constraints) {
@@ -66,14 +66,18 @@ public class BasicTalonFX extends BasicMotor {
 
         config.MotorOutput.PeakForwardDutyCycle = constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage;
         config.MotorOutput.PeakReverseDutyCycle = constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage;
+        config.ClosedLoopGeneral.ContinuousWrap = false;
 
         if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
-            config.ClosedLoopGeneral.ContinuousWrap = false;
             config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
             config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
             config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constraints.getMaxValue();
             config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constraints.getMinValue();
+        }
+        else{
+            config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+            config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
         }
 
         motor.getConfigurator().apply(config);
@@ -111,6 +115,12 @@ public class BasicTalonFX extends BasicMotor {
         return sensors.getPIDLatestOutput();
     }
 
+    /**
+     * this enables or disables the FOC on the motor
+     * foc is only supported with phoenix pro (sad)
+     * if true, but no foc is supported, it will be ignored
+     * @param enable true to enable foc, false to disable
+     */
     public void enableFOC(boolean enable) {
         velocityRequest.EnableFOC = enable;
         positionRequest.EnableFOC = enable;
