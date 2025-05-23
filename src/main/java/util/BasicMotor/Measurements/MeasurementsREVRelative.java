@@ -14,10 +14,6 @@ public class MeasurementsREVRelative extends Measurements {
     this.encoder = encoder;
   }
 
-  public MeasurementsREVRelative(RelativeEncoder encoder) {
-    this(encoder, 1.0);
-  }
-
   @Override
   public Measurement update(double dt) {
     currentVelocity = encoder.getVelocity();
