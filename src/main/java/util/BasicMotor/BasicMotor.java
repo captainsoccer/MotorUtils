@@ -230,6 +230,15 @@ public abstract class BasicMotor {
         outputMode = motorOutput.mode();
       }
     }
+    double tolerance = controller.getControllerGains().getPidGains().getTolerance();
+
+    boolean atSetpoint = Math.abs(motorOutput.error()) < tolerance;
+    logFrame.atSetpoint = atSetpoint;
+
+    if(motorOutput.mode().isProfiled()){
+      logFrame.atGoal = (Math.abs(motorOutput.goal() - motorOutput.setpoint()) < tolerance) && atSetpoint;
+    }
+
     // updates the log frame with the motor output
     logFrame.controllerFrame = motorOutput;
     // sets the motor output
@@ -348,5 +357,28 @@ public abstract class BasicMotor {
     motorState = MotorState.STOPPED;
     stopMotorFollow();
     stopMotorOutput();
+  }
+
+
+
+  //forwarded functions (for ease of use)
+  public void setReference(Controller.ControllerRequest request) {
+    controller.setReference(request);
+  }
+
+  public void setReference(double setpoint, Controller.RequestType mode) {
+    controller.setReference(setpoint, mode);
+  }
+
+  public double getPosition() {
+    return measurements.getMeasurement().position();
+  }
+
+  public double getVelocity() {
+    return measurements.getMeasurement().velocity();
+  }
+
+  public boolean isAtSetpoint() {
+    return logFrame.atSetpoint;
   }
 }

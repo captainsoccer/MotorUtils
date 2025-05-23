@@ -21,6 +21,16 @@ public class LogFrame {
     public Measurements.Measurement measurement;
 
     /**
+     * if the motor is at setpoint
+     */
+    public boolean atSetpoint = false;
+
+    /**
+     * if the motor is at goal (used when using a profile)
+     */
+    public boolean atGoal = false;
+
+    /**
      * the record holding the sensor data of the motor
      * @param temperature the temperature of the motor (in celsius)
      * @param currentDraw the current draw of the motor (in amps)
