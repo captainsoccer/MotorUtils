@@ -8,6 +8,10 @@ import util.BasicMotor.LogFrame;
 import util.BasicMotor.LogFrame.FeedForwardOutput;
 import util.BasicMotor.Measurements.Measurements;
 
+/**
+ * this is the controller used to control the basic motor class {@link util.BasicMotor.BasicMotor}
+ * this handles pid (if needed), feedforward, constraints and profile of the motor
+ */
 public class Controller implements Sendable {
   /** the gains of the controller pid, feedforward, constraints and profile */
   private final ControllerGains controllerGains;
@@ -105,10 +109,20 @@ public class Controller implements Sendable {
     return setpoint;
   }
 
+    /**
+     * gets the current request type of the controller
+     *
+     * @return the current request type of the controller
+     */
   public RequestType getRequestType() {
     return request.requestType;
   }
 
+    /**
+     * gets the current request of the controller
+     *
+     * @return the current request of the controller
+     */
   public ControllerRequest getRequest() {
     return request;
   }
@@ -254,32 +268,82 @@ public class Controller implements Sendable {
         "setpoint", () -> setpoint.position, (value) -> setReference(value, request.requestType));
   }
 
+  /**
+   * the type of the mode to control the motor
+   */
   public enum RequestType {
+    /**
+     * stops the motor
+     */
     STOP,
+    /**
+     * controls the motor with a voltage output
+     */
     VOLTAGE,
+    /**
+     * controls the motor with a percent output (duty cycle) (-1 to 1)
+     */
     PRECENT_OUTPUT,
+    /**
+     * controls the motor with a position output (needs a pid controller)
+     */
     POSITION,
+    /**
+     * controls the motor with a profiled position output (needs a pid controller and a profile)
+     */
     PROFILED_POSITION,
+    /**
+     * controls the motor with a velocity output (needs a pid controller and recommended to use feedforward)
+     */
     VELOCITY,
+    /**
+     * controls the motor with a profiled velocity output (needs a pid controller and a profile)
+     */
     PROFILED_VELOCITY;
 
+    /**
+     * checks if the request type is a position control
+     *
+     * @return true if the request type is a position control
+     */
     public boolean isPositionControl() {
       return this == POSITION || this == PROFILED_POSITION;
     }
 
+    /**
+     * checks if the request type is a velocity control
+     *
+     * @return true if the request type is a velocity control
+     */
     public boolean isVelocityControl() {
       return this == VELOCITY || this == PROFILED_VELOCITY;
     }
 
+    /**
+     * checks if the request type is a profiled control
+     *
+     * @return true if the request type is a profiled control
+     */
     public boolean isProfiled() {
       return this == PROFILED_POSITION || this == PROFILED_VELOCITY;
     }
 
+    /**
+     * checks if the request type requires a pid controller
+     *
+     * @return true if the request type requires a pid controller
+     */
     public boolean requiresPID() {
-      return this != VOLTAGE && this != PRECENT_OUTPUT;
+      return this != VOLTAGE && this != PRECENT_OUTPUT && this != STOP;
     }
   }
 
+    /**
+     * the request of the controller this contains the control mode and the goal
+     *
+     * @param goal the goal of the controller
+     * @param requestType the request type of the controller
+     */
   public record ControllerRequest(TrapezoidProfile.State goal, RequestType requestType) {
     public ControllerRequest(double setpoint, RequestType requestType) {
       this(new TrapezoidProfile.State(setpoint, 0), requestType);

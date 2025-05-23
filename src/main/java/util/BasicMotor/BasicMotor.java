@@ -8,6 +8,11 @@ import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.MotorManager.ControllerLocation;
 
+/**
+ * this is a basic motor class, it is used to simplify the process of creating a motor
+ * and also making it cross-platform for different motor controllers
+ * it handles logging, running pid, and updating the measurements
+ */
 public abstract class BasicMotor {
     /**
      * the controller of the motor

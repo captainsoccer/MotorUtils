@@ -4,13 +4,25 @@ import edu.wpi.first.math.MathUtil;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
 
+/**
+ * this is a very simplified PID controller, it is used to calculate the output of the PID controller
+ * it checks for izone, integral clamping, and tolerance
+ * it used inside the basic motor class controller {@link Controller}
+ */
 public class BasicPIDController {
+    /** the gains of the PID controller */
   private PIDGains gains;
 
+    /** the last error of the PID controller */
   private double lastError = 0;
 
+    /** the integral of the PID controller */
   private double integral;
 
+  /**
+   * creates a PID controller with the given gains
+   * @param gains the gains of the PID controller
+   */
   public BasicPIDController(PIDGains gains) {
     this.gains = gains;
   }

@@ -6,6 +6,11 @@ import util.BasicMotor.Measurements.Measurements;
 
 import static util.BasicMotor.MotorManager.defaultMaxMotorOutput;
 
+/**
+ * this class is used to set the constraints of the controller
+ * it handles the limits of the controller and the continuity of the controller and max motor output and min motor output
+ * this is modeled after the TalonFX constraints
+ */
 public class ControllerConstrains {
     /**
      * which type of constraints to use
