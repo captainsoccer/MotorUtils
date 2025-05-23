@@ -1,5 +1,6 @@
 package util.BasicMotor;
 
+import edu.wpi.first.wpilibj.RobotState;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Gains.CurrentLimits;
@@ -128,6 +129,12 @@ public abstract class BasicMotor {
             return;
         }
         motorState = true;
+
+        //TODO: decide if the controller should forget the setpoint when the robot goes into disabled mode
+        if(RobotState.isDisabled()){
+            stopMotorOutput();
+            return;
+        }
 
         // the controller frame (for logging)
         LogFrame.ControllerFrame motorOutput;
