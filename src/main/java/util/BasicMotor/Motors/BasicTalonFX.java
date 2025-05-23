@@ -10,6 +10,7 @@ import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
+import util.BasicMotor.Gains.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.MeasurementsCTRE;
@@ -117,6 +118,21 @@ public class BasicTalonFX extends BasicMotor {
     @Override
     protected LogFrame.PIDOutput getPIDLatestOutput() {
         return sensors.getPIDLatestOutput();
+    }
+
+    @Override
+    public void applyCurrentLimits(CurrentLimits currentLimits) {
+        var currentConfig = config.CurrentLimits;
+
+        currentConfig.SupplyCurrentLimit = currentLimits.getSupplyCurrentLimit();
+        currentConfig.StatorCurrentLimit = currentLimits.getStatorCurrentLimit();
+        currentConfig.SupplyCurrentLowerLimit = currentLimits.getSupplyLowerLimit();
+        currentConfig.SupplyCurrentLowerTime = currentLimits.getSupplyLowerTime();
+
+        currentConfig.SupplyCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
+        currentConfig.StatorCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
+
+        motor.getConfigurator().apply(currentConfig);
     }
 
     /**

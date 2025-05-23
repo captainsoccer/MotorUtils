@@ -2,6 +2,7 @@ package util.BasicMotor;
 
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerGains;
+import util.BasicMotor.Gains.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.MotorManager.ControllerLocation;
@@ -251,4 +252,11 @@ public abstract class BasicMotor {
      * @return the pid output
      */
     protected abstract LogFrame.PIDOutput getPIDLatestOutput();
+
+    /**
+     * sets the current limits of the motor
+     * some current limits are not supported on all motors
+     * @param currentLimits the current limits of the motor
+     */
+    public abstract void applyCurrentLimits(CurrentLimits currentLimits);
 }
