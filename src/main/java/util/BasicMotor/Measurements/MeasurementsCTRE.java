@@ -6,92 +6,82 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.*;
 
 /**
- * This class is used to get the measurements from the CTRE motor controller
- * it handles updating the measurements and getting the latency compensated values
+ * This class is used to get the measurements from the CTRE motor controller it handles updating the
+ * measurements and getting the latency compensated values
  */
 public class MeasurementsCTRE extends Measurements {
 
-    /**
-     * the timeout for the motor controller to wait for the signals to update
-     * if it does not update in this time, it will use the old value
-     */
-    private final double timeout;
+  /**
+   * the timeout for the motor controller to wait for the signals to update if it does not update in
+   * this time, it will use the old value
+   */
+  private final double timeout;
 
-    /**
-     * the motor position signal
-     */
-    StatusSignal<Angle> motorPosition;
-    /**
-     * the motor velocity signal
-     */
-    StatusSignal<AngularVelocity> motorVelocity;
-    /**
-     * the motor acceleration signal
-     */
-    StatusSignal<AngularAcceleration> motorAcceleration;
+  /** the motor position signal */
+  StatusSignal<Angle> motorPosition;
+  /** the motor velocity signal */
+  StatusSignal<AngularVelocity> motorVelocity;
+  /** the motor acceleration signal */
+  StatusSignal<AngularAcceleration> motorAcceleration;
 
-    /**
-     * the latency compensated the value of the motor position
-     */
-    double positionLatencyCompensatedValue = 0;
-    /**
-     * the latency compensated the value of the motor velocity
-     */
-    double velocityLatencyCompensatedValue = 0;
+  /** the latency compensated the value of the motor position */
+  double positionLatencyCompensatedValue = 0;
+  /** the latency compensated the value of the motor velocity */
+  double velocityLatencyCompensatedValue = 0;
 
-    /**
-     * Creates a new measurements object with the given signals
-     *
-     * @param positionSignal       the position signal of the motor
-     * @param velocitySignal       the velocity signal of the motor
-     * @param accelerationSignal   the acceleration signal of the motor
-     * @param refreshHZ            the refresh rate of the signals (how often to update the signals)
-     * @param gearRatio           the gear ratio of the motor (the measurements are divided by this)
-     */
-    public MeasurementsCTRE(
-            StatusSignal<Angle> positionSignal,
-            StatusSignal<AngularVelocity> velocitySignal,
-            StatusSignal<AngularAcceleration> accelerationSignal,
-            double refreshHZ,
-            double gearRatio) {
-        super(gearRatio);
+  /**
+   * Creates a new measurements object with the given signals
+   *
+   * @param positionSignal the position signal of the motor
+   * @param velocitySignal the velocity signal of the motor
+   * @param accelerationSignal the acceleration signal of the motor
+   * @param refreshHZ the refresh rate of the signals (how often to update the signals)
+   * @param gearRatio the gear ratio of the motor (the measurements are divided by this)
+   */
+  public MeasurementsCTRE(
+      StatusSignal<Angle> positionSignal,
+      StatusSignal<AngularVelocity> velocitySignal,
+      StatusSignal<AngularAcceleration> accelerationSignal,
+      double refreshHZ,
+      double gearRatio) {
+    super(gearRatio);
 
-        motorPosition = positionSignal;
-        motorVelocity = velocitySignal;
-        motorAcceleration = accelerationSignal;
+    motorPosition = positionSignal;
+    motorVelocity = velocitySignal;
+    motorAcceleration = accelerationSignal;
 
-        positionSignal.setUpdateFrequency(refreshHZ);
-        velocitySignal.setUpdateFrequency(refreshHZ);
-        accelerationSignal.setUpdateFrequency(refreshHZ);
+    positionSignal.setUpdateFrequency(refreshHZ);
+    velocitySignal.setUpdateFrequency(refreshHZ);
+    accelerationSignal.setUpdateFrequency(refreshHZ);
 
-        timeout = 1 / (refreshHZ * 4);
-    }
+    timeout = 1 / (refreshHZ * 4);
+  }
 
-    @Override
-    public Measurement update(double dt) {
-        BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity, motorAcceleration);
+  @Override
+  public Measurement update(double dt) {
+    BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity, motorAcceleration);
 
-        var position = BaseStatusSignal.getLatencyCompensatedValue(motorPosition, motorVelocity);
-        positionLatencyCompensatedValue = position.in(Units.Rotations);
+    var position = BaseStatusSignal.getLatencyCompensatedValue(motorPosition, motorVelocity);
+    positionLatencyCompensatedValue = position.in(Units.Rotations);
 
-        var velocity = BaseStatusSignal.getLatencyCompensatedValue(motorVelocity, motorAcceleration);
-        velocityLatencyCompensatedValue = velocity.in(Units.RotationsPerSecond);
+    var velocity = BaseStatusSignal.getLatencyCompensatedValue(motorVelocity, motorAcceleration);
+    velocityLatencyCompensatedValue = velocity.in(Units.RotationsPerSecond);
 
-        return super.update(dt);
-    }
+    return super.update(dt);
+  }
 
-    @Override
-    protected double getUpdatedPosition() {
-        return positionLatencyCompensatedValue;
-    }
+  @Override
+  protected double getUpdatedPosition() {
+    return positionLatencyCompensatedValue;
+  }
 
-    @Override
-    protected double getUpdatedVelocity() {
-        return velocityLatencyCompensatedValue;
-    }
+  @Override
+  protected double getUpdatedVelocity() {
+    return velocityLatencyCompensatedValue;
+  }
 
-    @Override
-    protected double getUpdatedAcceleration() {
-        return motorAcceleration.getValueAsDouble();
-    }
+  @Override
+  protected double getUpdatedAcceleration() {
+    return motorAcceleration.getValueAsDouble();
+  }
 }

@@ -54,6 +54,7 @@ public class LogFrame {
 
   /**
    * The frame of the controller
+   *
    * @param totalOutput the total output of the controller (in volts)
    * @param pidOutput the PID output of the controller (not always used)
    * @param feedForwardOutput the feedforward output of the controller
@@ -73,16 +74,14 @@ public class LogFrame {
       double goal,
       Controller.RequestType mode) {
 
-    /**
-     * empty constructor for the controller frame
-     * used when stopping the motor
-     */
+    /** empty constructor for the controller frame used when stopping the motor */
     public ControllerFrame() {
       this(0, new PIDOutput(), new FeedForwardOutput(), 0, 0, 0, 0, Controller.RequestType.STOP);
     }
 
     /**
      * apply the pid output to the controller frame
+     *
      * @param frame the controller frame to apply the pid output to
      * @param output the pid output to apply to the controller frame
      */
@@ -100,6 +99,7 @@ public class LogFrame {
 
     /**
      * apply the feedforward output to the controller frame
+     *
      * @param frame the controller frame to apply the feedforward output to
      * @param output the feedforward output to apply to the controller frame
      * @param constraint apply the constraints to the output (clamping and deadband)

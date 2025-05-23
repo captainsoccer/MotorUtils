@@ -109,20 +109,20 @@ public class Controller implements Sendable {
     return setpoint;
   }
 
-    /**
-     * gets the current request type of the controller
-     *
-     * @return the current request type of the controller
-     */
+  /**
+   * gets the current request type of the controller
+   *
+   * @return the current request type of the controller
+   */
   public RequestType getRequestType() {
     return request.requestType;
   }
 
-    /**
-     * gets the current request of the controller
-     *
-     * @return the current request of the controller
-     */
+  /**
+   * gets the current request of the controller
+   *
+   * @return the current request of the controller
+   */
   public ControllerRequest getRequest() {
     return request;
   }
@@ -268,37 +268,24 @@ public class Controller implements Sendable {
         "setpoint", () -> setpoint.position, (value) -> setReference(value, request.requestType));
   }
 
-  /**
-   * the type of the mode to control the motor
-   */
+  /** the type of the mode to control the motor */
   public enum RequestType {
-    /**
-     * stops the motor
-     */
+    /** stops the motor */
     STOP,
-    /**
-     * controls the motor with a voltage output
-     */
+    /** controls the motor with a voltage output */
     VOLTAGE,
-    /**
-     * controls the motor with a percent output (duty cycle) (-1 to 1)
-     */
+    /** controls the motor with a percent output (duty cycle) (-1 to 1) */
     PRECENT_OUTPUT,
-    /**
-     * controls the motor with a position output (needs a pid controller)
-     */
+    /** controls the motor with a position output (needs a pid controller) */
     POSITION,
-    /**
-     * controls the motor with a profiled position output (needs a pid controller and a profile)
-     */
+    /** controls the motor with a profiled position output (needs a pid controller and a profile) */
     PROFILED_POSITION,
     /**
-     * controls the motor with a velocity output (needs a pid controller and recommended to use feedforward)
+     * controls the motor with a velocity output (needs a pid controller and recommended to use
+     * feedforward)
      */
     VELOCITY,
-    /**
-     * controls the motor with a profiled velocity output (needs a pid controller and a profile)
-     */
+    /** controls the motor with a profiled velocity output (needs a pid controller and a profile) */
     PROFILED_VELOCITY;
 
     /**
@@ -338,12 +325,12 @@ public class Controller implements Sendable {
     }
   }
 
-    /**
-     * the request of the controller this contains the control mode and the goal
-     *
-     * @param goal the goal of the controller
-     * @param requestType the request type of the controller
-     */
+  /**
+   * the request of the controller this contains the control mode and the goal
+   *
+   * @param goal the goal of the controller
+   * @param requestType the request type of the controller
+   */
   public record ControllerRequest(TrapezoidProfile.State goal, RequestType requestType) {
     public ControllerRequest(double setpoint, RequestType requestType) {
       this(new TrapezoidProfile.State(setpoint, 0), requestType);

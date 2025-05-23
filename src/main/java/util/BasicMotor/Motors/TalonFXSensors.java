@@ -9,22 +9,43 @@ import edu.wpi.first.units.measure.Voltage;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.MotorManager;
 
+/**
+ * this class is used to manage the sensors of the TalonFX motor controller it updates the sensors
+ * at a given refresh rate and also saves the pid output of the built-in controller for logging
+ */
 public class TalonFXSensors {
+  /** the refresh rate of the sensors (how often to update the sensors) */
   private final double refreshHZ;
+  /**
+   * the location of the motor (if running on motor controller it will also update the pid output)
+   */
   private final MotorManager.ControllerLocation location;
 
+  /** the temperature of the motor controller */
   private final StatusSignal<Temperature> temperatureSignal;
+  /** the current draw of the motor controller */
   private final StatusSignal<Current> supplyCurrentSignal;
+  /** the current output of the motor controller */
   private final StatusSignal<Current> statorCurrentSignal;
+  /** the voltage output of the motor controller */
   private final StatusSignal<Voltage> motorVoltageSignal;
+  /** the voltage input of the motor controller */
   private final StatusSignal<Voltage> supplyVoltageSignal;
+  /** the duty cycle of the motor controller */
   private final StatusSignal<Double> dutyCycleSignal;
 
+  /** the total output of the pid controller */
   private final StatusSignal<Double> totalOutput;
+  /** the proportional output of the pid controller */
   private final StatusSignal<Double> kpOutput;
+  /** the integral output of the pid controller */
   private final StatusSignal<Double> kiOutput;
+  /** the derivative output of the pid controller */
   private final StatusSignal<Double> kdOutput;
 
+  /**
+   * the status signals of the motor controller used to update the sensors at a given refresh rate
+   */
   private final BaseStatusSignal[] statusSignals;
 
   /**
@@ -32,6 +53,7 @@ public class TalonFXSensors {
    * the motor controller
    */
   private LogFrame.PIDOutput latestPIDOutput = new LogFrame.PIDOutput();
+
   /**
    * Constructor for TalonFX Sensors
    *
@@ -56,6 +78,7 @@ public class TalonFXSensors {
     kdOutput = motor.getClosedLoopDerivativeOutput();
     totalOutput = motor.getClosedLoopOutput();
 
+    // if the controller is on the rio
     if (location == MotorManager.ControllerLocation.RIO) {
       statusSignals =
           new BaseStatusSignal[] {
@@ -85,10 +108,14 @@ public class TalonFXSensors {
     for (BaseStatusSignal signal : statusSignals) {
       signal.setUpdateFrequency(refreshHZ);
     }
-
-    dutyCycleSignal.setUpdateFrequency(100);
   }
 
+  /**
+   * gets the sensor data from the motor controller this is used to update the sensors at a given
+   * refresh rate
+   *
+   * @return the sensor data from the motor controller
+   */
   public LogFrame.SensorData getSensorData() {
     BaseStatusSignal.waitForAll(1 / (refreshHZ * 4), statusSignals);
 
@@ -125,6 +152,19 @@ public class TalonFXSensors {
         );
   }
 
+  /**
+   * sets the duty cycle refresh signal to the default rate used if the motor is a master for a
+   * follower motor
+   */
+  public void setDutyCycleToDefaultRate(boolean defaultRate) {
+    dutyCycleSignal.setUpdateFrequency(defaultRate ? 100 : refreshHZ);
+  }
+
+  /**
+   * gets the latest pid output from the motor controller this is used for logging
+   *
+   * @return the latest pid output from the motor controller
+   */
   public LogFrame.PIDOutput getPIDLatestOutput() {
     return latestPIDOutput;
   }

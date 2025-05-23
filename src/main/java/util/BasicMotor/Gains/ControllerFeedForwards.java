@@ -3,16 +3,16 @@ package util.BasicMotor.Gains;
 import java.util.function.Function;
 
 /**
- * this class is used to set the feed forward gains of the motor controller.
- * it is used to calculate the feed forward output of the motor controller
- * all the feedforwards of the {@link util.BasicMotor.BasicMotor} are calculated in this class on the rio
+ * this class is used to set the feed forward gains of the motor controller. it is used to calculate
+ * the feed forward output of the motor controller all the feedforwards of the {@link
+ * util.BasicMotor.BasicMotor} are calculated in this class on the rio
  */
 public class ControllerFeedForwards {
 
-    /**
-     * the type of change that is being made to the feed forward gains
-     * this is used to determine which gain to change from the dashboard
-     */
+  /**
+   * the type of change that is being made to the feed forward gains this is used to determine which
+   * gain to change from the dashboard
+   */
   public enum ChangeType {
     SIMPLE_FEED_FORWARD,
     FRICTION_FEED_FORWARD,
@@ -62,23 +62,23 @@ public class ControllerFeedForwards {
     this(0, 0, k_V, (x) -> 0.0);
   }
 
-    /**
-     * creates a feed forward that is only a simple feed forward gain and a friction feed forward gain
-     *
-     * @param k_V the simple feed forward gain
-     * @param frictionFeedForward the friction feed forward gain
-     */
+  /**
+   * creates a feed forward that is only a simple feed forward gain and a friction feed forward gain
+   *
+   * @param k_V the simple feed forward gain
+   * @param frictionFeedForward the friction feed forward gain
+   */
   public ControllerFeedForwards(double k_V, double frictionFeedForward) {
     this(0, frictionFeedForward, k_V, (x) -> 0.0);
   }
 
-    /**
-     * creates a feed forward that is only a simple feed forward gain and a friction feed forward gain
-     *
-     * @param k_V the simple feed forward gain
-     * @param simpleFeedForward the simple feed forward gain
-     * @param frictionFeedForward the friction feed forward gain
-     */
+  /**
+   * creates a feed forward that is only a simple feed forward gain and a friction feed forward gain
+   *
+   * @param k_V the simple feed forward gain
+   * @param simpleFeedForward the simple feed forward gain
+   * @param frictionFeedForward the friction feed forward gain
+   */
   public ControllerFeedForwards(double k_V, double simpleFeedForward, double frictionFeedForward) {
     this(frictionFeedForward, simpleFeedForward, k_V, (x) -> 0.0);
   }
@@ -91,37 +91,37 @@ public class ControllerFeedForwards {
   }
 
   /**
-   * gets the simple feed forward gain
-   * units are volts
+   * gets the simple feed forward gain units are volts
+   *
    * @return the simple feed forward gain
    */
   public double getSimpleFeedForward() {
     return simpleFeedForward;
   }
 
-    /**
-     * gets the friction feed forward gain
-     * units are volts
-     * @return the friction feed forward gain
-     */
+  /**
+   * gets the friction feed forward gain units are volts
+   *
+   * @return the friction feed forward gain
+   */
   public double getFrictionFeedForward() {
     return frictionFeedForward;
   }
 
-    /**
-     * gets the k_V gain
-     * units are volts per unit of measurement
-     * @return the k_V gain
-     */
+  /**
+   * gets the k_V gain units are volts per unit of measurement
+   *
+   * @return the k_V gain
+   */
   public double getK_V() {
     return k_V;
   }
 
-    /**
-     * gets the feed forward function
-     * units are volts per unit of measurement
-     * @return the feed forward function
-     */
+  /**
+   * gets the feed forward function units are volts per unit of measurement
+   *
+   * @return the feed forward function
+   */
   public Function<Double, Double> getFeedForwardFunction() {
     return feedForwardFunction;
   }

@@ -1,10 +1,7 @@
 package util.BasicMotor.Motors;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DutyCycleOut;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.VelocityVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Controllers.Controller;
@@ -17,132 +14,151 @@ import util.BasicMotor.Measurements.MeasurementsCTRE;
 import util.BasicMotor.MotorManager;
 
 public class BasicTalonFX extends BasicMotor {
-    private final TalonFX motor;
-    private final TalonFXConfiguration config;
+  private final TalonFX motor;
+  private final TalonFXConfiguration config;
 
-    private final TalonFXSensors sensors;
+  private final TalonFXSensors sensors;
 
-    private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
-    private final PositionVoltage positionRequest = new PositionVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
-    private final VoltageOut voltageRequest = new VoltageOut(0).withUpdateFreqHz(0);
-    private final DutyCycleOut dutyCycleRequest = new DutyCycleOut(0).withUpdateFreqHz(0);
+  private final VelocityVoltage velocityRequest =
+      new VelocityVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
+  private final PositionVoltage positionRequest =
+      new PositionVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
+  private final VoltageOut voltageRequest = new VoltageOut(0).withUpdateFreqHz(0);
+  private final DutyCycleOut dutyCycleRequest = new DutyCycleOut(0).withUpdateFreqHz(0);
 
-    public BasicTalonFX(
-            ControllerGains controllerGains,
-            int id,
-            double gearRatio,
-            String name,
-            MotorManager.ControllerLocation controllerLocation) {
+  public BasicTalonFX(
+      ControllerGains controllerGains,
+      int id,
+      double gearRatio,
+      String name,
+      MotorManager.ControllerLocation controllerLocation) {
 
-        super(controllerGains, name, controllerLocation);
+    super(controllerGains, name, controllerLocation);
 
-        motor = new TalonFX(id);
-        config = new TalonFXConfiguration();
+    motor = new TalonFX(id);
+    config = new TalonFXConfiguration();
 
-        setMeasurements(
-                new MeasurementsCTRE(
-                        motor.getPosition(),
-                        motor.getVelocity(),
-                        motor.getAcceleration(),
-                        controllerLocation.HZ,
-                        gearRatio));
-        sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
+    setMeasurements(
+        new MeasurementsCTRE(
+            motor.getPosition(),
+            motor.getVelocity(),
+            motor.getAcceleration(),
+            controllerLocation.HZ,
+            gearRatio));
+    sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
 
-        motor.optimizeBusUtilization();
+    motor.optimizeBusUtilization();
 
-        updatePIDGainsToMotor(controllerGains.getPidGains());
+    updatePIDGainsToMotor(controllerGains.getPidGains());
+    updateConstraints(controllerGains.getControllerConstrains());
+  }
+
+  @Override
+  protected void updatePIDGainsToMotor(PIDGains pidGains) {
+    config.Slot0.kP = pidGains.getK_P();
+    config.Slot0.kI = pidGains.getK_I();
+    config.Slot0.kD = pidGains.getK_D();
+
+    motor.getConfigurator().apply(config);
+  }
+
+  private void updateConstraints(ControllerConstrains constraints) {
+    config.Voltage.PeakForwardVoltage = constraints.getMaxMotorOutput();
+    config.Voltage.PeakReverseVoltage = constraints.getMinMotorOutput();
+
+    config.MotorOutput.PeakForwardDutyCycle =
+        constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage;
+    config.MotorOutput.PeakReverseDutyCycle =
+        constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage;
+
+    config.MotorOutput.DutyCycleNeutralDeadband =
+        constraints.getVoltageDeadband() / MotorManager.motorIdleVoltage;
+
+    config.ClosedLoopGeneral.ContinuousWrap = false;
+
+    if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
+      config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+      config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+      config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constraints.getMaxValue();
+      config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constraints.getMinValue();
+    } else {
+      config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+      config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
     }
 
-    @Override
-    protected void updatePIDGainsToMotor(PIDGains pidGains) {
-        config.Slot0.kP = pidGains.getK_P();
-        config.Slot0.kI = pidGains.getK_I();
-        config.Slot0.kD = pidGains.getK_D();
+    motor.getConfigurator().apply(config);
+  }
 
-        motor.getConfigurator().apply(config);
+  @Override
+  protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
+    switch (mode) {
+      case STOP -> motor.stopMotor();
+
+      case POSITION, PROFILED_POSITION -> motor.setControl(
+          positionRequest.withPosition(setpoint).withFeedForward(feedForward));
+
+      case VELOCITY -> motor.setControl(
+          velocityRequest.withVelocity(setpoint).withFeedForward(feedForward));
+
+      case VOLTAGE -> motor.setControl(voltageRequest.withOutput(setpoint));
+
+      case PRECENT_OUTPUT -> motor.setControl(dutyCycleRequest.withOutput(setpoint));
     }
+  }
 
-    private void updateConstraints(ControllerConstrains constraints) {
-        config.Voltage.PeakForwardVoltage = constraints.getMaxMotorOutput();
-        config.Voltage.PeakReverseVoltage = constraints.getMinMotorOutput();
+  @Override
+  protected void stopMotorOutput() {
+    motor.stopMotor();
+  }
 
-        config.MotorOutput.PeakForwardDutyCycle = constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage;
-        config.MotorOutput.PeakReverseDutyCycle = constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage;
+  @Override
+  protected LogFrame.SensorData getSensorData() {
+    return sensors.getSensorData();
+  }
 
-        config.MotorOutput.DutyCycleNeutralDeadband = constraints.getVoltageDeadband() / MotorManager.motorIdleVoltage;
+  @Override
+  protected LogFrame.PIDOutput getPIDLatestOutput() {
+    return sensors.getPIDLatestOutput();
+  }
 
-        config.ClosedLoopGeneral.ContinuousWrap = false;
+  @Override
+  public void setCurrentLimits(CurrentLimits currentLimits) {
+    var currentConfig = config.CurrentLimits;
 
-        if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
-            config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-            config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    currentConfig.SupplyCurrentLimit = currentLimits.getSupplyCurrentLimit();
+    currentConfig.StatorCurrentLimit = currentLimits.getStatorCurrentLimit();
+    currentConfig.SupplyCurrentLowerLimit = currentLimits.getSupplyLowerLimit();
+    currentConfig.SupplyCurrentLowerTime = currentLimits.getSupplyLowerTime();
 
-            config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constraints.getMaxValue();
-            config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constraints.getMinValue();
-        }
-        else{
-            config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-            config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
-        }
+    currentConfig.SupplyCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
+    currentConfig.StatorCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
 
-        motor.getConfigurator().apply(config);
-    }
+    motor.getConfigurator().apply(currentConfig);
+  }
 
-    @Override
-    protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
-        switch (mode) {
-            case STOP -> motor.stopMotor();
+  @Override
+  protected void setMotorFollow(BasicMotor master, boolean inverted) {
+    BasicTalonFX motor = (BasicTalonFX) master;
 
-            case POSITION, PROFILED_POSITION ->
-                    motor.setControl(positionRequest.withPosition(setpoint).withFeedForward(feedForward));
+    Follower follower = new Follower(motor.motor.getDeviceID(), inverted);
 
-            case VELOCITY -> motor.setControl(velocityRequest.withVelocity(setpoint).withFeedForward(feedForward));
+    this.motor.setControl(follower);
+  }
 
-            case VOLTAGE -> motor.setControl(voltageRequest.withOutput(setpoint));
+  @Override
+  protected void stopMotorFollow() {
+    motor.stopMotor();
+  }
 
-            case PRECENT_OUTPUT -> motor.setControl(dutyCycleRequest.withOutput(setpoint));
-
-        }
-    }
-
-    @Override
-    protected void stopMotorOutput() {
-        motor.stopMotor();
-    }
-
-    @Override
-    protected LogFrame.SensorData getSensorData() {
-        return sensors.getSensorData();
-    }
-
-    @Override
-    protected LogFrame.PIDOutput getPIDLatestOutput() {
-        return sensors.getPIDLatestOutput();
-    }
-
-    @Override
-    public void applyCurrentLimits(CurrentLimits currentLimits) {
-        var currentConfig = config.CurrentLimits;
-
-        currentConfig.SupplyCurrentLimit = currentLimits.getSupplyCurrentLimit();
-        currentConfig.StatorCurrentLimit = currentLimits.getStatorCurrentLimit();
-        currentConfig.SupplyCurrentLowerLimit = currentLimits.getSupplyLowerLimit();
-        currentConfig.SupplyCurrentLowerTime = currentLimits.getSupplyLowerTime();
-
-        currentConfig.SupplyCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
-        currentConfig.StatorCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
-
-        motor.getConfigurator().apply(currentConfig);
-    }
-
-    /**
-     * this enables or disables the FOC on the motor
-     * foc is only supported with phoenix pro (sad)
-     * if true, but no foc is supported, it will be ignored
-     * @param enable true to enable foc, false to disable
-     */
-    public void enableFOC(boolean enable) {
-        velocityRequest.EnableFOC = enable;
-        positionRequest.EnableFOC = enable;
-    }
+  /**
+   * this enables or disables the FOC on the motor foc is only supported with phoenix pro (sad) if
+   * true, but no foc is supported, it will be ignored
+   *
+   * @param enable true to enable foc, false to disable
+   */
+  public void enableFOC(boolean enable) {
+    velocityRequest.EnableFOC = enable;
+    positionRequest.EnableFOC = enable;
+  }
 }

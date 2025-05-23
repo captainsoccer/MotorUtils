@@ -4,24 +4,21 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.Logger;
 
 public class MotorManager extends SubsystemBase {
 
-    /**
-     * the frequency of the PID loop (in Hz) used for the PID loop
-     */
+  /** the frequency of the PID loop (in Hz) used for the PID loop */
   public static final double PID_LOOP_HZ = 100;
-    /**
-     * the frequency of the profile loop (in Hz) used for the profile loop
-     * used for the run function when the controller runs on the motor
-     */
+  /**
+   * the frequency of the profile loop (in Hz) used for the profile loop used for the run function
+   * when the controller runs on the motor
+   */
   public static final double PROFILE_LOOP_HZ = 50;
-    /**
-     * the frequency of the sensor loop (in Hz) used for the sensor loop
-     * used for the updateSensorData function when the controller runs on the motor
-     */
+  /**
+   * the frequency of the sensor loop (in Hz) used for the sensor loop used for the updateSensorData
+   * function when the controller runs on the motor
+   */
   public static final double SENSOR_LOOP_HZ = 4;
 
   /**
@@ -30,9 +27,7 @@ public class MotorManager extends SubsystemBase {
    */
   public static final double motorIdleVoltage = 12;
 
-  /**
-   * the maximum output of the motor (in volts)
-   */
+  /** the maximum output of the motor (in volts) */
   public static final double defaultMaxMotorOutput = 13.0;
 
   private static MotorManager instance;
@@ -70,8 +65,12 @@ public class MotorManager extends SubsystemBase {
     }
   }
 
-  public void registerMotor(String name, ControllerLocation location,
-                            Runnable run, Runnable sensorLoopFunction, Supplier<LogFrameAutoLogged> frameSupplier) {
+  public void registerMotor(
+      String name,
+      ControllerLocation location,
+      Runnable run,
+      Runnable sensorLoopFunction,
+      Supplier<LogFrameAutoLogged> frameSupplier) {
     var handler = new MotorHandler(name, run, sensorLoopFunction, frameSupplier);
 
     motors.add(handler);
@@ -88,14 +87,17 @@ public class MotorManager extends SubsystemBase {
 
     private final Supplier<LogFrameAutoLogged> frameSupplier;
 
-    public MotorHandler(String motorName, Runnable run, Runnable sensorLoopFunction,
-                        Supplier<LogFrameAutoLogged> frameSupplier) {
+    public MotorHandler(
+        String motorName,
+        Runnable run,
+        Runnable sensorLoopFunction,
+        Supplier<LogFrameAutoLogged> frameSupplier) {
       this.motorName = motorName;
 
       pidLoop = new Notifier(run);
       sensorLoop = new Notifier(sensorLoopFunction);
 
-        this.frameSupplier = frameSupplier;
+      this.frameSupplier = frameSupplier;
     }
   }
 
