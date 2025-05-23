@@ -134,6 +134,7 @@ public class Controller implements Sendable {
   }
 
   // calculations
+
   /**
    * calculates the output of the controller without the PID controller this is used when the pid of
    * the motor is running on the motor controller
@@ -224,7 +225,8 @@ public class Controller implements Sendable {
         feedForwards.getSimpleFeedForward(),
         feedForwards.getFrictionFeedForward() * directionOfTravel,
         feedForwards.getK_V() * setpoint.position,
-        feedForwards.getCalculatedFeedForward(setpoint.position));
+        feedForwards.getCalculatedFeedForward(setpoint.position),
+        request.arbFeedForward);
   }
 
   /**
@@ -325,18 +327,35 @@ public class Controller implements Sendable {
    *
    * @param goal the goal of the controller
    * @param requestType the request type of the controller
+   * @param arbFeedForward a voltage feedforward given by the user that will be added to the motor
+   *     output
    */
-  public record ControllerRequest(TrapezoidProfile.State goal, RequestType requestType) {
-    public ControllerRequest(double setpoint, RequestType requestType) {
-      this(new TrapezoidProfile.State(setpoint, 0), requestType);
+  public record ControllerRequest(
+      TrapezoidProfile.State goal, RequestType requestType, double arbFeedForward) {
+    /**
+     * creates a controller request with a goal and a mode
+     *
+     * @param goal the goal
+     * @param requestType the mode
+     */
+    public ControllerRequest(double goal, RequestType requestType) {
+      this(new TrapezoidProfile.State(goal, 0), requestType, 0);
     }
 
-    public ControllerRequest(double setpoint, double setpointVelocity, RequestType requestType) {
-      this(new TrapezoidProfile.State(setpoint, setpointVelocity), requestType);
+    public ControllerRequest(TrapezoidProfile.State goal, RequestType requestType) {
+      this(goal, requestType, 0);
+    }
+
+    public ControllerRequest(double goal, double setpointVelocity, RequestType requestType) {
+      this(new TrapezoidProfile.State(goal, setpointVelocity), requestType, 0);
     }
 
     public ControllerRequest() {
-      this(new TrapezoidProfile.State(), RequestType.STOP);
+      this(new TrapezoidProfile.State(), RequestType.STOP, 0);
+    }
+
+    public ControllerRequest(double goal, RequestType requestType, double arbFeedForward) {
+      this(new TrapezoidProfile.State(goal, 0), requestType, arbFeedForward);
     }
   }
 }
