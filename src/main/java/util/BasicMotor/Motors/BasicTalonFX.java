@@ -193,6 +193,11 @@ public class BasicTalonFX extends BasicMotor {
   }
 
   @Override
+  protected void setMotorPosition(double position) {
+    motor.setPosition(position);
+  }
+
+  @Override
   protected void setMotorFollow(BasicMotor master, boolean inverted) {
     BasicTalonFX motor = (BasicTalonFX) master;
 
