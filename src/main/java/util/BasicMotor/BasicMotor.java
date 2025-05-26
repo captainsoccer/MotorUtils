@@ -491,4 +491,11 @@ public abstract class BasicMotor {
         controller.reset(newPosition);
         setMotorPosition(newPosition * measurements.getGearRatio());
     }
+
+    /**
+     * resets the controllers (essentially makes the motor as if it was just created, but in the latest position)
+     */
+    public void reset(){
+        resetEncoder(measurements.getGearRatio());
+    }
 }
