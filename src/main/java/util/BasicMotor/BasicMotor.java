@@ -486,7 +486,8 @@ public abstract class BasicMotor {
 
     /**
      * gets the current position of the motor
-     * default units are rotations, but can be changed in the measurements
+     * <p>
+     * default units are rotations but can be changed in the measurements
      * @return the current position of the motor
      */
     public double getPosition() {
@@ -495,7 +496,7 @@ public abstract class BasicMotor {
 
     /**
      * gets the current velocity of the motor
-     *
+     * <p>
      * default units are rotations per second, but can be changed in the measurements
      * @return the current velocity of the motor
      */
