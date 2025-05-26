@@ -13,6 +13,7 @@ import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Gains.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
+import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREV;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVRelative;
 import util.BasicMotor.MotorManager;
@@ -20,6 +21,8 @@ import util.BasicMotor.MotorManager;
 public class BasicSparkMAX extends BasicMotor {
     private final SparkMax motor;
     private final SparkMaxConfig config;
+
+    private final Measurements defaultMeasurements;
 
     // the idle power draw of the Spark MAX in watts (according to chatgpt)
     private static final double sparkMaxIdlePowerDraw = 0.72;
@@ -45,7 +48,8 @@ public class BasicSparkMAX extends BasicMotor {
         // all configs should be stored in code and not on motor
         applyConfig();
 
-        setMeasurements(new MeasurementsREVRelative(motor.getEncoder(), gearRatio));
+        defaultMeasurements = new MeasurementsREVRelative(motor.getEncoder(), gearRatio);
+        setMeasurements(defaultMeasurements);
     }
 
     @Override
@@ -73,6 +77,11 @@ public class BasicSparkMAX extends BasicMotor {
         }
 
         applyConfig();
+    }
+
+    @Override
+    protected Measurements getDefaultMeasurements() {
+        return defaultMeasurements;
     }
 
     @Override
@@ -171,6 +180,16 @@ public class BasicSparkMAX extends BasicMotor {
         encoder.setEncoderPosition(position);
 
         motor.getClosedLoopController().setIAccum(0);
+    }
+
+    @Override
+    protected void stopRecordingMeasurements() {
+        //TODO: remember rev timings
+    }
+
+    @Override
+    protected void startRecordingMeasurements(double HZ) {
+        //TODO: remember rev timings
     }
 
     @Override

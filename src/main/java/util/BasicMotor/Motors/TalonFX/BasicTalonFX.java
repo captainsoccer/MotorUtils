@@ -40,6 +40,11 @@ public class BasicTalonFX extends BasicMotor {
    */
   private final TalonFXSensors sensors;
 
+  /**
+   * used to store the default measurements of the motor controller
+   */
+  private final Measurements defaultMeasurements;
+
   /** velocity request for the motor controller */
   private final VelocityVoltage velocityRequest =
       new VelocityVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
@@ -74,13 +79,14 @@ public class BasicTalonFX extends BasicMotor {
     motor = new TalonFX(id);
     config = new TalonFXConfiguration();
 
-    setMeasurements(
-        new MeasurementsCTRE(
+    defaultMeasurements = new MeasurementsCTRE(
             motor.getPosition(),
             motor.getVelocity(),
             motor.getAcceleration(),
             controllerLocation.HZ,
-            gearRatio));
+            gearRatio);
+
+    setMeasurements(defaultMeasurements);
 
     sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
 
@@ -136,7 +142,7 @@ public class BasicTalonFX extends BasicMotor {
 
   @Override
   protected Measurements getDefaultMeasurements() {
-    return null;
+    return defaultMeasurements;
   }
 
   @Override
