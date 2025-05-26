@@ -1,4 +1,4 @@
-package util.BasicMotor.Motors;
+package util.BasicMotor.Motors.TalonFX;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;

@@ -1,4 +1,4 @@
-package util.BasicMotor.Motors;
+package util.BasicMotor.Motors.TalonFX;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
