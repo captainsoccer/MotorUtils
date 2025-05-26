@@ -8,10 +8,7 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Controllers.Controller;
-import util.BasicMotor.Gains.ControllerConstrains;
-import util.BasicMotor.Gains.ControllerGains;
-import util.BasicMotor.Gains.CurrentLimits;
-import util.BasicMotor.Gains.PIDGains;
+import util.BasicMotor.Gains.*;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREV;
@@ -24,23 +21,19 @@ public class BasicSparkMAX extends BasicMotor {
 
     private final Measurements defaultMeasurements;
 
-    // the idle power draw of the Spark MAX in watts (according to chatgpt)
+    // the idle power draw of the Spark MAX in watts (according to ChatGPT)
     private static final double sparkMaxIdlePowerDraw = 0.72;
 
     public BasicSparkMAX(
             ControllerGains gains,
             int id,
-            boolean isBrushless,
             String name,
             double gearRatio,
             MotorManager.ControllerLocation location) {
 
         super(gains, name, location);
 
-        this.motor =
-                new SparkMax(
-                        id,
-                        isBrushless ? SparkLowLevel.MotorType.kBrushless : SparkLowLevel.MotorType.kBrushed);
+        this.motor = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
 
         this.config = new SparkMaxConfig();
         config.voltageCompensation(
@@ -54,6 +47,7 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     protected void updatePIDGainsToMotor(PIDGains pidGains) {
+        // sets the PID gains for the closed loop controller
         config.closedLoop.pid(pidGains.getK_P(), pidGains.getK_I(), pidGains.getK_D());
         config.closedLoop.iZone(pidGains.getI_Zone());
         config.closedLoop.iMaxAccum(pidGains.getI_MaxAccum());
@@ -63,15 +57,19 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     protected void updateConstraints(ControllerConstrains constraints) {
+        // sets the max voltage to the max motor output
         config.closedLoop.maxOutput(constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage);
         config.closedLoop.minOutput(constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage);
 
         if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
+            //sets the soft limits to the max and min values
             config.softLimit.forwardSoftLimit(constraints.getMaxValue());
             config.softLimit.reverseSoftLimit(constraints.getMinValue());
+            // enables the soft limits
             config.softLimit.forwardSoftLimitEnabled(true);
             config.softLimit.reverseSoftLimitEnabled(true);
         } else {
+            // disables the soft limits
             config.softLimit.forwardSoftLimitEnabled(false);
             config.softLimit.reverseSoftLimitEnabled(false);
         }
@@ -155,7 +153,20 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     public void setCurrentLimits(CurrentLimits currentLimits) {
-        // TODO: create a rev current limits class
+
+        //TODO: decide what to do with this shit
+        config.secondaryCurrentLimit(currentLimits.getSupplyLowerLimit()); // it is stator not supply current limit
+
+        if(currentLimits instanceof CurrentLimitsREV limits){
+            int rpm = (limits.getFreeSpeedRPS() * 60) * (int)getMeasurements().getGearRatio(); // convert RPS to RPM
+            config.smartCurrentLimit(limits.getStallCurrentLimit(), limits.getStatorCurrentLimit(), rpm);
+        }
+        else{
+            // if the current limits are not REV specific, use the normal current limits
+            config.smartCurrentLimit(currentLimits.getStatorCurrentLimit());
+        }
+
+        applyConfig();
     }
 
     @Override

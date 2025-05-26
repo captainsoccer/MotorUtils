@@ -10,12 +10,12 @@ public class CurrentLimits {
    * the maximum current output of the motor controller (in amps) this is different from
    * supplyCurrentLimit
    */
-  private final double statorCurrentLimit;
+  private final int statorCurrentLimit;
   /**
    * the maximum current draw of the motor controller (in amps) this is different from
    * statorCurrentLimit
    */
-  private final double supplyCurrentLimit;
+  private final int supplyCurrentLimit;
   /**
    * the time (in seconds) that the motor can stay at supply current limit before it lowers to
    * supply lower limit this is useful for bursts of current
@@ -25,7 +25,7 @@ public class CurrentLimits {
    * the current the motor drops to after the supply current limit is reached for supplyLowerTime
    * this is useful for bursts of current
    */
-  private final double supplyLowerLimit;
+  private final int supplyLowerLimit;
 
   /**
    * creates a current limit with the given values
@@ -37,10 +37,10 @@ public class CurrentLimits {
    *     reached for
    */
   public CurrentLimits(
-      double statorCurrentLimit,
-      double supplyCurrentLimit,
+      int statorCurrentLimit,
+      int supplyCurrentLimit,
       double supplyLowerTime,
-      double supplyLowerLimit) {
+      int supplyLowerLimit) {
     this.statorCurrentLimit = statorCurrentLimit;
     this.supplyCurrentLimit = supplyCurrentLimit;
     this.supplyLowerTime = supplyLowerTime;
@@ -53,7 +53,7 @@ public class CurrentLimits {
    * @param statorCurrentLimit the maximum current output of the motor controller (in amps)
    * @param supplyCurrentLimit the maximum current draw of the motor controller (in amps)
    */
-  public CurrentLimits(double statorCurrentLimit, double supplyCurrentLimit) {
+  public CurrentLimits(int statorCurrentLimit, int supplyCurrentLimit) {
     this(statorCurrentLimit, supplyCurrentLimit, 0, 0);
   }
 
@@ -62,7 +62,7 @@ public class CurrentLimits {
    *
    * @return the maximum current output of the motor controller (in amps)
    */
-  public double getStatorCurrentLimit() {
+  public int getStatorCurrentLimit() {
     return statorCurrentLimit;
   }
 
@@ -71,7 +71,7 @@ public class CurrentLimits {
    *
    * @return the maximum current draw of the motor controller (in amps)
    */
-  public double getSupplyCurrentLimit() {
+  public int getSupplyCurrentLimit() {
     return supplyCurrentLimit;
   }
 
@@ -92,7 +92,7 @@ public class CurrentLimits {
    * @return the current the motor drops to after the supply current limit is reached for
    *     supplyLowerTime
    */
-  public double getSupplyLowerLimit() {
+  public int getSupplyLowerLimit() {
     return supplyLowerLimit;
   }
 }
