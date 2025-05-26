@@ -52,7 +52,7 @@ public class TalonFXSensors {
    * The latest PID output from the motor controller used for logging if the pid controller is on
    * the motor controller
    */
-  private LogFrame.PIDOutput latestPIDOutput = new LogFrame.PIDOutput();
+  private LogFrame.PIDOutput latestPIDOutput = LogFrame.PIDOutput.EMPTY;
 
   /**
    * Constructor for TalonFX Sensors

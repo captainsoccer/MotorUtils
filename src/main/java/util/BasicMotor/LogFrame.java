@@ -53,9 +53,7 @@ public class LogFrame {
    * @param totalOutput the total output of the controller (in volts)
    */
   public record PIDOutput(double pOutput, double iOutput, double dOutput, double totalOutput) {
-    public PIDOutput() {
-      this(0, 0, 0, 0);
-    }
+    public static final PIDOutput EMPTY = new PIDOutput(0, 0, 0, 0);
   }
 
   /**
@@ -74,9 +72,7 @@ public class LogFrame {
       double calculatedFeedForward,
       double arbitraryFeedForward,
       double totalOutput) {
-    public FeedForwardOutput() {
-      this(0, 0, 0, 0, 0);
-    }
+    public static final FeedForwardOutput EMPTY = new FeedForwardOutput(0, 0, 0, 0, 0);
 
     public FeedForwardOutput(
         double simpleFeedForward,
@@ -120,10 +116,10 @@ public class LogFrame {
       double goal,
       Controller.RequestType mode) {
 
-    /** empty constructor for the controller frame used when stopping the motor */
-    public ControllerFrame() {
-      this(0, new PIDOutput(), new FeedForwardOutput(), 0, 0, 0, 0, Controller.RequestType.STOP);
-    }
+    /** empty controller frame used when stopping the motor */
+    public static final ControllerFrame EMPTY =
+        new ControllerFrame(
+            0, PIDOutput.EMPTY, FeedForwardOutput.EMPTY, 0, 0, 0, 0, Controller.RequestType.STOP);
 
     /**
      * apply the pid output to the controller frame
@@ -165,7 +161,7 @@ public class LogFrame {
 
     public ControllerFrame(
         double output, double wanted, double measurement, Controller.RequestType mode) {
-      this(output, new PIDOutput(), new FeedForwardOutput(), wanted, measurement, 0, 0, mode);
+      this(output, PIDOutput.EMPTY, FeedForwardOutput.EMPTY, wanted, measurement, 0, 0, mode);
     }
   }
 }
