@@ -11,6 +11,7 @@ import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Gains.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
+import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.MeasurementsCTRE;
 import util.BasicMotor.MotorManager;
 
@@ -134,6 +135,11 @@ public class BasicTalonFX extends BasicMotor {
   }
 
   @Override
+  protected Measurements getDefaultMeasurements() {
+    return null;
+  }
+
+  @Override
   protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
     switch (mode) {
       case STOP -> motor.stopMotor();
@@ -195,6 +201,20 @@ public class BasicTalonFX extends BasicMotor {
   @Override
   protected void setMotorPosition(double position) {
     motor.setPosition(position);
+  }
+
+  @Override
+  protected void stopRecordingMeasurements() {
+    if(getMeasurements() instanceof MeasurementsCTRE measurements) {
+      measurements.setUpdateFrequency(0);
+    }
+  }
+
+  @Override
+  protected void startRecordingMeasurements(double HZ) {
+    if (getMeasurements() instanceof MeasurementsCTRE measurements) {
+      measurements.setUpdateFrequency(HZ);
+    }
   }
 
   @Override

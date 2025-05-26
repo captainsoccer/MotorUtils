@@ -57,6 +57,12 @@ public class MeasurementsCTRE extends Measurements {
     timeout = 1 / (refreshHZ * 4);
   }
 
+  public void setUpdateFrequency(double refreshHZ) {
+    motorPosition.setUpdateFrequency(refreshHZ);
+    motorVelocity.setUpdateFrequency(refreshHZ);
+    motorAcceleration.setUpdateFrequency(refreshHZ);
+  }
+
   @Override
   public Measurement update(double dt) {
     BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity, motorAcceleration);
