@@ -21,6 +21,9 @@ public class BasicSparkMAX extends BasicMotor {
     private final SparkMax motor;
     private final SparkMaxConfig config;
 
+    // the idle power draw of the Spark MAX in watts (according to chatgpt)
+    private static final double sparkMaxIdlePowerDraw = 0.72;
+
     public BasicSparkMAX(
             ControllerGains gains,
             int id,
@@ -109,11 +112,35 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     protected LogFrame.SensorData getSensorData() {
-        return null;
+        double voltage = motor.getBusVoltage();
+        double current = motor.getOutputCurrent();
+        double temperature = motor.getMotorTemperature();
+        double dutyCycle = motor.getAppliedOutput();
+
+        double outputVoltage = motor.getAppliedOutput() * MotorManager.motorIdleVoltage;
+        double powerOutput = outputVoltage * current;
+
+        double powerDraw = sparkMaxIdlePowerDraw + powerOutput; // idle power draw + output power
+        double currentDraw = powerDraw / voltage; // current draw is power draw / voltage
+
+        String faults = motor.getLastError().name(); // get the faults of the motor
+
+        return new LogFrame.SensorData(
+                temperature,
+                currentDraw,
+                current,
+                outputVoltage,
+                voltage,
+                powerDraw,
+                powerOutput,
+                dutyCycle,
+                faults
+        );
     }
 
     @Override
     protected LogFrame.PIDOutput getPIDLatestOutput() {
+        //spark max does not support getting the PID output directly
         return LogFrame.PIDOutput.EMPTY;
     }
 
