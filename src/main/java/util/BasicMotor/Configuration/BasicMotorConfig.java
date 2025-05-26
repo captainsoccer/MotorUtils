@@ -12,7 +12,7 @@ import java.util.function.Function;
  * <p>
  * for any other motor controller, use the appropriate configuration class
  */
-public class BasicConfig {
+public class BasicMotorConfig {
 
     /**
      * the basic motor configuration (minimum configuration required to run the motor)
