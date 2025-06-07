@@ -146,6 +146,12 @@ public class ControllerGains {
     controllerProfile = new TrapezoidProfile(profileConstraints);
   }
 
+  /**
+   * this function is used to initialize the sendable builder for the controller gains
+   * it adds the PID gains, feed forwards, and motion profile constraints to the sendable builder
+   * this is used when the controller gains are added to the SmartDashboard
+   * @param builder the sendable builder
+   */
   public void initSendable(SendableBuilder builder) {
     if (isProfiled()) {
       builder.setSmartDashboardType("ProfiledPIDController");
@@ -174,6 +180,11 @@ public class ControllerGains {
     buildFeedForwardSendable(builder);
   }
 
+    /**
+     * builds the sendable for the feed forwards (simpleFeedForward, frictionFeedForward, k_V)
+     *
+     * @param builder the sendable builder
+     */
   private void buildFeedForwardSendable(SendableBuilder builder) {
     builder.addDoubleProperty(
         "simpleFeedForward",
