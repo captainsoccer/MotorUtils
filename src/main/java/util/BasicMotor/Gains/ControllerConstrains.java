@@ -77,6 +77,7 @@ public class ControllerConstrains {
     this.maxValue = maxValue;
     this.maxMotorOutput =
         MathUtil.clamp(maxMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+    if(minMotorOutput > 0) minMotorOutput = -minMotorOutput;
     this.minMotorOutput =
         MathUtil.clamp(minMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
     this.voltageDeadband = Math.abs(deadband);
