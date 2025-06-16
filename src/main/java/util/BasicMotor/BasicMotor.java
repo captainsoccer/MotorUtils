@@ -239,7 +239,6 @@ public abstract class BasicMotor {
             logFrame.controllerFrame = LogFrame.ControllerFrame.EMPTY;
             return;
         }
-        // TODO: decide if the controller should forget the setpoint when the robot goes into disabled
         // mode
         if (RobotState.isDisabled()) {
             motorState = MotorState.DISABLED;
@@ -420,6 +419,13 @@ public abstract class BasicMotor {
      * @param mode the idle mode of the motor
      */
     public abstract void setIdleMode(IdleMode mode);
+
+    /**
+     * sets if the motor is inverted or not, this is used to set the motor to be inverted or not
+     * default is counter-clockwise positive
+     * @param inverted if the motor should be inverted (true for clockwise positive, false for counter-clockwise positive)
+     */
+    public abstract void setMotorInverted(boolean inverted);
 
     /**
      * sets the motor encoder to a new positon

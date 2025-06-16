@@ -194,6 +194,13 @@ public class BasicSparkMAX extends BasicMotor {
     }
 
     @Override
+    public void setMotorInverted(boolean inverted) {
+        config.inverted(inverted);
+
+        applyConfig();
+    }
+
+    @Override
     protected void setMotorPosition(double position) {
         if (!(getMeasurements() instanceof MeasurementsREV encoder)) {
             DriverStation.reportWarning("motor: " + name + " does not use anymore an encoder of the motor controller, so the position cannot be set", false);

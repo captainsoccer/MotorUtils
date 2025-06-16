@@ -1,9 +1,12 @@
 package util.BasicMotor.Motors.TalonFX;
 
+import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.wpilibj.DriverStation;
 import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
@@ -79,6 +82,8 @@ public class BasicTalonFX extends BasicMotor {
     motor = new TalonFX(id);
     config = new TalonFXConfiguration();
 
+    applyConfig();
+
     defaultMeasurements = new MeasurementsCTRE(
             motor.getPosition(),
             motor.getVelocity(),
@@ -102,7 +107,7 @@ public class BasicTalonFX extends BasicMotor {
     config.Slot0.kI = pidGains.getK_I();
     config.Slot0.kD = pidGains.getK_D();
 
-    motor.getConfigurator().apply(config);
+    applyConfig();
   }
 
   @Override
@@ -137,7 +142,7 @@ public class BasicTalonFX extends BasicMotor {
     }
 
     // applies the config to the motor
-    motor.getConfigurator().apply(config);
+    applyConfig();
   }
 
   @Override
@@ -147,9 +152,12 @@ public class BasicTalonFX extends BasicMotor {
 
   @Override
   protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
-    switch (mode) {
-      case STOP -> motor.stopMotor();
+    if(mode == Controller.RequestType.STOP){
+      motor.stopMotor();
+      return;
+    }
 
+    StatusCode error = switch (mode) {
       case POSITION, PROFILED_POSITION -> motor.setControl(
           positionRequest.withPosition(setpoint).withFeedForward(feedForward));
 
@@ -159,6 +167,13 @@ public class BasicTalonFX extends BasicMotor {
       case VOLTAGE -> motor.setControl(voltageRequest.withOutput(setpoint));
 
       case PRECENT_OUTPUT -> motor.setControl(dutyCycleRequest.withOutput(setpoint));
+
+      default -> StatusCode.OK;
+    };
+
+    if (error != StatusCode.OK) {
+      DriverStation.reportError(
+          "Failed to set motor output for motor: " + super.name + " Error: " + error.name(), false);
     }
   }
 
@@ -189,7 +204,7 @@ public class BasicTalonFX extends BasicMotor {
     currentConfig.SupplyCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
     currentConfig.StatorCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
 
-    motor.getConfigurator().apply(currentConfig);
+    applyConfig();
   }
 
   @Override
@@ -201,7 +216,14 @@ public class BasicTalonFX extends BasicMotor {
           case BRAKE -> NeutralModeValue.Brake;
         };
 
-    motor.getConfigurator().apply(config);
+    applyConfig();
+  }
+
+  @Override
+  public void setMotorInverted(boolean inverted) {
+    config.MotorOutput.Inverted = inverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+
+    applyConfig();
   }
 
   @Override
@@ -246,5 +268,18 @@ public class BasicTalonFX extends BasicMotor {
   public void enableFOC(boolean enable) {
     velocityRequest.EnableFOC = enable;
     positionRequest.EnableFOC = enable;
+  }
+
+  /**
+   * applies the configuration to the motor controller
+   */
+  private void applyConfig() {
+    var error = motor.getConfigurator().apply(config);
+
+    if(error != StatusCode.OK){
+      DriverStation.reportError(
+            "Failed to apply config to motor: " + super.name + " Error: " + error.name(), false
+      );
+    }
   }
 }
