@@ -23,6 +23,8 @@ public class BasicSparkMAX extends BasicMotor {
 
     private final Measurements defaultMeasurements;
 
+    private double kI = 0; // the integral gain, used for logging the I output
+
     // the idle power draw of the Spark MAX in watts (according to ChatGPT)
     private static final double sparkMaxIdlePowerDraw = 0.72;
 
@@ -53,6 +55,8 @@ public class BasicSparkMAX extends BasicMotor {
         config.closedLoop.pid(pidGains.getK_P(), pidGains.getK_I(), pidGains.getK_D());
         config.closedLoop.iZone(pidGains.getI_Zone());
         config.closedLoop.iMaxAccum(pidGains.getI_MaxAccum());
+
+        kI = pidGains.getK_I(); // store the integral gain for later use
 
         applyConfig();
     }
@@ -154,8 +158,10 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     protected LogFrame.PIDOutput getPIDLatestOutput() {
-        //spark max does not support getting the PID output directly
-        return LogFrame.PIDOutput.EMPTY;
+        //spark max supports only integral accumulation, so we will return the I accumulator value
+        double iAccum = motor.getClosedLoopController().getIAccum();
+
+        return new LogFrame.PIDOutput(0, iAccum * kI, 0, 0);
     }
 
     @Override
@@ -199,15 +205,60 @@ public class BasicSparkMAX extends BasicMotor {
         motor.getClosedLoopController().setIAccum(0);
     }
 
+    /**
+     * configures the periodic frames for the Spark MAX motor controller
+     * This is used to set the frequency of the periodic frames
+     * some might not affect the Spark MAX, but are included for completeness
+     * check the chart at <a href="https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames">...</a>
+     * @param mainLoopHZ the frequency of the main loop in Hz
+     */
+    private void configurePeriodicFrames(double mainLoopHZ) {
+        var signals = config.signals;
+        int sensorLoopPeriodMs = (int) ((1 / MotorManager.SENSOR_LOOP_HZ) * 1000); // convert to milliseconds
+        int mainLoopPeriodMs = (int) ((1 / mainLoopHZ) * 1000); // convert to milliseconds
+
+        signals.busVoltagePeriodMs(sensorLoopPeriodMs); //currently does nothing
+        signals.motorTemperaturePeriodMs(sensorLoopPeriodMs); //currently does nothing
+        signals.iAccumulationPeriodMs(sensorLoopPeriodMs); //currently unknown if it does anything
+        signals.outputCurrentPeriodMs(sensorLoopPeriodMs); //currently does nothing
+
+        signals.appliedOutputPeriodMs(mainLoopPeriodMs); // currently does something
+        signals.primaryEncoderPositionAlwaysOn(true);
+        signals.primaryEncoderVelocityAlwaysOn(true);
+        signals.primaryEncoderPositionPeriodMs(mainLoopPeriodMs); // currently does something
+        signals.primaryEncoderVelocityPeriodMs(mainLoopPeriodMs); // currently does something
+
+        applyConfig();
+    }
+
     @Override
     protected void stopRecordingMeasurements() {
-        //TODO: remember rev timings
-        config.signals
+        var signals = config.signals;
+
+        int maxPeriodMs = 32767; // maximum period in milliseconds for the Spark MAX according to the documentation
+        // check the docs at https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames
+
+        signals.primaryEncoderPositionAlwaysOn(false);
+        signals.primaryEncoderVelocityAlwaysOn(false);
+        signals.primaryEncoderPositionPeriodMs(maxPeriodMs);
+        signals.primaryEncoderVelocityPeriodMs(maxPeriodMs);
+
+        applyConfig();
     }
 
     @Override
     protected void startRecordingMeasurements(double HZ) {
-        //TODO: remember rev timings
+        var signals = config.signals;
+
+        int periodMs = (int) ((1 / HZ) * 1000); // convert to milliseconds
+
+        // set the encoder position and velocity to be always on
+        signals.primaryEncoderPositionAlwaysOn(true);
+        signals.primaryEncoderVelocityAlwaysOn(true);
+        signals.primaryEncoderPositionPeriodMs(periodMs);
+        signals.primaryEncoderVelocityPeriodMs(periodMs);
+
+        applyConfig();
     }
 
     @Override
@@ -239,10 +290,6 @@ public class BasicSparkMAX extends BasicMotor {
                     "Failed to apply configuration to Spark MAX motor: " + name + ". Error: " + okSignal.name(),
                     false);
         }
-    }
-
-    private void configPeriodicFrames(double mainLoopHZ){
-
     }
 
     // TODO: add support for other rev encoders switching (like absolute encoders) directly
