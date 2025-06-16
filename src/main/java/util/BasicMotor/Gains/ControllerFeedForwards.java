@@ -16,10 +16,10 @@ public class ControllerFeedForwards {
   public enum ChangeType {
     SIMPLE_FEED_FORWARD,
     FRICTION_FEED_FORWARD,
-    K_V
+    SETPOINT_FEED_FORWARD
   }
 
-  /** \ a simple feed forward gain (adds constant voltage to the output) can also be used as k_g */
+  /** a simple feed forward gain (adds constant voltage to the output) can also be used as k_g */
   private double simpleFeedForward;
 
   /**
@@ -29,9 +29,9 @@ public class ControllerFeedForwards {
   private double frictionFeedForward;
 
   /** a feed forward gain that is multiplied by the setpoint of the controller */
-  private double k_V;
+  private double setpointFeedForward;
 
-  /** a feed forward that is given the setpoint and returns a value can be used as k_g for an arm */
+  /** a feed forward that is given the setpoint and returns a value - for example, it can be used as a k_g for an arm */
   private final Function<Double, Double> feedForwardFunction;
 
   /**
@@ -39,52 +39,53 @@ public class ControllerFeedForwards {
    *
    * @param simpleFeedForward the simple feed forward gain
    * @param frictionFeedForward the friction feed forward gain
-   * @param k_V the k_V gain
+   * @param setpointFeedForward the setpoint feed forward gain
    * @param feedForwardFunction the feed forward function
    */
   public ControllerFeedForwards(
       double simpleFeedForward,
       double frictionFeedForward,
-      double k_V,
+      double setpointFeedForward,
       Function<Double, Double> feedForwardFunction) {
     this.simpleFeedForward = simpleFeedForward;
     this.frictionFeedForward = frictionFeedForward;
-    this.k_V = k_V;
+    this.setpointFeedForward = setpointFeedForward;
     this.feedForwardFunction = feedForwardFunction;
   }
 
   /**
-   * creates a feed forward that is only a simple feed forward gain
+   * creates a feed forward that is only a setpoint feed forward gain
+   * used, for example, in a flywheel controller
    *
-   * @param k_V the simple feed forward gain
+   * @param setpointFeedForward the setpoint feed forward gain
    */
-  public ControllerFeedForwards(double k_V) {
-    this(0, 0, k_V, (x) -> 0.0);
+  public ControllerFeedForwards(double setpointFeedForward) {
+    this(0, 0, setpointFeedForward, (x) -> 0.0);
   }
 
   /**
-   * creates a feed forward that is only a simple feed forward gain and a friction feed forward gain
+   * creates a feed forward that is only a setpoint feed forward gain and a friction feed forward gain
    *
-   * @param k_V the simple feed forward gain
+   * @param setpointFeedForward the setpoint feed forward gain
    * @param frictionFeedForward the friction feed forward gain
    */
-  public ControllerFeedForwards(double k_V, double frictionFeedForward) {
-    this(0, frictionFeedForward, k_V, (x) -> 0.0);
+  public ControllerFeedForwards(double setpointFeedForward, double frictionFeedForward) {
+    this(0, frictionFeedForward, setpointFeedForward, (x) -> 0.0);
   }
 
   /**
-   * creates a feed forward that is only a simple feed forward gain and a friction feed forward gain
+   * creates a feed forward that does not use a feed forward function
    *
-   * @param k_V the simple feed forward gain
+   * @param setpointFeedForward the setpoint feed forward gain
    * @param simpleFeedForward the simple feed forward gain
    * @param frictionFeedForward the friction feed forward gain
    */
-  public ControllerFeedForwards(double k_V, double simpleFeedForward, double frictionFeedForward) {
-    this(frictionFeedForward, simpleFeedForward, k_V, (x) -> 0.0);
+  public ControllerFeedForwards(double setpointFeedForward, double simpleFeedForward, double frictionFeedForward) {
+    this(frictionFeedForward, simpleFeedForward, setpointFeedForward, (x) -> 0.0);
   }
 
   /**
-   * creates an empty feed forward gain (no simple feed forward, no friction feed forward, no k_FF)
+   * creates an empty feed forward gain (no simple feed forward, no friction feed forward, no setpoint feed forward)
    */
   public ControllerFeedForwards() {
     this(0, 0, 0, (x) -> 0.0);
@@ -109,12 +110,12 @@ public class ControllerFeedForwards {
   }
 
   /**
-   * gets the k_V gain units are volts per unit of measurement
+   * gets the setpoint feed forward gain units are volts per unit of measurement
    *
-   * @return the k_V gain
+   * @return the setpoint feed forward gain
    */
-  public double getK_V() {
-    return k_V;
+  public double getSetpointFeedForward() {
+    return setpointFeedForward;
   }
 
   /**
@@ -144,8 +145,8 @@ public class ControllerFeedForwards {
       case FRICTION_FEED_FORWARD:
         frictionFeedForward = value;
         break;
-      case K_V:
-        k_V = value;
+      case SETPOINT_FEED_FORWARD:
+        setpointFeedForward = value;
         break;
     }
   }

@@ -166,7 +166,7 @@ public class PIDGains {
    * @param values the values to set the gains to
    */
   private void setValues(Double[] values) {
-    if (values.length != 8) throw new IllegalArgumentException("values must be of length 5");
+    if (values.length != 6) throw new IllegalArgumentException("values must be of length 6");
 
     this.k_P = values[0];
     this.k_I = values[1];

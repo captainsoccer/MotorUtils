@@ -86,18 +86,44 @@ public abstract class BasicMotor {
      */
     private boolean hasPIDGainsChanged = false;
 
+    /**
+     * a function to set the PID gains changed flag
+     */
     private void setHasPIDGainsChanged() {
         hasPIDGainsChanged = true;
     }
 
+    /**
+     * updates the PID gains to the motor controller this is used to update the PID gains of the motor
+     * controller when the PID gains change
+     *
+     * @param pidGains the new PID gains to set
+     */
     protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
 
+    /**
+     * if the constraints have changed (then it updates the motor controller on the slower thread)
+     */
     private boolean hasConstraintsChanged = false;
 
+    /**
+     * a function to set the constraints changed flag
+     */
     private void setHasConstraintsChanged() {
         hasConstraintsChanged = true;
     }
 
+    /**
+     * the name of the motor (used for logging)
+     */
+    protected final String name;
+
+    /**
+     * updates the constraints of the motor controller this is used to update the constraints of the
+     * motor controller when the constraints change
+     *
+     * @param constraints the new constraints to set
+     */
     protected abstract void updateConstraints(ControllerConstrains constraints);
 
     // constructors
@@ -115,6 +141,8 @@ public abstract class BasicMotor {
         controller =
                 new Controller(
                         controllerGains, this::setHasPIDGainsChanged, this::setHasConstraintsChanged);
+
+        this.name = name;
 
         MotorManager.getInstance()
                 .registerMotor(

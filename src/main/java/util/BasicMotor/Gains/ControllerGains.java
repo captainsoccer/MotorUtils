@@ -202,10 +202,10 @@ public class ControllerGains {
 
     builder.addDoubleProperty(
         "k_V",
-        controllerFeedForwards::getK_V,
+        controllerFeedForwards::getSetpointFeedForward,
         (value) ->
             controllerFeedForwards.updateFeedForwards(
-                value, ControllerFeedForwards.ChangeType.K_V));
+                value, ControllerFeedForwards.ChangeType.SETPOINT_FEED_FORWARD));
   }
 
   /**

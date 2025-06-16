@@ -1,11 +1,13 @@
 package util.BasicMotor.Motors.SparkMAX;
 
+import com.revrobotics.REVLibError;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.wpilibj.DriverStation;
 import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.*;
@@ -84,7 +86,6 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
-        // TODO: add error code handling for the motor controller
         switch (mode) {
             // stop the motor output
             case STOP -> stopMotorOutput();
@@ -109,7 +110,13 @@ public class BasicSparkMAX extends BasicMotor {
      * @param mode        the control type of the closed loop output
      */
     private void setClosedLoopOutput(double setpoint, double feedForward, SparkBase.ControlType mode) {
-        motor.getClosedLoopController().setReference(setpoint, mode, ClosedLoopSlot.kSlot0, feedForward);
+        var okSignal = motor.getClosedLoopController().setReference(setpoint, mode, ClosedLoopSlot.kSlot0, feedForward);
+
+        if (okSignal != REVLibError.kOk) {
+            DriverStation.reportError(
+                    "Failed to set closed loop output for Spark MAX motor: " + name + ". Error: " + okSignal.name(),
+                    false);
+        }
     }
 
     @Override
@@ -157,11 +164,10 @@ public class BasicSparkMAX extends BasicMotor {
         //TODO: decide what to do with this shit
         config.secondaryCurrentLimit(currentLimits.getSupplyLowerLimit()); // it is stator not supply current limit
 
-        if(currentLimits instanceof CurrentLimitsREV limits){
-            int rpm = (limits.getFreeSpeedRPS() * 60) * (int)getMeasurements().getGearRatio(); // convert RPS to RPM
+        if (currentLimits instanceof CurrentLimitsREV limits) {
+            int rpm = (limits.getFreeSpeedRPS() * 60) * (int) getMeasurements().getGearRatio(); // convert RPS to RPM
             config.smartCurrentLimit(limits.getStallCurrentLimit(), limits.getStatorCurrentLimit(), rpm);
-        }
-        else{
+        } else {
             // if the current limits are not REV specific, use the normal current limits
             config.smartCurrentLimit(currentLimits.getStatorCurrentLimit());
         }
@@ -184,7 +190,7 @@ public class BasicSparkMAX extends BasicMotor {
     @Override
     protected void setMotorPosition(double position) {
         if (!(getMeasurements() instanceof MeasurementsREV encoder)) {
-            // TODO: add alert to say the encoder is not a rev encoder anymore
+            DriverStation.reportWarning("motor: " + name + " does not use anymore an encoder of the motor controller, so the position cannot be set", false);
             return;
         }
 
@@ -196,6 +202,7 @@ public class BasicSparkMAX extends BasicMotor {
     @Override
     protected void stopRecordingMeasurements() {
         //TODO: remember rev timings
+        config.signals
     }
 
     @Override
@@ -222,11 +229,20 @@ public class BasicSparkMAX extends BasicMotor {
      * applies the current configuration to the motor
      */
     private void applyConfig() {
-        // TODO: add error code handling for setting the configuration
-        motor.configure(
+        var okSignal = motor.configure(
                 config,
                 SparkBase.ResetMode.kResetSafeParameters,
                 SparkBase.PersistMode.kNoPersistParameters);
+
+        if(okSignal != REVLibError.kOk) {
+            DriverStation.reportError(
+                    "Failed to apply configuration to Spark MAX motor: " + name + ". Error: " + okSignal.name(),
+                    false);
+        }
+    }
+
+    private void configPeriodicFrames(double mainLoopHZ){
+
     }
 
     // TODO: add support for other rev encoders switching (like absolute encoders) directly

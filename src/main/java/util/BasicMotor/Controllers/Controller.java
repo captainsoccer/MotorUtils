@@ -227,7 +227,7 @@ public class Controller implements Sendable {
     return new FeedForwardOutput(
         feedForwards.getSimpleFeedForward(),
         feedForwards.getFrictionFeedForward() * directionOfTravel,
-        feedForwards.getK_V() * setpoint.position,
+        feedForwards.getSetpointFeedForward() * setpoint.position,
         feedForwards.getCalculatedFeedForward(setpoint.position),
         request.arbFeedForward);
   }
