@@ -87,13 +87,6 @@ public abstract class BasicMotor {
     private boolean hasPIDGainsChanged = false;
 
     /**
-     * a function to set the PID gains changed flag
-     */
-    private void setHasPIDGainsChanged() {
-        hasPIDGainsChanged = true;
-    }
-
-    /**
      * updates the PID gains to the motor controller this is used to update the PID gains of the motor
      * controller when the PID gains change
      *
@@ -107,13 +100,6 @@ public abstract class BasicMotor {
     private boolean hasConstraintsChanged = false;
 
     /**
-     * a function to set the constraints changed flag
-     */
-    private void setHasConstraintsChanged() {
-        hasConstraintsChanged = true;
-    }
-
-    /**
      * the name of the motor (used for logging)
      */
     protected final String name;
@@ -125,9 +111,7 @@ public abstract class BasicMotor {
      * @param constraints the new constraints to set
      */
     protected abstract void updateConstraints(ControllerConstrains constraints);
-
-    // constructors
-
+    
     /**
      * creates the motor. the motor child needs to register the measurements
      *
@@ -135,12 +119,13 @@ public abstract class BasicMotor {
      * @param name               the name of the motor (used for logging)
      * @param controllerLocation the location of the controller (RIO or motor controller)
      */
-    public BasicMotor(
-            ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
+    public BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
+
         this.controllerLocation = controllerLocation;
-        controller =
-                new Controller(
-                        controllerGains, this::setHasPIDGainsChanged, this::setHasConstraintsChanged);
+
+        Runnable setHasPIDGainsChanged = () -> hasPIDGainsChanged = true;
+        Runnable setHasConstraintsChanged = () -> hasConstraintsChanged = true;
+        controller = new Controller(controllerGains, setHasPIDGainsChanged, setHasConstraintsChanged);
 
         this.name = name;
 
