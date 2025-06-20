@@ -91,8 +91,6 @@ public class BasicTalonFX extends BasicMotor {
             controllerLocation.HZ,
             gearRatio);
 
-    setMeasurements(defaultMeasurements);
-
     sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
 
     motor.optimizeBusUtilization();
@@ -108,7 +106,7 @@ public class BasicTalonFX extends BasicMotor {
     config.Slot0.kD = pidGains.getK_D();
 
     if(controllerLocation == MotorManager.ControllerLocation.MOTOR){
-      //changes made in phoenix 6hi https://v6.docs.ctr-electronics.com/en/latest/docs/migration/migration-guide/feature-replacements-guide.html#integral-zone-and-max-integral-accumulator
+      //changes made in phoenix 6 api https://v6.docs.ctr-electronics.com/en/latest/docs/migration/migration-guide/feature-replacements-guide.html#integral-zone-and-max-integral-accumulator
 
       if(pidGains.getI_MaxAccum() != Double.POSITIVE_INFINITY)
         DriverStation.reportWarning( name + " does not need i max accum when running on motor therefor not used (TalonFX check phoenix 6 docs)", false);
@@ -222,7 +220,6 @@ public class BasicTalonFX extends BasicMotor {
 
   @Override
   public void setIdleMode(IdleMode mode) {
-
     config.MotorOutput.NeutralMode =
         switch (mode) {
           case COAST -> NeutralModeValue.Coast;
@@ -234,7 +231,8 @@ public class BasicTalonFX extends BasicMotor {
 
   @Override
   public void setMotorInverted(boolean inverted) {
-    config.MotorOutput.Inverted = inverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+    config.MotorOutput.Inverted =
+            inverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
 
     applyConfig();
   }
@@ -281,6 +279,8 @@ public class BasicTalonFX extends BasicMotor {
   public void enableFOC(boolean enable) {
     velocityRequest.EnableFOC = enable;
     positionRequest.EnableFOC = enable;
+    voltageRequest.EnableFOC = enable;
+    dutyCycleRequest.EnableFOC = enable;
   }
 
   /**
