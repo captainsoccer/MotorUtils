@@ -107,6 +107,19 @@ public class BasicTalonFX extends BasicMotor {
     config.Slot0.kI = pidGains.getK_I();
     config.Slot0.kD = pidGains.getK_D();
 
+    if(controllerLocation == MotorManager.ControllerLocation.MOTOR){
+      //changes made in phoenix 6hi https://v6.docs.ctr-electronics.com/en/latest/docs/migration/migration-guide/feature-replacements-guide.html#integral-zone-and-max-integral-accumulator
+
+      if(pidGains.getI_MaxAccum() != Double.POSITIVE_INFINITY)
+        DriverStation.reportWarning( name + " does not need i max accum when running on motor therefor not used (TalonFX check phoenix 6 docs)", false);
+
+      if(pidGains.getTolerance() != 0)
+        DriverStation.reportWarning( name + " does not need tolerance when running on motor therefor not used (TalonFX check phoenix 6 docs)", false);
+
+      if(pidGains.getI_Zone() != Double.POSITIVE_INFINITY)
+        DriverStation.reportWarning( name + " does not need i zone when running on motor therefor not used (TalonFX check phoenix 6 docs)", false);
+    }
+
     applyConfig();
   }
 
