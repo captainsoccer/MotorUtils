@@ -212,36 +212,13 @@ public abstract class BasicMotor {
         }
 
         // updates the measurements
-        var measurement = measurements.update(1 / controllerLocation.HZ);
+        var measurement = updateMeasurements();
         logFrame.measurement = measurement;
 
         // checks if the motor is stopped or needs to be stopped
-        if (motorState.stopped() && controller.getRequestType() == Controller.RequestType.STOP) {
-            return;
-        } else if (controller.getRequestType() == Controller.RequestType.STOP) {
-            motorState = MotorState.STOPPED;
-            stopMotorOutput();
-            logFrame.controllerFrame = LogFrame.ControllerFrame.EMPTY;
-            return;
-        }
-        // mode
-        if (RobotState.isDisabled()) {
-            motorState = MotorState.DISABLED;
-            stopMotorOutput();
-            return;
-        }
-
-        // if the motor was disabled before, resets the controller to the current measurement
-        if (motorState == MotorState.DISABLED) {
-            double value =
-                    controller.getRequestType().isVelocityControl()
-                            ? measurement.velocity()
-                            : measurement.position();
-
-            controller.reset(value);
-        }
-
-        motorState = MotorState.RUNNING;
+        boolean shouldRun = shouldRunLoop(controller.getRequestType());
+        if(shouldRun) motorState = MotorState.RUNNING;
+        else return;
 
         // the controller frame (for logging)
         LogFrame.ControllerFrame motorOutput;
@@ -317,6 +294,55 @@ public abstract class BasicMotor {
         logFrame.controllerFrame = motorOutput;
         // sets the motor output
         setMotorOutput(reference, feedForward, outputMode);
+    }
+
+    /**
+     * takes the latest measurements and checks if needed to use the default measurements
+     * (usually used for the first run)
+     * @return the latest measurement of the motor
+     */
+    private Measurements.Measurement updateMeasurements() {
+        if (measurements == null) {
+            measurements = getDefaultMeasurements();
+        }
+
+        return measurements.update(1 / controllerLocation.HZ);
+    }
+
+    /**
+     * should the main loop continue running or should stop,
+     * it would stop if the motor is disabled or if the request type is stop
+     * @param requestType the request type of the controller
+     * @return true if the loop should continue running, false otherwise
+     */
+    private boolean shouldRunLoop(Controller.RequestType requestType) {
+        if(RobotState.isDisabled()) {
+            if(motorState == MotorState.DISABLED){
+                return false;
+            }
+            motorState = MotorState.DISABLED;
+            return false;
+        }
+
+        if(motorState == MotorState.DISABLED) {
+            if(requestType == Controller.RequestType.STOP) {
+                motorState = MotorState.STOPPED;
+                return false;
+            }
+
+            return true;
+        }
+
+        if(requestType == Controller.RequestType.STOP) {
+            if(motorState != MotorState.STOPPED) {
+                motorState = MotorState.STOPPED;
+                stopMotorOutput();
+                logFrame.controllerFrame = LogFrame.ControllerFrame.EMPTY;
+            }
+            return false;
+        }
+
+        return true;
     }
 
     /**
