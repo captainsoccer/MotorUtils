@@ -131,87 +131,20 @@ public class Controller implements Sendable {
    * resets the integral sum and the previous error of the PID controller and sets the setpoint to
    * the current position for profiling purposes (will be set to correct in the next loop)
    */
-  public void reset(double measurement) {
+  public void reset(double measurement, double measurementVelocity) {
     this.pidController.reset();
-    this.setpoint = new TrapezoidProfile.State(measurement, 0);
+    this.setpoint = new TrapezoidProfile.State(measurement, measurementVelocity);
   }
 
   // calculations
-
-  /**
-   * calculates the output of the controller without the PID controller this is used when the pid of
-   * the motor is running on the motor controller
-   *
-   * @param measurements the measurement of the controller (depending on the request type)
-   * @param dt the time since the last calculation
-   * @return the output of the controller in volts
-   */
-  public LogFrame.ControllerFrame calculateWithOutPID(
-      Measurements.Measurement measurements, double dt) {
-    // gets the measurement of the controller
-    double measurement =
-        switch (request.requestType) {
-          case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
-          default -> measurements.position();
-        };
-
-    calculateConstraints(measurements);
-
-    setpoint = calculateProfile(dt);
-
-    double directionOfTravel =
-        switch (request.requestType) {
-          case POSITION, PROFILED_POSITION -> setpoint.position > measurement ? 1 : -1;
-          default -> Math.signum(setpoint.position);
-        };
-
-    var feedForward = calculateFeedForward(directionOfTravel);
-
-    double error = request.requestType.requiresPID() ? setpoint.position - measurement : 0;
-
-    return new LogFrame.ControllerFrame(
-        feedForward.totalOutput(),
-        LogFrame.PIDOutput.EMPTY,
-        feedForward,
-        setpoint.position,
-        measurement,
-        error,
-        request.goal.position,
-        request.requestType);
-  }
-
-  /**
-   * calculates the output of the controller
-   *
-   * @param measurement the measurement of the controller (depending on the request type)
-   * @param dt the time since the last calculation
-   * @return the output of the controller in volts
-   */
-  public LogFrame.ControllerFrame calculate(Measurements.Measurement measurement, double dt) {
-
-    var feedForwards = calculateWithOutPID(measurement, dt);
-
-    var pidOutput = calculatePID(measurement, dt);
-
-    // also clamps the output of the controller;
-    return new LogFrame.ControllerFrame(
-        feedForwards, pidOutput, controllerGains.getControllerConstrains());
-  }
-
   /**
    * calculates the PID of the controller
    *
-   * @param measurements the measurement of the controller (depending on the request type)
+   * @param measurement the measurement of the controller (depending on the request type)
    * @return the output PID of the controller in volts
    */
-  private LogFrame.PIDOutput calculatePID(Measurements.Measurement measurements, double dt) {
-    double measurement =
-        switch (request.requestType) {
-          case VELOCITY, PROFILED_VELOCITY -> measurements.velocity();
-          default -> measurements.position();
-        };
-
-    return this.pidController.calculate(measurement, this.setpoint.position, dt);
+  public LogFrame.PIDOutput calculatePID(double measurement, double dt) {
+    return this.pidController.calculate(this.setpoint.position, measurement, dt);
   }
 
   /**
@@ -221,7 +154,7 @@ public class Controller implements Sendable {
    *     feed forward)
    * @return the feed forward of the controller in volts
    */
-  private FeedForwardOutput calculateFeedForward(double directionOfTravel) {
+  public FeedForwardOutput calculateFeedForward(double directionOfTravel) {
     var feedForwards = this.controllerGains.getControllerFeedForwards();
 
     return new FeedForwardOutput(
@@ -234,17 +167,23 @@ public class Controller implements Sendable {
 
   /**
    * calculates the profile of movement
-   *
+   * and sets the setpoint to the calculated profile
    * @param dt the time since the last calculation
-   * @return the new setpoint of the controller
    */
-  private TrapezoidProfile.State calculateProfile(double dt) {
-    if (!request.requestType.isProfiled())
-      return new TrapezoidProfile.State(request.goal.position, request.goal.velocity);
-
+  public void calculateProfile(double dt) {
     var profile = this.controllerGains.getControllerProfile();
 
-    return profile.calculate(dt, setpoint, request.goal);
+    setpoint = profile.calculate(dt, setpoint, request.goal);
+  }
+
+  /**
+   * checks the motor output of the controller
+   * (if it is above or below the maximum output of the motor or is below the minimum output of the motor)
+   * @param output the output of the controller in volts
+   * @return the checked output of the controller in volts
+   */
+  public double checkMotorOutput(double output) {
+    return controllerGains.getControllerConstrains().checkMotorOutput(output);
   }
 
   /**
@@ -252,7 +191,7 @@ public class Controller implements Sendable {
    *
    * @param measurement the measurement of the controller (depending on the request type)
    */
-  private void calculateConstraints(Measurements.Measurement measurement) {
+  public void calculateConstraints(Measurements.Measurement measurement, ControllerRequest request) {
     this.controllerGains.getControllerConstrains().calculateConstraints(measurement, request);
   }
 

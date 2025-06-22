@@ -220,80 +220,28 @@ public abstract class BasicMotor {
         if(shouldRun) motorState = MotorState.RUNNING;
         else return;
 
-        // the controller frame (for logging)
-        LogFrame.ControllerFrame motorOutput;
-        // the reference to give to the motor (can be any mode)
-        double reference;
-        // the feedforward (this is used if the controller is on the motor and there is any feedforward
-        // calculation)
-        double feedForward;
-        // the output mode (this is used to set the motor output)
-        Controller.RequestType outputMode;
+        var motorOutput = runController(measurement, 1 / controllerLocation.HZ, controller.getRequest());
 
-        // if the controller is not using PID, we can just set the reference to the setpoint
-        if (!controller.getRequestType().requiresPID()) {
-            var request = controller.getRequestType();
-            reference = controller.getRequest().goal().position;
-            feedForward = 0;
-
-            // if the controller is using voltage control, we need to set the reference to the setpoint
-            if (request == Controller.RequestType.VOLTAGE) {
-                motorOutput =
-                        new LogFrame.ControllerFrame(reference, reference, measurement.position(), request);
-                outputMode = Controller.RequestType.VOLTAGE;
-            }
-            // if using precent output, then the total output needs to be multiplied by the input voltage
-            // to be in volts
-            else {
-                // multiplies the setpoint (duty cycle) by the input voltage to get the output voltage
-                motorOutput =
-                        new LogFrame.ControllerFrame(
-                                reference * logFrame.sensorData.voltageInput(),
-                                reference,
-                                measurement.position(),
-                                request);
-
-                outputMode = Controller.RequestType.PRECENT_OUTPUT;
-            }
-        }
-        // if the controller is using PID, we need to calculate the output
-        else {
-            // if calculating on the rio, then calculate the output in volts and set it
-            if (controllerLocation == ControllerLocation.RIO) {
-                motorOutput = controller.calculate(measurement, 1 / controllerLocation.HZ);
-
-                reference = motorOutput.totalOutput();
-                feedForward = 0;
-                outputMode = Controller.RequestType.VOLTAGE;
-            }
-            // if calculating on the motor controller, then calculate the feedforward and the setpoint and
-            // give to the motor
-            else {
-                var feedForwardOutput =
-                        controller.calculateWithOutPID(measurement, 1 / controllerLocation.HZ);
-
-                // adds the pid output from the motor controller (could be outdated by a cycle or two)
-                motorOutput = new LogFrame.ControllerFrame(feedForwardOutput, getPIDLatestOutput());
-
-                reference = motorOutput.setpoint();
-                feedForward = motorOutput.feedForwardOutput().totalOutput();
-                outputMode = motorOutput.mode();
-            }
-        }
         double tolerance = controller.getControllerGains().getPidGains().getTolerance();
 
-        boolean atSetpoint = Math.abs(motorOutput.error()) < tolerance;
+        boolean atSetpoint = Math.abs(motorOutput.error()) <= tolerance;
         logFrame.atSetpoint = atSetpoint;
 
         if (motorOutput.mode().isProfiled()) {
             logFrame.atGoal =
                     (Math.abs(motorOutput.goal() - motorOutput.setpoint()) < tolerance) && atSetpoint;
         }
+        else logFrame.atGoal = atSetpoint;
 
         // updates the log frame with the motor output
         logFrame.controllerFrame = motorOutput;
         // sets the motor output
-        setMotorOutput(reference, feedForward, outputMode);
+        if(controllerLocation == ControllerLocation.RIO) {
+            setMotorOutput(motorOutput.totalOutput(), 0, Controller.RequestType.VOLTAGE);
+        }
+        else{
+            setMotorOutput(motorOutput.setpoint(), motorOutput.totalOutput(), motorOutput.mode());
+        }
     }
 
     /**
@@ -346,6 +294,78 @@ public abstract class BasicMotor {
     }
 
     /**
+     * runs the controller with the given measurement and dt
+     * this is used to calculate the output of the controller
+     * this functions handles constraints, feedforward, motion profiles, and PID control
+     *
+     * @param measurement      the latest measurement of the motor
+     * @param dt               the time since the last update (in seconds)
+     * @param controllerRequest the request of the controller
+     * @return the controller frame with the output of the controller
+     */
+    private LogFrame.ControllerFrame runController(Measurements.Measurement measurement, double dt, Controller.ControllerRequest controllerRequest) {
+        //cheks if motor is within the constraints
+        controller.calculateConstraints(measurement, controllerRequest);
+
+        //if the controller is not using PID, we can just set the output directly
+        if(!controllerRequest.requestType().requiresPID()){
+            double output = controllerRequest.requestType() == Controller.RequestType.VOLTAGE ?
+                    controllerRequest.goal().position :
+                    controllerRequest.goal().position * logFrame.sensorData.voltageInput();
+
+            return new LogFrame.ControllerFrame(output, controllerRequest.goal().position, measurement.position(), controllerRequest.requestType());
+        }
+
+        //if using a motion profile, then calculate the profile
+        if(controllerRequest.requestType().isProfiled()) controller.calculateProfile(dt);
+
+        //calculate the direction of travel
+        double directionOfTravel = Math.signum(controllerRequest.requestType().isPositionControl() ?
+                controller.getSetpoint().position - measurement.position() : controller.getSetpoint().position);
+
+        // calculate the feedforward output
+        var FFOutput = controller.calculateFeedForward(directionOfTravel);
+
+        //calculates the error of the controller
+        double referenceMeasurement = controllerRequest.requestType().isVelocityControl() ?
+                measurement.velocity() :
+                measurement.position();
+        double error = controller.getSetpoint().position - referenceMeasurement;
+
+        // if the controller is on the motor, then we can just return the feedforward output
+        if(controllerLocation == ControllerLocation.MOTOR){
+            return new LogFrame.ControllerFrame(
+                    FFOutput.totalOutput(),
+                    FFOutput,
+                    controller.getSetpoint().position,
+                    referenceMeasurement,
+                    error,
+                    controller.getRequest().goal().position,
+                    controllerRequest.requestType()
+            );
+        }
+
+        // calculate the PID output
+        var pidOutput = controller.calculatePID(referenceMeasurement, dt);
+
+        //sums the feedforward and pid output
+        double totalOutput = FFOutput.totalOutput() + pidOutput.totalOutput();
+        // updates the log frame with the pid output
+        logFrame.pidOutput = pidOutput;
+
+        // returns the combined controller frame and cheks the motor output
+        return new LogFrame.ControllerFrame(
+                controller.checkMotorOutput(totalOutput),
+                FFOutput,
+                controller.getSetpoint().position,
+                referenceMeasurement,
+                error,
+                controller.getRequest().goal().position,
+                controllerRequest.requestType()
+        );
+    }
+
+    /**
      * sets the motor output
      *
      * @param setpoint    the setpoint of the motor (units depending on the mode)
@@ -373,6 +393,9 @@ public abstract class BasicMotor {
      */
     private void updateSensorData() {
         logFrame.sensorData = getSensorData();
+        
+        if(controllerLocation == ControllerLocation.MOTOR)
+            logFrame.pidOutput = getPIDLatestOutput();
 
         // if the pid has changed, then update the built-in motor pid
         if (hasPIDGainsChanged) {
@@ -573,7 +596,17 @@ public abstract class BasicMotor {
      * @param newPosition the new position of the motor (gear ratio is applied later)
      */
     public void resetEncoder(double newPosition) {
-        controller.reset(newPosition);
+        controller.reset(newPosition, 0);
+        setMotorPosition(newPosition * measurements.getGearRatio());
+    }
+
+    /**
+     * resets the motor encoder to a specif position
+     *
+     * @param newPosition the new position of the motor (gear ratio is applied later)
+     */
+    public void resetEncoder(double newPosition, double newVelocity) {
+        controller.reset(newPosition, newVelocity);
         setMotorPosition(newPosition * measurements.getGearRatio());
     }
 

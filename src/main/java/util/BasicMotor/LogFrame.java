@@ -9,6 +9,8 @@ import util.BasicMotor.Measurements.Measurements;
 public class LogFrame {
   /** the latest frame of the controller */
   public ControllerFrame controllerFrame;
+  /** the latest PID output of the controller */
+  public PIDOutput pidOutput;
   /** the latest sensor data of the motor */
   public SensorData sensorData;
   /** the latest measurement of the motor */
@@ -98,7 +100,6 @@ public class LogFrame {
    * The frame of the controller
    *
    * @param totalOutput the total output of the controller (in volts)
-   * @param pidOutput the PID output of the controller (not always used)
    * @param feedForwardOutput the feedforward output of the controller
    * @param setpoint the setpoint of the controller in units of measurement
    * @param measurement the measurement of the controller in units of measurement
@@ -108,7 +109,6 @@ public class LogFrame {
    */
   public record ControllerFrame(
       double totalOutput,
-      PIDOutput pidOutput,
       FeedForwardOutput feedForwardOutput,
       double setpoint,
       double measurement,
@@ -119,49 +119,11 @@ public class LogFrame {
     /** empty controller frame used when stopping the motor */
     public static final ControllerFrame EMPTY =
         new ControllerFrame(
-            0, PIDOutput.EMPTY, FeedForwardOutput.EMPTY, 0, 0, 0, 0, Controller.RequestType.STOP);
-
-    /**
-     * apply the pid output to the controller frame
-     *
-     * @param frame the controller frame to apply the pid output to
-     * @param output the pid output to apply to the controller frame
-     */
-    public ControllerFrame(ControllerFrame frame, PIDOutput output) {
-      this(
-          frame.totalOutput + output.totalOutput,
-          output,
-          frame.feedForwardOutput,
-          frame.setpoint,
-          frame.measurement,
-          frame.error,
-          frame.goal,
-          frame.mode);
-    }
-
-    /**
-     * apply the feedforward output to the controller frame
-     *
-     * @param frame the controller frame to apply the feedforward output to
-     * @param output the feedforward output to apply to the controller frame
-     * @param constraint apply the constraints to the output (clamping and deadband)
-     */
-    public ControllerFrame(
-        ControllerFrame frame, PIDOutput output, ControllerConstrains constraint) {
-      this(
-          constraint.checkMotorOutput(frame.totalOutput + output.totalOutput),
-          output,
-          frame.feedForwardOutput,
-          frame.setpoint,
-          frame.measurement,
-          frame.error,
-          frame.goal,
-          frame.mode);
-    }
+            0, FeedForwardOutput.EMPTY, 0, 0, 0, 0, Controller.RequestType.STOP);
 
     public ControllerFrame(
         double output, double wanted, double measurement, Controller.RequestType mode) {
-      this(output, PIDOutput.EMPTY, FeedForwardOutput.EMPTY, wanted, measurement, 0, 0, mode);
+      this(output, FeedForwardOutput.EMPTY, wanted, measurement, 0, 0, mode);
     }
   }
 }
