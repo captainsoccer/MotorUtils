@@ -190,12 +190,11 @@ public class BasicSparkMAX extends BasicMotor {
     @Override
     public void setCurrentLimits(CurrentLimits currentLimits) {
 
-        //TODO: decide what to do with this shit
-        config.secondaryCurrentLimit(currentLimits.getSupplyLowerLimit()); // it is a stator limit not supply current limit
-
         if (currentLimits instanceof CurrentLimitsREV limits) {
             int rpm = (limits.getFreeSpeedRPS() * 60) * (int) getMeasurements().getGearRatio(); // convert RPS to RPM
             config.smartCurrentLimit(limits.getStallCurrentLimit(), limits.getStatorCurrentLimit(), rpm);
+
+            config.secondaryCurrentLimit(limits.getSecondaryCurrentLimit());
         } else {
             // if the current limits are not REV specific, use the normal current limits
             config.smartCurrentLimit(currentLimits.getStatorCurrentLimit());
@@ -324,6 +323,10 @@ public class BasicSparkMAX extends BasicMotor {
         }
     }
 
+    /**
+     * an enum that represents the range of the absolute encoder
+     * it can be either 0 to 1 or -0.5 to 0.5
+     */
     public enum AbsoluteEncoderRange {
         /**
          * 0 to 1 of range
@@ -338,8 +341,6 @@ public class BasicSparkMAX extends BasicMotor {
             return this == HALF_REVOLUTION;
         }
     }
-
-    // TODO: add support for other rev encoders switching (like absolute encoders) directly
 
     /**
      * restores the Spark MAX to use the default encoder (the primary encoder)

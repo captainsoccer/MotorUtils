@@ -12,6 +12,12 @@ public class CurrentLimitsREV extends CurrentLimits{
     private final int stallCurrentLimit;
 
     /**
+     * the secondary current limit
+     * if the current output of the motor controller exceeds this limit, the motor controller will stop for a short time
+     */
+    private final int secondaryCurrentLimit;
+
+    /**
      * the free speed of the motor controller (in RPM) if below this speed the motor is considered in stall and the stall current limit is applied
      */
     private final int freeSpeedRPS;
@@ -27,9 +33,10 @@ public class CurrentLimitsREV extends CurrentLimits{
      * @param secondaryCurrentLimit a secondary current limit that is not used by REV controllers
      */
     public CurrentLimitsREV(int freeSpeedCurrentLimit, int stallCurrentLimit, int freeSpeedRPS, int secondaryCurrentLimit) {
-        super(freeSpeedCurrentLimit, 0, 0, secondaryCurrentLimit);
+        super(freeSpeedCurrentLimit, 0, 0, 0);
         this.stallCurrentLimit = stallCurrentLimit;
         this.freeSpeedRPS = freeSpeedRPS;
+        this.secondaryCurrentLimit = secondaryCurrentLimit;
     }
 
     /**
@@ -46,5 +53,13 @@ public class CurrentLimitsREV extends CurrentLimits{
      */
     public int getFreeSpeedRPS() {
         return freeSpeedRPS;
+    }
+
+    /**
+     * gets the secondary current limit of the motor controller
+     * @return the secondary current limit of the motor controller (in amps)
+     */
+    public int getSecondaryCurrentLimit() {
+        return secondaryCurrentLimit;
     }
 }
