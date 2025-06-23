@@ -1,9 +1,9 @@
 package util.BasicMotor.Measurements.RevEncoders;
 
 import com.revrobotics.AbsoluteEncoder;
-import edu.wpi.first.wpilibj.DriverStation;
+import util.BasicMotor.Measurements.Measurements;
 
-public class MeasurementsREVAbsolute extends  MeasurementsREV {
+public class MeasurementsREVAbsolute extends Measurements {
     private final AbsoluteEncoder encoder;
 
     private double currentVelocity;
@@ -24,11 +24,6 @@ public class MeasurementsREVAbsolute extends  MeasurementsREV {
         previousVelocity = currentVelocity;
 
         return super.update(dt);
-    }
-
-    @Override
-    public void setEncoderPosition(double position) {
-        DriverStation.reportWarning("cannot set position of an absolute encoder", true);
     }
 
     @Override

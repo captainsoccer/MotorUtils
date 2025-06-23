@@ -1,12 +1,13 @@
 package util.BasicMotor.Measurements.RevEncoders;
 
 import com.revrobotics.RelativeEncoder;
+import util.BasicMotor.Measurements.Measurements;
 
 /**
  * This class is used to get the measurements from the REV motor controller it handles updating the
  * measurements and getting the latency compensated values
  */
-public class MeasurementsREVRelative extends MeasurementsREV {
+public class MeasurementsREVRelative extends Measurements {
   /** the encoder used to get the measurements from the motor controller */
   private final RelativeEncoder encoder;
 
@@ -54,7 +55,6 @@ public class MeasurementsREVRelative extends MeasurementsREV {
     return acceleration;
   }
 
-  @Override
   public void setEncoderPosition(double position) {
     encoder.setPosition(position);
   }

@@ -14,7 +14,6 @@ import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.*;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.Measurements;
-import util.BasicMotor.Measurements.RevEncoders.MeasurementsREV;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVAbsolute;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVRelative;
 import util.BasicMotor.MotorManager;
@@ -54,6 +53,7 @@ public class BasicSparkMAX extends BasicMotor {
 
     /**
      * gets the Spark MAX motor controller (useful if needed direct access to the motor controller)
+     *
      * @return the Spark MAX motor controller
      */
     public SparkMax getMotor() {
@@ -148,7 +148,7 @@ public class BasicSparkMAX extends BasicMotor {
         config.closedLoop.iZone(pidGains.getI_Zone());
         config.closedLoop.iMaxAccum(pidGains.getI_MaxAccum());
 
-        if(pidGains.getTolerance() != 0) {
+        if (pidGains.getTolerance() != 0) {
             DriverStation.reportWarning(
                     "Spark MAX does not use tolerance in the PID controller (works on rio PID Controller), so it is ignored: " + name,
                     false);
@@ -178,7 +178,7 @@ public class BasicSparkMAX extends BasicMotor {
             config.softLimit.reverseSoftLimitEnabled(false);
         }
 
-        if(constraints.getVoltageDeadband() != 0) {
+        if (constraints.getVoltageDeadband() != 0) {
             DriverStation.reportWarning(
                     "Spark MAX does not use voltage deadband (works on RIO PID controller), so it is ignored: " + name,
                     false);
@@ -225,8 +225,9 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     protected void setMotorPosition(double position) {
-        if (!(getMeasurements() instanceof MeasurementsREV encoder)) {
-            DriverStation.reportWarning("motor: " + name + " does not use anymore an encoder of the motor controller, so the position cannot be set", false);
+        if (!(getMeasurements() instanceof MeasurementsREVRelative encoder)) {
+            DriverStation.reportWarning(
+                    "motor: " + name + " does not use anymore an encoder that supports setting position,so the position cannot be set", false);
             return;
         }
 
@@ -240,6 +241,7 @@ public class BasicSparkMAX extends BasicMotor {
      * This is used to set the frequency of the periodic frames
      * some might not affect the Spark MAX, but are included for completeness
      * check the chart at <a href="https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames">...</a>
+     *
      * @param mainLoopHZ the frequency of the main loop in Hz
      */
     private void configurePeriodicFrames(double mainLoopHZ) {
@@ -315,17 +317,21 @@ public class BasicSparkMAX extends BasicMotor {
                 SparkBase.ResetMode.kResetSafeParameters,
                 SparkBase.PersistMode.kNoPersistParameters);
 
-        if(okSignal != REVLibError.kOk) {
+        if (okSignal != REVLibError.kOk) {
             DriverStation.reportError(
                     "Failed to apply configuration to Spark MAX motor: " + name + ". Error: " + okSignal.name(),
                     false);
         }
     }
 
-    public enum AbsoluteEncoderRange{
-        /** 0 to 1 of range */
+    public enum AbsoluteEncoderRange {
+        /**
+         * 0 to 1 of range
+         */
         ZERO_TO_ONE,
-        /** -0.5 to 0.5 of range */
+        /**
+         * -0.5 to 0.5 of range
+         */
         HALF_REVOLUTION;
 
         public boolean zeroCentered() {
@@ -339,24 +345,26 @@ public class BasicSparkMAX extends BasicMotor {
      * restores the Spark MAX to use the default encoder (the primary encoder)
      */
     public void useDefaultEncoder() {
-       config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder);
+        config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder);
 
-       // sets the primary encoder as the feedback sensor for the closed loop controller (also apply the config)
-       setDefaultMeasurements();
+        // sets the primary encoder as the feedback sensor for the closed loop controller (also apply the config)
+        setDefaultMeasurements();
     }
 
     /**
      * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark MAX)
      * it uses the absolute encoder connected to the Spark MAX data port
-     * @param inverted if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
-     *                           (the value reported by the sensor to get the motor position)
+     *
+     * @param inverted               if the absolute encoder is inverted (the position is reversed)
+     * @param zeroOffset             the position the encoder reports that should be considered zero
+     * @param sensorToMotorRatio     this value divides the ratio between the sensor and the motor
+     *                               (the value reported by the sensor to get the motor position)
      * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
      *                               (the value reported by the sensor to get the mechanism position)
-     * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
+     * @param absoluteEncoderRange   if the encoder should report a range of 0 to 1 or -0.5 to 0.5
      */
-    public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio, double mechanismToSensorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
+    public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio,
+                                   double mechanismToSensorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
         //sets the absolute encoder configuration
         config.absoluteEncoder.setSparkMaxDataPortConfig();
         //sets whether the absolute encoder is inverted or not
@@ -387,10 +395,11 @@ public class BasicSparkMAX extends BasicMotor {
     /**
      * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark MAX)
      * it uses the absolute encoder connected to the Spark MAX data port
-     * @param inverted if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
-     *                           (the value reported by the sensor to get the motor position)
+     *
+     * @param inverted             if the absolute encoder is inverted (the position is reversed)
+     * @param zeroOffset           the position the encoder reports that should be considered zero
+     * @param sensorToMotorRatio   this value divides the ratio between the sensor and the motor
+     *                             (the value reported by the sensor to get the motor position)
      * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
      */
     public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
@@ -400,12 +409,59 @@ public class BasicSparkMAX extends BasicMotor {
     /**
      * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark MAX)
      * it uses the absolute encoder connected to the Spark MAX data port
-     * @param inverted if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset the position the encoder reports that should be considered zero
+     *
+     * @param inverted           if the absolute encoder is inverted (the position is reversed)
+     * @param zeroOffset         the position the encoder reports that should be considered zero
      * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
      *                           (the value reported by the sensor to get the motor position)
      */
     public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio) {
         useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, AbsoluteEncoderRange.ZERO_TO_ONE);
+    }
+
+    /**
+     * configures the Spark MAX to use an external encoder for the pid loop (if it runs on the Spark MAX)
+     * it uses the external encoder connected to the Spark MAX data port
+     *
+     * @param inverted               if the external encoder is inverted (the position is reversed)
+     * @param sensorToMotorRatio     this value divides the ratio between the sensor and the motor
+     *                               (the value reported by the sensor to get the motor position)
+     * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
+     *                               (the value reported by the sensor to get the mechanism position)
+     */
+    public void useExternalEncoder(boolean inverted, double sensorToMotorRatio, double mechanismToSensorRatio) {
+        //sets the absolute encoder configuration
+        config.alternateEncoder.setSparkMaxDataPortConfig();
+        //sets whether the absolute encoder is inverted or not
+        config.alternateEncoder.inverted(inverted);
+        //sets the conversion factor for the absolute encoder position and velocity
+        config.alternateEncoder.positionConversionFactor(1 / sensorToMotorRatio);
+        config.alternateEncoder.velocityConversionFactor(1 / sensorToMotorRatio);
+        //sets the feedback sensor for the closed loop controller
+        config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAlternateOrExternalEncoder);
+
+        int periodMs = (int) ((1 / controllerLocation.HZ) * 1000); // convert to milliseconds
+        // sets the period for the absolute encoder position and velocity
+        // (the default encoder period is automatically disabled)
+        config.signals.externalOrAltEncoderPosition(periodMs);
+        config.signals.externalOrAltEncoderVelocity(periodMs);
+
+        //apply the configuration to the motor
+        applyConfig();
+
+        // set the measurements to the absolute encoder measurements
+        setMeasurements(new MeasurementsREVRelative(motor.getAlternateEncoder(), mechanismToSensorRatio));
+    }
+
+    /**
+     * configures the Spark MAX to use an external encoder for the pid loop (if it runs on the Spark MAX)
+     * it uses the external encoder connected to the Spark MAX data port
+     *
+     * @param inverted           if the external encoder is inverted (the position is reversed)
+     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
+     *                           (the value reported by the sensor to get the motor position)
+     */
+    public void useExternalEncoder(boolean inverted, double sensorToMotorRatio) {
+        useExternalEncoder(inverted, sensorToMotorRatio, 1);
     }
 }
