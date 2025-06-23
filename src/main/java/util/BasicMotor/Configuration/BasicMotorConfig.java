@@ -37,13 +37,6 @@ public class BasicMotorConfig {
      */
     public ConstraintsConfig constraintsConfig = new ConstraintsConfig();
     /**
-     * the current limit configuration of the motor controller
-     * <p>
-     * this is used to set the current limits of the motor controller
-     */
-    public CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
-
-    /**
      * bunches up all the configurations into one class
      * @return the controller gains which include PID gains, constraints, and feed forwards
      */
@@ -244,45 +237,6 @@ public class BasicMotorConfig {
         public ControllerConstrains getConstraints() {
             return new ControllerConstrains(
                     constraintType, maxValue, minValue, maxOutput, minOutput, voltageDeadband);
-        }
-    }
-
-    public static class CurrentLimitConfig {
-        /**
-         * the maximum current output of the motor controller (in amps)
-         * <p>
-         * this is the max current the motor windings will allow before stopping,
-         * this will usually be higher than the supply current limit by a wide margin.
-         */
-        public int statorCurrentLimit = 0;
-        /**
-         * the maximum current draw of the motor controller (in amps)
-         * <p>
-         * this is the max current the motor controller will draw from the battery before stopping or
-         * lowering to the {@link #lowerCurrentLimit} after the {@link #lowerLimitTime} has passed.
-         * this is useful if the robot is experiencing brownouts or breakers are tripping.
-         */
-        public int supplyCurrentLimit = 0;
-        /**
-         * the time (in seconds) that the motor can stay at supply current limit before it lowers to
-         * {@link #lowerCurrentLimit} this is useful for bursts of current needed for a short time
-         */
-        public double lowerLimitTime = 0;
-        /**
-         * the current the motor drops to after the supply current limit is reached for
-         * {@link #lowerLimitTime} this is useful for bursts of current
-         * <p>
-         * this is usually lower than the supply current limit and is used to prevent overheating
-         */
-        public int lowerCurrentLimit = 0;
-
-        /**
-         * creates the current limit configuration with the given values
-         * @return the current limits of the motor controller
-         */
-        public CurrentLimits getCurrentLimits() {
-            return new CurrentLimits(
-                    statorCurrentLimit, supplyCurrentLimit, lowerLimitTime, lowerCurrentLimit);
         }
     }
 }

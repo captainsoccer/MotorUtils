@@ -7,6 +7,8 @@ import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import edu.wpi.first.wpilibj.DriverStation;
 import util.BasicMotor.BasicMotor;
+import util.BasicMotor.Configuration.BasicMotorConfig;
+import util.BasicMotor.Configuration.BasicSparkBaseConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.*;
 import util.BasicMotor.LogFrame;
@@ -26,6 +28,16 @@ abstract class BasicSparkBase extends BasicMotor {
     // the idle power draw of the Spark MAX in watts (according to ChatGPT)
     private static final double sparkMaxIdlePowerDraw = 0.72;
 
+    /**
+     * creates a new spark base motor controller
+     *
+     * @param motor     the Spark base motor controller (SparkFlex, SparkMax, etc.)
+     * @param config    the config of the Spark base motor controller (SparkFlexConfig, SparkMaxConfig, etc.)
+     * @param gains     the gains of the controller (PID, FF, etc.)
+     * @param name      the name of the motor (used for logging and debugging)
+     * @param gearRatio the gear ratio of the motor (used for measurements and calculations)
+     * @param location  the location of the motor controller (used for logging and debugging)
+     */
     public BasicSparkBase(
             SparkBase motor,
             SparkBaseConfig config,
@@ -44,9 +56,41 @@ abstract class BasicSparkBase extends BasicMotor {
         // all configs should be stored in code and not on motor
         applyConfig();
 
+        updatePIDGainsToMotor(gains.getPidGains().convertToMotorGains(gearRatio));
+        updateConstraints(gains.getControllerConstrains().convertToMotorConstrains(gearRatio));
+
         configurePeriodicFrames(location.HZ);
 
         defaultMeasurements = new MeasurementsREVRelative(motor.getEncoder(), gearRatio);
+    }
+
+    /**
+     * creates a new spark base motor controller
+     *
+     * @param motor       the Spark base motor controller (SparkFlex, SparkMax, etc.)
+     * @param config      the config of the Spark base motor controller (SparkFlexConfig, SparkMaxConfig, etc.)
+     * @param motorConfig the basic motor configuration (used for logging and debugging)
+     */
+    public BasicSparkBase(
+            SparkBase motor,
+            SparkBaseConfig config,
+            BasicMotorConfig motorConfig) {
+
+        this(
+                motor,
+                config,
+                motorConfig.getControllerGains(),
+                motorConfig.motorConfig.name,
+                motorConfig.motorConfig.gearRatio,
+                motorConfig.motorConfig.location);
+
+        if (motorConfig instanceof BasicSparkBaseConfig sparkBaseConfig) {
+            setCurrentLimits(sparkBaseConfig.currentLimitConfig.getCurrentLimits());
+        } else {
+            DriverStation.reportWarning(
+                    "Motor config is not a Spark Base config, so the currentLimits config is not applied " + name,
+                    false);
+        }
     }
 
     /**
@@ -141,18 +185,20 @@ abstract class BasicSparkBase extends BasicMotor {
 
     @Override
     protected void updatePIDGainsToMotor(PIDGains pidGains) {
-        // sets the PID gains for the closed loop controller
-        config.closedLoop.pid(pidGains.getK_P(), pidGains.getK_I(), pidGains.getK_D());
-        config.closedLoop.iZone(pidGains.getI_Zone());
-        config.closedLoop.iMaxAccum(pidGains.getI_MaxAccum());
+        var gains = pidGains.convertToDutyCycle();
 
-        if (pidGains.getTolerance() != 0) {
+        // sets the PID gains for the closed loop controller
+        config.closedLoop.pid(gains.getK_P(), gains.getK_I(), gains.getK_D());
+        config.closedLoop.iZone(gains.getI_Zone());
+        config.closedLoop.iMaxAccum(gains.getI_MaxAccum());
+
+        if (gains.getTolerance() != 0) {
             DriverStation.reportWarning(
                     "Spark MAX does not use tolerance in the PID controller (works on rio PID Controller), so it is ignored: " + name,
                     false);
         }
 
-        kI = pidGains.getK_I(); // store the integral gain for later use
+        kI = gains.getK_I(); // store the integral gain for later use
 
         applyConfig();
     }
@@ -189,13 +235,15 @@ abstract class BasicSparkBase extends BasicMotor {
     public void setCurrentLimits(CurrentLimits currentLimits) {
 
         if (currentLimits instanceof CurrentLimitsREV limits) {
-            int rpm = (limits.getFreeSpeedRPS() * 60) * (int) getMeasurements().getGearRatio(); // convert RPS to RPM
+            int rpm = (int) ((limits.getFreeSpeedRPS() * 60) * getMeasurements().getGearRatio()); // convert RPS to RPM
             config.smartCurrentLimit(limits.getStallCurrentLimit(), limits.getStatorCurrentLimit(), rpm);
 
             config.secondaryCurrentLimit(limits.getSecondaryCurrentLimit());
         } else {
             // if the current limits are not REV specific, use the normal current limits
             config.smartCurrentLimit(currentLimits.getStatorCurrentLimit());
+
+            DriverStation.reportWarning("using default current limits for Spark MAX motor: " + name, false);
         }
 
         applyConfig();

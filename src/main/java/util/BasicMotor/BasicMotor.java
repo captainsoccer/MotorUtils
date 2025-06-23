@@ -113,7 +113,7 @@ public abstract class BasicMotor {
     protected abstract void updateConstraints(ControllerConstrains constraints);
     
     /**
-     * creates the motor. the motor child needs to register the measurements
+     * creates the motor.
      *
      * @param controllerGains    the gains of the controller
      * @param name               the name of the motor (used for logging)

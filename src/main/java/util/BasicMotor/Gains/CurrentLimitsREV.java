@@ -18,9 +18,9 @@ public class CurrentLimitsREV extends CurrentLimits{
     private final int secondaryCurrentLimit;
 
     /**
-     * the free speed of the motor controller (in RPM) if below this speed the motor is considered in stall and the stall current limit is applied
+     * the free speed of the motor controller (in RPS) if below this speed the motor is considered in stall and the stall current limit is applied
      */
-    private final int freeSpeedRPS;
+    private final double freeSpeedRPS;
 
     /**
      * creates a current limit with the given values
@@ -32,7 +32,7 @@ public class CurrentLimitsREV extends CurrentLimits{
      *                     the gear ratio is automatically applied to the free speed so no need to divide by it
      * @param secondaryCurrentLimit a secondary current limit that is not used by REV controllers
      */
-    public CurrentLimitsREV(int freeSpeedCurrentLimit, int stallCurrentLimit, int freeSpeedRPS, int secondaryCurrentLimit) {
+    public CurrentLimitsREV(int freeSpeedCurrentLimit, int stallCurrentLimit, double freeSpeedRPS, int secondaryCurrentLimit) {
         super(freeSpeedCurrentLimit, 0, 0, 0);
         this.stallCurrentLimit = stallCurrentLimit;
         this.freeSpeedRPS = freeSpeedRPS;
@@ -51,7 +51,7 @@ public class CurrentLimitsREV extends CurrentLimits{
      * gets the free speed of the motor controller
      * @return the free speed of the motor controller (in RPS (revolutions per second))
      */
-    public int getFreeSpeedRPS() {
+    public double getFreeSpeedRPS() {
         return freeSpeedRPS;
     }
 

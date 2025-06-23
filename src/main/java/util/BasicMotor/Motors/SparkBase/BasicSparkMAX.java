@@ -4,10 +4,20 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import util.BasicMotor.Configuration.BasicSparkBaseConfig;
 import util.BasicMotor.Gains.*;
 import util.BasicMotor.MotorManager;
 
 public class BasicSparkMAX extends BasicSparkBase {
+    /**
+     * creates a basic spark max motor controller with the given gains and id
+     *
+     * @param gains     the gains of the motor controller
+     * @param id        the id of the motor controller
+     * @param name      the name of the motor controller
+     * @param gearRatio the gear ratio of the motor controller
+     * @param location  the location of the motor controller (RIO or MOTOR)
+     */
     public BasicSparkMAX(
             ControllerGains gains,
             int id,
@@ -16,6 +26,15 @@ public class BasicSparkMAX extends BasicSparkBase {
             MotorManager.ControllerLocation location) {
 
         super(new SparkMax(id, SparkLowLevel.MotorType.kBrushless), new SparkMaxConfig(), gains, name, gearRatio, location);
+    }
+
+    /**
+     * creates a basic spark max motor controller with the given configuration
+     *
+     * @param config the configuration of the motor controller
+     */
+    public BasicSparkMAX(BasicSparkBaseConfig config) {
+        super(new SparkMax(config.motorConfig.id, SparkLowLevel.MotorType.kBrushless), new SparkMaxConfig(), config);
     }
 
     @Override
