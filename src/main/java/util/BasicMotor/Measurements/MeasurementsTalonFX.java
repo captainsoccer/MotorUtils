@@ -9,7 +9,7 @@ import edu.wpi.first.units.measure.*;
  * This class is used to get the measurements from the CTRE motor controller it handles updating the
  * measurements and getting the latency compensated values
  */
-public class MeasurementsCTRE extends Measurements {
+public class MeasurementsTalonFX extends Measurements {
 
   /**
    * the timeout for the motor controller to wait for the signals to update if it does not update in
@@ -38,7 +38,7 @@ public class MeasurementsCTRE extends Measurements {
    * @param refreshHZ the refresh rate of the signals (how often to update the signals)
    * @param gearRatio the gear ratio of the motor (the measurements are divided by this)
    */
-  public MeasurementsCTRE(
+  public MeasurementsTalonFX(
       StatusSignal<Angle> positionSignal,
       StatusSignal<AngularVelocity> velocitySignal,
       StatusSignal<AngularAcceleration> accelerationSignal,

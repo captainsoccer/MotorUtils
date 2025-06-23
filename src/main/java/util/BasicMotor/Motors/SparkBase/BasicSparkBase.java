@@ -1,13 +1,10 @@
-package util.BasicMotor.Motors.SparkMAX;
+package util.BasicMotor.Motors.SparkBase;
 
 import com.revrobotics.REVLibError;
-import com.revrobotics.spark.ClosedLoopSlot;
-import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkLowLevel;
-import com.revrobotics.spark.SparkMax;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.*;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.DriverStation;
 import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Controllers.Controller;
@@ -18,9 +15,9 @@ import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVAbsolute;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVRelative;
 import util.BasicMotor.MotorManager;
 
-public class BasicSparkMAX extends BasicMotor {
-    private final SparkMax motor;
-    private final SparkMaxConfig config;
+abstract class BasicSparkBase extends BasicMotor {
+    protected final SparkBase motor;
+    protected final SparkBaseConfig config;
 
     private final Measurements defaultMeasurements;
 
@@ -29,18 +26,19 @@ public class BasicSparkMAX extends BasicMotor {
     // the idle power draw of the Spark MAX in watts (according to ChatGPT)
     private static final double sparkMaxIdlePowerDraw = 0.72;
 
-    public BasicSparkMAX(
+    public BasicSparkBase(
+            SparkBase motor,
+            SparkBaseConfig config,
             ControllerGains gains,
-            int id,
             String name,
             double gearRatio,
             MotorManager.ControllerLocation location) {
 
         super(gains, name, location);
 
-        this.motor = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
+        this.motor = motor;
 
-        this.config = new SparkMaxConfig();
+        this.config = config;
         config.voltageCompensation(
                 MotorManager.motorIdleVoltage); // set the voltage compensation to the idle voltage
         // all configs should be stored in code and not on motor
@@ -56,7 +54,7 @@ public class BasicSparkMAX extends BasicMotor {
      *
      * @return the Spark MAX motor controller
      */
-    public SparkMax getMotor() {
+    public SparkBase getMotor() {
         return motor;
     }
 
@@ -294,7 +292,7 @@ public class BasicSparkMAX extends BasicMotor {
 
     @Override
     protected void setMotorFollow(BasicMotor master, boolean inverted) {
-        var motor = (BasicSparkMAX) master;
+        var motor = (BasicSparkBase) master;
 
         config.follow(motor.motor, inverted);
         applyConfig();
@@ -366,8 +364,6 @@ public class BasicSparkMAX extends BasicMotor {
      */
     public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio,
                                    double mechanismToSensorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
-        //sets the absolute encoder configuration
-        config.absoluteEncoder.setSparkMaxDataPortConfig();
         //sets whether the absolute encoder is inverted or not
         config.absoluteEncoder.inverted(inverted);
         //sets the conversion factor for the absolute encoder position and velocity
@@ -431,15 +427,10 @@ public class BasicSparkMAX extends BasicMotor {
      *                               (the value reported by the sensor to get the mechanism position)
      */
     public void useExternalEncoder(boolean inverted, double sensorToMotorRatio, double mechanismToSensorRatio) {
-        //sets the absolute encoder configuration
-        config.alternateEncoder.setSparkMaxDataPortConfig();
-        //sets whether the absolute encoder is inverted or not
-        config.alternateEncoder.inverted(inverted);
-        //sets the conversion factor for the absolute encoder position and velocity
-        config.alternateEncoder.positionConversionFactor(1 / sensorToMotorRatio);
-        config.alternateEncoder.velocityConversionFactor(1 / sensorToMotorRatio);
         //sets the feedback sensor for the closed loop controller
         config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAlternateOrExternalEncoder);
+
+        configExternalEncoder(inverted, sensorToMotorRatio, mechanismToSensorRatio);
 
         int periodMs = (int) ((1 / controllerLocation.HZ) * 1000); // convert to milliseconds
         // sets the period for the absolute encoder position and velocity
@@ -451,7 +442,7 @@ public class BasicSparkMAX extends BasicMotor {
         applyConfig();
 
         // set the measurements to the absolute encoder measurements
-        setMeasurements(new MeasurementsREVRelative(motor.getAlternateEncoder(), mechanismToSensorRatio));
+        setMeasurements(new MeasurementsREVRelative(getExternalEncoder(), mechanismToSensorRatio));
     }
 
     /**
@@ -465,4 +456,8 @@ public class BasicSparkMAX extends BasicMotor {
     public void useExternalEncoder(boolean inverted, double sensorToMotorRatio) {
         useExternalEncoder(inverted, sensorToMotorRatio, 1);
     }
+
+    abstract protected void configExternalEncoder(boolean inverted, double sensorToMotorRatio, double mechanismToSensorRatio);
+
+    abstract protected RelativeEncoder getExternalEncoder();
 }
