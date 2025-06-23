@@ -1,9 +1,10 @@
-package util.BasicMotor.Measurements;
+package util.BasicMotor.Measurements.CTREEncoders;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.*;
+import util.BasicMotor.Measurements.Measurements;
 
 /**
  * This class is used to get the measurements from the CTRE motor controller it handles updating the

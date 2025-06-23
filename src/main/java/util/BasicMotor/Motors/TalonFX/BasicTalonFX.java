@@ -17,8 +17,8 @@ import util.BasicMotor.Gains.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.Measurements;
-import util.BasicMotor.Measurements.MeasurementsCANCoder;
-import util.BasicMotor.Measurements.MeasurementsTalonFX;
+import util.BasicMotor.Measurements.CTREEncoders.MeasurementsCANCoder;
+import util.BasicMotor.Measurements.CTREEncoders.MeasurementsTalonFX;
 import util.BasicMotor.MotorManager;
 
 /**

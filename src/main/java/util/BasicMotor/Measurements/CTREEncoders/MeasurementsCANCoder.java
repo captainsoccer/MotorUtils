@@ -1,12 +1,13 @@
-package util.BasicMotor.Measurements;
+package util.BasicMotor.Measurements.CTREEncoders;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import util.BasicMotor.Measurements.Measurements;
 
-public class MeasurementsCANCoder extends Measurements{
+public class MeasurementsCANCoder extends Measurements {
     /**
      * the timeout for the motor controller to wait for the signals to update if it does not update in
      * this time, it will use the old value
