@@ -202,6 +202,193 @@ public abstract class BasicMotor {
     }
 
     /**
+     * stops the motor
+     */
+    public void stopMotor() {
+        controller.setReference(new Controller.ControllerRequest());
+    }
+
+    /**
+     * sets the current limits of the motor some current limits are not supported on all motors
+     *
+     * @param currentLimits the current limits of the motor
+     */
+    public abstract void setCurrentLimits(CurrentLimits currentLimits);
+
+    /**
+     * sets the idle mode of the motor this is used to set the motor to brake or coast mode
+     *
+     * @param mode the idle mode of the motor
+     */
+    public abstract void setIdleMode(IdleMode mode);
+
+    /**
+     * sets if the motor is inverted or not, this is used to set the motor to be inverted or not
+     * default is counter-clockwise positive
+     * @param inverted if the motor should be inverted (true for clockwise positive, false for counter-clockwise positive)
+     */
+    public abstract void setMotorInverted(boolean inverted);
+
+    /**
+     * sets the motor encoder to a new positon
+     *
+     * @param position the position
+     */
+    protected abstract void setMotorPosition(double position);
+
+    /**
+     * used when there is no more need to record measurements this is used to stop the
+     * measurement recording (to free up canbus)
+     * measurements can be re-enabled by calling {@link #startRecordingMeasurements(double HZ)}
+     */
+    protected abstract void stopRecordingMeasurements();
+
+    /**
+     * starts recording measurements this is used to start the measurement recording
+     * (used when accidentally stopped the measurements)
+     *
+     * @param HZ the frequency to record the measurements at (in Hz)
+     */
+    protected abstract void startRecordingMeasurements(double HZ);
+
+    /**
+     * start following another motor this only works if the other motor is the same type as this motor
+     * this will disable pid control on this motor and measurements logging
+     *
+     * @param master   the motor to follow
+     * @param inverted if the motor should be opposite of the master
+     */
+    public void followMotor(BasicMotor master, boolean inverted) {
+        if (master == this) {
+            return;
+        }
+
+        if (this.getClass() != master.getClass()) {
+            throw new IllegalArgumentException("Cannot follow a motor of a different type");
+        }
+
+        motorState = MotorState.FOLLOWING;
+        setMotorFollow(master, inverted);
+        stopRecordingMeasurements();
+    }
+
+    protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
+
+    protected abstract void stopMotorFollow();
+
+    /**
+     * stops following the motor this will re-enable pid control on this motor and measurements
+     * logging
+     */
+    public void stopFollowing() {
+        motorState = MotorState.STOPPED;
+        stopMotorFollow();
+        stopMotorOutput();
+        stopRecordingMeasurements();
+    }
+
+    // forwarded functions (for ease of use)
+
+    /**
+     * sets the reference of the motor this is used to set the setpoint of the motor
+     *
+     * @param request the request to set the reference to
+     */
+    public void setReference(Controller.ControllerRequest request) {
+        controller.setReference(request);
+    }
+
+    /**
+     * sets the reference of the motor this is used to set the setpoint of the motor
+     *
+     * @param setpoint the setpoint of the motor (units depending on the mode)
+     * @param mode     the mode of the motor (position, velocity, voltage, percent output)
+     */
+    public void setReference(double setpoint, Controller.RequestType mode) {
+        controller.setReference(setpoint, mode);
+    }
+
+    /**
+     * sets the reference of the motor this is used to set the setpoint of the motor
+     *
+     * @param setpoint             the setpoint of the motor (units depending on the mode)
+     * @param mode                 the mode of the motor (position, velocity, voltage, percent output)
+     * @param arbitraryFeedForward a voltage applied on top of the pid and other feedForwards
+     */
+    public void setReference(
+            double setpoint, Controller.RequestType mode, double arbitraryFeedForward) {
+        controller.setReference(new Controller.ControllerRequest(setpoint, mode, arbitraryFeedForward));
+    }
+
+    /**
+     * gets the current position of the motor
+     * <p>
+     * default units are rotations but can be changed in the measurements
+     * @return the current position of the motor
+     */
+    public double getPosition() {
+        return measurements.getMeasurement().position();
+    }
+
+    /**
+     * gets the current velocity of the motor
+     * <p>
+     * default units are rotations per second, but can be changed in the measurements
+     * @return the current velocity of the motor
+     */
+    public double getVelocity() {
+        return measurements.getMeasurement().velocity();
+    }
+
+    /**
+     * if the motor is at the setpoint, this is used to check if the motor is at the setpoint
+     *
+     * @return true if the motor is at the setpoint, false otherwise
+     */
+    public boolean isAtSetpoint() {
+        return logFrame.atSetpoint;
+    }
+
+    /**
+     * if the motor is at the goal this is used to check if the motor is at the goal
+     *
+     * @return true if the motor is at the goal, false otherwise
+     */
+    public boolean isAtGoal() {
+        return logFrame.atGoal;
+    }
+
+    /**
+     * resets the motor encoder to a specif position
+     *
+     * @param newPosition the new position of the motor (gear ratio is applied later)
+     */
+    public void resetEncoder(double newPosition) {
+        controller.reset(newPosition, 0);
+        setMotorPosition(newPosition * measurements.getGearRatio());
+    }
+
+    /**
+     * resets the motor encoder to a specif position
+     *
+     * @param newPosition the new position of the motor (gear ratio is applied later)
+     */
+    public void resetEncoder(double newPosition, double newVelocity) {
+        controller.reset(newPosition, newVelocity);
+        setMotorPosition(newPosition * measurements.getGearRatio());
+    }
+
+    /**
+     * resets the controllers (essentially makes the motor as if it was just created, but in the
+     * latest position)
+     */
+    public void reset() {
+        resetEncoder(measurements.getGearRatio());
+    }
+
+
+    //periodic functions
+    /**
      * this runs the main loop for the controller runs pid if needed and updates the measurements this
      * is called on a separate thread
      */
@@ -385,18 +572,11 @@ public abstract class BasicMotor {
     protected abstract void stopMotorOutput();
 
     /**
-     * stops the motor
-     */
-    public void stopMotor() {
-        controller.setReference(new Controller.ControllerRequest());
-    }
-
-    /**
      * gets all the sensor data from the motor (this runs on a separate slower thread)
      */
     private void updateSensorData() {
         logFrame.sensorData = getSensorData();
-        
+
         if(controllerLocation == ControllerLocation.MOTOR)
             logFrame.pidOutput = getPIDLatestOutput();
 
@@ -442,182 +622,4 @@ public abstract class BasicMotor {
      * @return the pid output
      */
     protected abstract LogFrame.PIDOutput getPIDLatestOutput();
-
-    /**
-     * sets the current limits of the motor some current limits are not supported on all motors
-     *
-     * @param currentLimits the current limits of the motor
-     */
-    public abstract void setCurrentLimits(CurrentLimits currentLimits);
-
-    /**
-     * sets the idle mode of the motor this is used to set the motor to brake or coast mode
-     *
-     * @param mode the idle mode of the motor
-     */
-    public abstract void setIdleMode(IdleMode mode);
-
-    /**
-     * sets if the motor is inverted or not, this is used to set the motor to be inverted or not
-     * default is counter-clockwise positive
-     * @param inverted if the motor should be inverted (true for clockwise positive, false for counter-clockwise positive)
-     */
-    public abstract void setMotorInverted(boolean inverted);
-
-    /**
-     * sets the motor encoder to a new positon
-     *
-     * @param position the position
-     */
-    protected abstract void setMotorPosition(double position);
-
-    /**
-     * used when there is no more need to record measurements this is used to stop the
-     * measurement recording (to free up canbus)
-     * measurements can be re-enabled by calling {@link #startRecordingMeasurements(double HZ)}
-     */
-    protected abstract void stopRecordingMeasurements();
-
-    /**
-     * starts recording measurements this is used to start the measurement recording
-     * (used when accidentally stopped the measurements)
-     *
-     * @param HZ the frequency to record the measurements at (in Hz)
-     */
-    protected abstract void startRecordingMeasurements(double HZ);
-
-    /**
-     * start following another motor this only works if the other motor is the same type as this motor
-     * this will disable pid control on this motor and measurements logging
-     *
-     * @param master   the motor to follow
-     * @param inverted if the motor should be opposite of the master
-     */
-    public void followMotor(BasicMotor master, boolean inverted) {
-        if (master == this) {
-            return;
-        }
-
-        if (this.getClass() != master.getClass()) {
-            throw new IllegalArgumentException("Cannot follow a motor of a different type");
-        }
-
-        motorState = MotorState.FOLLOWING;
-        setMotorFollow(master, inverted);
-        stopRecordingMeasurements();
-    }
-
-    protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
-
-    protected abstract void stopMotorFollow();
-
-    /**
-     * stops following the motor this will re-enable pid control on this motor and measurements
-     * logging
-     */
-    public void stopFollowing() {
-        motorState = MotorState.STOPPED;
-        stopMotorFollow();
-        stopMotorOutput();
-        stopRecordingMeasurements();
-    }
-
-    // forwarded functions (for ease of use)
-
-    /**
-     * sets the reference of the motor this is used to set the setpoint of the motor
-     *
-     * @param request the request to set the reference to
-     */
-    public void setReference(Controller.ControllerRequest request) {
-        controller.setReference(request);
-    }
-
-    /**
-     * sets the reference of the motor this is used to set the setpoint of the motor
-     *
-     * @param setpoint the setpoint of the motor (units depending on the mode)
-     * @param mode     the mode of the motor (position, velocity, voltage, percent output)
-     */
-    public void setReference(double setpoint, Controller.RequestType mode) {
-        controller.setReference(setpoint, mode);
-    }
-
-    /**
-     * sets the reference of the motor this is used to set the setpoint of the motor
-     *
-     * @param setpoint             the setpoint of the motor (units depending on the mode)
-     * @param mode                 the mode of the motor (position, velocity, voltage, percent output)
-     * @param arbitraryFeedForward a voltage applied on top of the pid and other feedForwards
-     */
-    public void setReference(
-            double setpoint, Controller.RequestType mode, double arbitraryFeedForward) {
-        controller.setReference(new Controller.ControllerRequest(setpoint, mode, arbitraryFeedForward));
-    }
-
-    /**
-     * gets the current position of the motor
-     * <p>
-     * default units are rotations but can be changed in the measurements
-     * @return the current position of the motor
-     */
-    public double getPosition() {
-        return measurements.getMeasurement().position();
-    }
-
-    /**
-     * gets the current velocity of the motor
-     * <p>
-     * default units are rotations per second, but can be changed in the measurements
-     * @return the current velocity of the motor
-     */
-    public double getVelocity() {
-        return measurements.getMeasurement().velocity();
-    }
-
-    /**
-     * if the motor is at the setpoint, this is used to check if the motor is at the setpoint
-     *
-     * @return true if the motor is at the setpoint, false otherwise
-     */
-    public boolean isAtSetpoint() {
-        return logFrame.atSetpoint;
-    }
-
-    /**
-     * if the motor is at the goal this is used to check if the motor is at the goal
-     *
-     * @return true if the motor is at the goal, false otherwise
-     */
-    public boolean isAtGoal() {
-        return logFrame.atGoal;
-    }
-
-    /**
-     * resets the motor encoder to a specif position
-     *
-     * @param newPosition the new position of the motor (gear ratio is applied later)
-     */
-    public void resetEncoder(double newPosition) {
-        controller.reset(newPosition, 0);
-        setMotorPosition(newPosition * measurements.getGearRatio());
-    }
-
-    /**
-     * resets the motor encoder to a specif position
-     *
-     * @param newPosition the new position of the motor (gear ratio is applied later)
-     */
-    public void resetEncoder(double newPosition, double newVelocity) {
-        controller.reset(newPosition, newVelocity);
-        setMotorPosition(newPosition * measurements.getGearRatio());
-    }
-
-    /**
-     * resets the controllers (essentially makes the motor as if it was just created, but in the
-     * latest position)
-     */
-    public void reset() {
-        resetEncoder(measurements.getGearRatio());
-    }
 }
