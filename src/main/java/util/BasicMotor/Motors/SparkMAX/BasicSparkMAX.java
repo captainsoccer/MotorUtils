@@ -45,8 +45,9 @@ public class BasicSparkMAX extends BasicMotor {
         // all configs should be stored in code and not on motor
         applyConfig();
 
+        configurePeriodicFrames(location.HZ);
+
         defaultMeasurements = new MeasurementsREVRelative(motor.getEncoder(), gearRatio);
-        setMeasurements(defaultMeasurements);
     }
 
     @Override
@@ -55,6 +56,12 @@ public class BasicSparkMAX extends BasicMotor {
         config.closedLoop.pid(pidGains.getK_P(), pidGains.getK_I(), pidGains.getK_D());
         config.closedLoop.iZone(pidGains.getI_Zone());
         config.closedLoop.iMaxAccum(pidGains.getI_MaxAccum());
+
+        if(pidGains.getTolerance() != 0) {
+            DriverStation.reportWarning(
+                    "Spark MAX does not use tolerance in the PID controller (works on rio PID Controller), so it is ignored: " + name,
+                    false);
+        }
 
         kI = pidGains.getK_I(); // store the integral gain for later use
 
@@ -78,6 +85,12 @@ public class BasicSparkMAX extends BasicMotor {
             // disables the soft limits
             config.softLimit.forwardSoftLimitEnabled(false);
             config.softLimit.reverseSoftLimitEnabled(false);
+        }
+
+        if(constraints.getVoltageDeadband() != 0) {
+            DriverStation.reportWarning(
+                    "Spark MAX does not use voltage deadband (works on RIO PID controller), so it is ignored: " + name,
+                    false);
         }
 
         applyConfig();
@@ -168,7 +181,7 @@ public class BasicSparkMAX extends BasicMotor {
     public void setCurrentLimits(CurrentLimits currentLimits) {
 
         //TODO: decide what to do with this shit
-        config.secondaryCurrentLimit(currentLimits.getSupplyLowerLimit()); // it is stator not supply current limit
+        config.secondaryCurrentLimit(currentLimits.getSupplyLowerLimit()); // it is a stator limit not supply current limit
 
         if (currentLimits instanceof CurrentLimitsREV limits) {
             int rpm = (limits.getFreeSpeedRPS() * 60) * (int) getMeasurements().getGearRatio(); // convert RPS to RPM
