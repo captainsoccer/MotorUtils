@@ -148,7 +148,7 @@ public class TalonFXSensors {
         powerDraw,
         powerOutput,
         dutyCycle,
-        "Not supported by TalonFX" // TODO: Implement fault handling
+        "Not supported by TalonFX"
         );
   }
 

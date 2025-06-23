@@ -263,6 +263,8 @@ public class BasicTalonFX extends BasicMotor {
   protected void setMotorFollow(BasicMotor master, boolean inverted) {
     BasicTalonFX motor = (BasicTalonFX) master;
 
+    sensors.setDutyCycleToDefaultRate(true);
+
     Follower follower = new Follower(motor.motor.getDeviceID(), inverted);
 
     this.motor.setControl(follower);
@@ -270,6 +272,7 @@ public class BasicTalonFX extends BasicMotor {
 
   @Override
   protected void stopMotorFollow() {
+    sensors.setDutyCycleToDefaultRate(false);
     motor.stopMotor();
   }
 
