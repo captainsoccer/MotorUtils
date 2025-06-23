@@ -5,6 +5,7 @@ import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -14,6 +15,7 @@ import util.BasicMotor.Gains.*;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREV;
+import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVAbsolute;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVRelative;
 import util.BasicMotor.MotorManager;
 
@@ -48,6 +50,14 @@ public class BasicSparkMAX extends BasicMotor {
         configurePeriodicFrames(location.HZ);
 
         defaultMeasurements = new MeasurementsREVRelative(motor.getEncoder(), gearRatio);
+    }
+
+    /**
+     * gets the Spark MAX motor controller (useful if needed direct access to the motor controller)
+     * @return the Spark MAX motor controller
+     */
+    public SparkMax getMotor() {
+        return motor;
     }
 
     @Override
@@ -312,5 +322,90 @@ public class BasicSparkMAX extends BasicMotor {
         }
     }
 
+    public enum AbsoluteEncoderRange{
+        /** 0 to 1 of range */
+        ZERO_TO_ONE,
+        /** -0.5 to 0.5 of range */
+        HALF_REVOLUTION;
+
+        public boolean zeroCentered() {
+            return this == HALF_REVOLUTION;
+        }
+    }
+
     // TODO: add support for other rev encoders switching (like absolute encoders) directly
+
+    /**
+     * restores the Spark MAX to use the default encoder (the primary encoder)
+     */
+    public void useDefaultEncoder() {
+       config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder);
+
+       // sets the primary encoder as the feedback sensor for the closed loop controller (also apply the config)
+       setDefaultMeasurements();
+    }
+
+    /**
+     * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark MAX)
+     * it uses the absolute encoder connected to the Spark MAX data port
+     * @param inverted if the absolute encoder is inverted (the position is reversed)
+     * @param zeroOffset the position the encoder reports that should be considered zero
+     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
+     *                           (the value reported by the sensor to get the motor position)
+     * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
+     *                               (the value reported by the sensor to get the mechanism position)
+     * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
+     */
+    public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio, double mechanismToSensorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
+        //sets the absolute encoder configuration
+        config.absoluteEncoder.setSparkMaxDataPortConfig();
+        //sets whether the absolute encoder is inverted or not
+        config.absoluteEncoder.inverted(inverted);
+        //sets the conversion factor for the absolute encoder position and velocity
+        config.absoluteEncoder.positionConversionFactor(1 / sensorToMotorRatio);
+        config.absoluteEncoder.velocityConversionFactor(1 / sensorToMotorRatio);
+        //sets the zero centered range of the absolute encoder
+        config.absoluteEncoder.zeroCentered(absoluteEncoderRange.zeroCentered());
+        //sets the zero offset of the absolute encoder
+        config.absoluteEncoder.zeroOffset(zeroOffset);
+        //sets the feedback sensor for the closed loop controller
+        config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAbsoluteEncoder);
+
+        int periodMs = (int) ((1 / controllerLocation.HZ) * 1000); // convert to milliseconds
+        // sets the period for the absolute encoder position and velocity
+        // (the default encoder period is automatically disabled)
+        config.signals.absoluteEncoderPositionPeriodMs(periodMs);
+        config.signals.absoluteEncoderVelocityPeriodMs(periodMs);
+
+        //apply the configuration to the motor
+        applyConfig();
+
+        // set the measurements to the absolute encoder measurements
+        setMeasurements(new MeasurementsREVAbsolute(motor.getAbsoluteEncoder(), mechanismToSensorRatio));
+    }
+
+    /**
+     * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark MAX)
+     * it uses the absolute encoder connected to the Spark MAX data port
+     * @param inverted if the absolute encoder is inverted (the position is reversed)
+     * @param zeroOffset the position the encoder reports that should be considered zero
+     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
+     *                           (the value reported by the sensor to get the motor position)
+     * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
+     */
+    public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
+        useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, 1, absoluteEncoderRange);
+    }
+
+    /**
+     * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark MAX)
+     * it uses the absolute encoder connected to the Spark MAX data port
+     * @param inverted if the absolute encoder is inverted (the position is reversed)
+     * @param zeroOffset the position the encoder reports that should be considered zero
+     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
+     *                           (the value reported by the sensor to get the motor position)
+     */
+    public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio) {
+        useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, AbsoluteEncoderRange.ZERO_TO_ONE);
+    }
 }

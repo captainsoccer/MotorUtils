@@ -295,4 +295,7 @@ public class BasicTalonFX extends BasicMotor {
       );
     }
   }
+
+
+  //TODO: add support for remote encoder or fused (idk need to learn)
 }
