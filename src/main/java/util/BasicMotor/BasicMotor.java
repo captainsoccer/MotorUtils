@@ -216,7 +216,7 @@ public abstract class BasicMotor {
         logFrame.measurement = measurement;
 
         // checks if the motor is stopped or needs to be stopped
-        boolean shouldRun = shouldRunLoop(controller.getRequestType());
+        boolean shouldRun = shouldRunLoop(controller.getRequestType(), measurement);
         if(shouldRun) motorState = MotorState.RUNNING;
         else return;
 
@@ -236,12 +236,10 @@ public abstract class BasicMotor {
         // updates the log frame with the motor output
         logFrame.controllerFrame = motorOutput;
         // sets the motor output
-        if(controllerLocation == ControllerLocation.RIO) {
+        if(controllerLocation == ControllerLocation.RIO)
             setMotorOutput(motorOutput.totalOutput(), 0, Controller.RequestType.VOLTAGE);
-        }
-        else{
-            setMotorOutput(motorOutput.setpoint(), motorOutput.totalOutput(), motorOutput.mode());
-        }
+        else
+            setMotorOutput(motorOutput.setpoint(), motorOutput.feedForwardOutput().totalOutput(), motorOutput.mode());
     }
 
     /**
@@ -263,7 +261,8 @@ public abstract class BasicMotor {
      * @param requestType the request type of the controller
      * @return true if the loop should continue running, false otherwise
      */
-    private boolean shouldRunLoop(Controller.RequestType requestType) {
+    private boolean shouldRunLoop(Controller.RequestType requestType, Measurements.Measurement measurement) {
+        //if the robot is disabled, then we need to stop the motor
         if(RobotState.isDisabled()) {
             if(motorState == MotorState.DISABLED){
                 return false;
@@ -272,20 +271,24 @@ public abstract class BasicMotor {
             return false;
         }
 
-        if(motorState == MotorState.DISABLED) {
-            if(requestType == Controller.RequestType.STOP) {
-                motorState = MotorState.STOPPED;
-                return false;
-            }
 
+        if(motorState == MotorState.DISABLED && requestType != Controller.RequestType.STOP) {
+            //if the motor was disabled, then we need to reset the controller to the current measurement
+            if(requestType.isVelocityControl())
+                controller.reset(measurement.velocity(), measurement.acceleration());
+            else
+                controller.reset(measurement.position(), measurement.velocity());
+            //continue running the loop
             return true;
         }
 
+        //if the request type is stop, then we need to stop the motor
         if(requestType == Controller.RequestType.STOP) {
             if(motorState != MotorState.STOPPED) {
                 motorState = MotorState.STOPPED;
                 stopMotorOutput();
                 logFrame.controllerFrame = LogFrame.ControllerFrame.EMPTY;
+                logFrame.pidOutput = LogFrame.PIDOutput.EMPTY;
             }
             return false;
         }
