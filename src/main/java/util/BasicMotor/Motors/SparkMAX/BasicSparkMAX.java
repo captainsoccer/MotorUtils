@@ -51,54 +51,36 @@ public class BasicSparkMAX extends BasicMotor {
     }
 
     @Override
-    protected void updatePIDGainsToMotor(PIDGains pidGains) {
-        // sets the PID gains for the closed loop controller
-        config.closedLoop.pid(pidGains.getK_P(), pidGains.getK_I(), pidGains.getK_D());
-        config.closedLoop.iZone(pidGains.getI_Zone());
-        config.closedLoop.iMaxAccum(pidGains.getI_MaxAccum());
-
-        if(pidGains.getTolerance() != 0) {
-            DriverStation.reportWarning(
-                    "Spark MAX does not use tolerance in the PID controller (works on rio PID Controller), so it is ignored: " + name,
-                    false);
-        }
-
-        kI = pidGains.getK_I(); // store the integral gain for later use
-
-        applyConfig();
-    }
-
-    @Override
-    protected void updateConstraints(ControllerConstrains constraints) {
-        // sets the max voltage to the max motor output
-        config.closedLoop.maxOutput(constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage);
-        config.closedLoop.minOutput(constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage);
-
-        if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
-            //sets the soft limits to the max and min values
-            config.softLimit.forwardSoftLimit(constraints.getMaxValue());
-            config.softLimit.reverseSoftLimit(constraints.getMinValue());
-            // enables the soft limits
-            config.softLimit.forwardSoftLimitEnabled(true);
-            config.softLimit.reverseSoftLimitEnabled(true);
-        } else {
-            // disables the soft limits
-            config.softLimit.forwardSoftLimitEnabled(false);
-            config.softLimit.reverseSoftLimitEnabled(false);
-        }
-
-        if(constraints.getVoltageDeadband() != 0) {
-            DriverStation.reportWarning(
-                    "Spark MAX does not use voltage deadband (works on RIO PID controller), so it is ignored: " + name,
-                    false);
-        }
-
-        applyConfig();
-    }
-
-    @Override
     protected Measurements getDefaultMeasurements() {
         return defaultMeasurements;
+    }
+
+    @Override
+    protected LogFrame.SensorData getSensorData() {
+        double voltage = motor.getBusVoltage();
+        double current = motor.getOutputCurrent();
+        double temperature = motor.getMotorTemperature();
+        double dutyCycle = motor.getAppliedOutput();
+
+        double outputVoltage = motor.getAppliedOutput() * MotorManager.motorIdleVoltage;
+        double powerOutput = outputVoltage * current;
+
+        double powerDraw = sparkMaxIdlePowerDraw + powerOutput; // idle power draw + output power
+        double currentDraw = powerDraw / voltage; // current draw is power draw / voltage
+
+        String faults = motor.getLastError().name(); // get the faults of the motor
+
+        return new LogFrame.SensorData(
+                temperature,
+                currentDraw,
+                current,
+                outputVoltage,
+                voltage,
+                powerDraw,
+                powerOutput,
+                dutyCycle,
+                faults
+        );
     }
 
     @Override
@@ -142,39 +124,57 @@ public class BasicSparkMAX extends BasicMotor {
     }
 
     @Override
-    protected LogFrame.SensorData getSensorData() {
-        double voltage = motor.getBusVoltage();
-        double current = motor.getOutputCurrent();
-        double temperature = motor.getMotorTemperature();
-        double dutyCycle = motor.getAppliedOutput();
-
-        double outputVoltage = motor.getAppliedOutput() * MotorManager.motorIdleVoltage;
-        double powerOutput = outputVoltage * current;
-
-        double powerDraw = sparkMaxIdlePowerDraw + powerOutput; // idle power draw + output power
-        double currentDraw = powerDraw / voltage; // current draw is power draw / voltage
-
-        String faults = motor.getLastError().name(); // get the faults of the motor
-
-        return new LogFrame.SensorData(
-                temperature,
-                currentDraw,
-                current,
-                outputVoltage,
-                voltage,
-                powerDraw,
-                powerOutput,
-                dutyCycle,
-                faults
-        );
-    }
-
-    @Override
     protected LogFrame.PIDOutput getPIDLatestOutput() {
         //spark max supports only integral accumulation, so we will return the I accumulator value
         double iAccum = motor.getClosedLoopController().getIAccum();
 
         return new LogFrame.PIDOutput(0, iAccum * kI, 0, 0);
+    }
+
+    @Override
+    protected void updatePIDGainsToMotor(PIDGains pidGains) {
+        // sets the PID gains for the closed loop controller
+        config.closedLoop.pid(pidGains.getK_P(), pidGains.getK_I(), pidGains.getK_D());
+        config.closedLoop.iZone(pidGains.getI_Zone());
+        config.closedLoop.iMaxAccum(pidGains.getI_MaxAccum());
+
+        if(pidGains.getTolerance() != 0) {
+            DriverStation.reportWarning(
+                    "Spark MAX does not use tolerance in the PID controller (works on rio PID Controller), so it is ignored: " + name,
+                    false);
+        }
+
+        kI = pidGains.getK_I(); // store the integral gain for later use
+
+        applyConfig();
+    }
+
+    @Override
+    protected void updateConstraints(ControllerConstrains constraints) {
+        // sets the max voltage to the max motor output
+        config.closedLoop.maxOutput(constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage);
+        config.closedLoop.minOutput(constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage);
+
+        if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
+            //sets the soft limits to the max and min values
+            config.softLimit.forwardSoftLimit(constraints.getMaxValue());
+            config.softLimit.reverseSoftLimit(constraints.getMinValue());
+            // enables the soft limits
+            config.softLimit.forwardSoftLimitEnabled(true);
+            config.softLimit.reverseSoftLimitEnabled(true);
+        } else {
+            // disables the soft limits
+            config.softLimit.forwardSoftLimitEnabled(false);
+            config.softLimit.reverseSoftLimitEnabled(false);
+        }
+
+        if(constraints.getVoltageDeadband() != 0) {
+            DriverStation.reportWarning(
+                    "Spark MAX does not use voltage deadband (works on RIO PID controller), so it is ignored: " + name,
+                    false);
+        }
+
+        applyConfig();
     }
 
     @Override
