@@ -3,7 +3,19 @@ package util.BasicMotor.Configuration;
 import util.BasicMotor.Gains.CurrentLimits;
 
 public class BasicTalonFXConfig extends BasicMotorConfig{
+    /**
+     * the current limit configuration of the motor controller
+     * <p>
+     * this is used to set the current limits of the motor controller
+     */
     public final BasicSparkBaseConfig.CurrentLimitConfig currentLimitConfig = new BasicSparkBaseConfig.CurrentLimitConfig();
+
+    /**
+     * the CAN bus name to use for the motor controller
+     * the default is "rio" which is the name of the CAN bus on the roboRIO
+     * do not change this unless you know what you are doing
+     */
+    public String canBusName = "rio";
 
     public static class CurrentLimitConfig {
         /**

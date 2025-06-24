@@ -29,6 +29,13 @@ import util.BasicMotor.MotorManager;
  */
 public class BasicTalonFX extends BasicMotor {
     /**
+     * the default can bus name for the talonFX motor controller
+     *
+     * <p>this is used to identify the can bus of the motor controller
+     */
+    public static final String defaultCanBusName = "rio";
+
+    /**
      * the talonFX motor controller
      *
      * <p>this is the motor controller used to control the motor
@@ -82,17 +89,19 @@ public class BasicTalonFX extends BasicMotor {
      * @param gearRatio          the gear ratio of the motor
      * @param name               the name of the motor controller
      * @param controllerLocation the location of the motor controller (rio, motor controller)
+     * @param canBusName        the can bus name of the motor controller
      */
     public BasicTalonFX(
             ControllerGains controllerGains,
             int id,
             double gearRatio,
             String name,
-            MotorManager.ControllerLocation controllerLocation) {
+            MotorManager.ControllerLocation controllerLocation,
+            String canBusName) {
 
         super(controllerGains, name, controllerLocation);
 
-        motor = new TalonFX(id);
+        motor = new TalonFX(id, canBusName);
         config = new TalonFXConfiguration();
 
         applyConfig();
@@ -113,6 +122,30 @@ public class BasicTalonFX extends BasicMotor {
     }
 
     /**
+     * Constructor for the TalonFX motor controller
+     *
+     * @param controllerGains    the gains for the motor controller
+     * @param id                 the id of the motor controller
+     * @param gearRatio          the gear ratio of the motor
+     * @param name               the name of the motor controller
+     * @param controllerLocation the location of the motor controller (rio, motor controller)
+     */
+    public BasicTalonFX(
+            ControllerGains controllerGains,
+            int id,
+            double gearRatio,
+            String name,
+            MotorManager.ControllerLocation controllerLocation) {
+        this(
+                controllerGains,
+                id,
+                gearRatio,
+                name,
+                controllerLocation,
+                defaultCanBusName);
+    }
+
+    /**
      * Constructor for the TalonFX motor controller with a specif configuration
      *
      * @param config the configuration for the motor controller
@@ -123,15 +156,28 @@ public class BasicTalonFX extends BasicMotor {
                 config.motorConfig.id,
                 config.motorConfig.gearRatio,
                 config.motorConfig.name,
-                config.motorConfig.location);
+                config.motorConfig.location,
+                defaultCanBusName);
 
-        if(config instanceof BasicTalonFXConfig talonFXConfig) {
-            setCurrentLimits(talonFXConfig.currentLimitConfig.getCurrentLimits());
-        }
-        else{
-            DriverStation.reportWarning(
-                    "BasicTalonFXConfig not used, ignoring them motor: " + name, false);
-        }
+        DriverStation.reportWarning(
+                "BasicTalonFXConfig not used, ignoring them motor: " + name, false);
+    }
+
+    /**
+     * Constructor for the TalonFX motor controller with a specif configuration
+     *
+     * @param config the configuration for the motor controller
+     */
+    public BasicTalonFX(BasicTalonFXConfig config) {
+        this(
+                config.getControllerGains(),
+                config.motorConfig.id,
+                config.motorConfig.gearRatio,
+                config.motorConfig.name,
+                config.motorConfig.location,
+                config.canBusName);
+
+        setCurrentLimits(config.currentLimitConfig.getCurrentLimits());
     }
 
     @Override
