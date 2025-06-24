@@ -130,7 +130,7 @@ public class BasicTalonFX extends BasicMotor {
         }
         else{
             DriverStation.reportWarning(
-                    "BasicTalonFXConfig not used, ignoring them", false);
+                    "BasicTalonFXConfig not used, ignoring them motor: " + name, false);
         }
     }
 
