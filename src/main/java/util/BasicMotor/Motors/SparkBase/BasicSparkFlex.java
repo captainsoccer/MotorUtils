@@ -5,6 +5,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import util.BasicMotor.Configuration.BasicMotorConfig;
+import util.BasicMotor.Configuration.BasicSparkBaseConfig;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.MotorManager;
 
@@ -39,6 +40,39 @@ public class BasicSparkFlex extends BasicSparkBase {
      */
     public BasicSparkFlex(BasicMotorConfig config) {
         super(new SparkFlex(config.motorConfig.id, SparkLowLevel.MotorType.kBrushless), new SparkFlexConfig(), config);
+
+        if(config instanceof BasicSparkBaseConfig sparkBaseConfig) {
+            if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder && sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
+                var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
+
+                useExternalEncoderWithAbsoluteEncoder(
+                        absoluteEncoderConfig.inverted,
+                        absoluteEncoderConfig.zeroOffset,
+                        absoluteEncoderConfig.sensorToMotorRatio,
+                        absoluteEncoderConfig.mechanismToSensorRatio,
+                        absoluteEncoderConfig.absoluteEncoderRange);
+            }
+
+            if(sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
+                var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
+
+                useAbsoluteEncoder(
+                        absoluteEncoderConfig.inverted,
+                        absoluteEncoderConfig.zeroOffset,
+                        absoluteEncoderConfig.sensorToMotorRatio,
+                        absoluteEncoderConfig.mechanismToSensorRatio,
+                        absoluteEncoderConfig.absoluteEncoderRange);
+            }
+
+            if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder){
+                var externalEncoderConfig = sparkBaseConfig.externalEncoderConfig;
+
+                useExternalEncoder(
+                        externalEncoderConfig.inverted,
+                        externalEncoderConfig.sensorToMotorRatio,
+                        externalEncoderConfig.mechanismToSensorRatio);
+            }
+        }
     }
 
     @Override
@@ -50,8 +84,8 @@ public class BasicSparkFlex extends BasicSparkBase {
         //sets whether the absolute encoder is inverted or not
         config.externalEncoder.inverted(inverted);
         //sets the conversion factor for the absolute encoder position and velocity
-        config.externalEncoder.positionConversionFactor(1 / sensorToMotorRatio);
-        config.externalEncoder.velocityConversionFactor(1 / sensorToMotorRatio);
+        config.externalEncoder.positionConversionFactor(sensorToMotorRatio);
+        config.externalEncoder.velocityConversionFactor(sensorToMotorRatio);
     }
 
     @Override
@@ -61,5 +95,34 @@ public class BasicSparkFlex extends BasicSparkBase {
         var sparkMax = (SparkFlex) motor;
 
         return sparkMax.getExternalEncoder();
+    }
+
+    /**
+     * use this when you want to use an external encoder which doubles as an absolute encoder but you want to
+     * use the relative encoder for the pid controller (not bound to a range and more accurate)
+     * @param inverted whether the external encoder is inverted (counts in the opposite direction of the motor)
+     * @param sensorToMotorRatio the number that the reading of the external encoder should be multiplied by to get the motor output
+     * @param mechanismToSensorRatio the number that the reading of the external encoder should be divided by to get the mechanism output
+     * @param zeroOffset the zero offset of the absolute encoder (in rotations)
+     * @param absoluteEncoderRange the range of the absolute encoder
+     */
+    public void useExternalEncoderWithAbsoluteEncoder(
+            boolean inverted,
+            double sensorToMotorRatio,
+            double mechanismToSensorRatio,
+            double zeroOffset,
+            AbsoluteEncoderRange absoluteEncoderRange) {
+
+        //configures the absolute encoder
+        setAbsoluteEncoderConfig(inverted, zeroOffset, sensorToMotorRatio, mechanismToSensorRatio, absoluteEncoderRange);
+
+        //sets the external encoder configuration
+        useExternalEncoder(inverted, sensorToMotorRatio, mechanismToSensorRatio);
+
+        assert motor instanceof SparkFlex;
+
+        var sparkFlex = (SparkFlex) motor;
+
+        sparkFlex.getExternalEncoder().setPosition(sparkFlex.getAbsoluteEncoder().getPosition());
     }
 }

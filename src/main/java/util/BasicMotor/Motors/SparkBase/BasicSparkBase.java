@@ -17,7 +17,7 @@ import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVAbsolute;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVRelative;
 import util.BasicMotor.MotorManager;
 
-abstract class BasicSparkBase extends BasicMotor {
+public abstract class BasicSparkBase extends BasicMotor {
     protected final SparkBase motor;
     protected final SparkBaseConfig config;
 
@@ -84,8 +84,11 @@ abstract class BasicSparkBase extends BasicMotor {
                 motorConfig.motorConfig.gearRatio,
                 motorConfig.motorConfig.location);
 
+        setIdleMode(motorConfig.motorConfig.idleMode);
+
         if (motorConfig instanceof BasicSparkBaseConfig sparkBaseConfig) {
             setCurrentLimits(sparkBaseConfig.currentLimitConfig.getCurrentLimits());
+
         } else {
             DriverStation.reportWarning(
                     "Motor config is not a Spark Base config, so the currentLimits config is not applied " + name,
@@ -404,23 +407,18 @@ abstract class BasicSparkBase extends BasicMotor {
      *
      * @param inverted               if the absolute encoder is inverted (the position is reversed)
      * @param zeroOffset             the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio     this value divides the ratio between the sensor and the motor
-     *                               (the value reported by the sensor to get the motor position)
-     * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
-     *                               (the value reported by the sensor to get the mechanism position)
+     * @param sensorToMotorRatio     the number which the reading of the external encoder should be multiplied by to get the motor output
+     *                               a value bigger than 1.0 is a reduction in the motor output.
+     *                               (the motor spins more than the sensor)
+     * @param mechanismToSensorRatio the number which the reading of the external encoder should be divided by to get the mechanism output
+     *                               a value bigger than 1.0 is a reduction in the mechanism output.
+     *                               (the sensor spins more than the mechanism)
      * @param absoluteEncoderRange   if the encoder should report a range of 0 to 1 or -0.5 to 0.5
      */
     public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio,
                                    double mechanismToSensorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
-        //sets whether the absolute encoder is inverted or not
-        config.absoluteEncoder.inverted(inverted);
-        //sets the conversion factor for the absolute encoder position and velocity
-        config.absoluteEncoder.positionConversionFactor(1 / sensorToMotorRatio);
-        config.absoluteEncoder.velocityConversionFactor(1 / sensorToMotorRatio);
-        //sets the zero centered range of the absolute encoder
-        config.absoluteEncoder.zeroCentered(absoluteEncoderRange.zeroCentered());
-        //sets the zero offset of the absolute encoder
-        config.absoluteEncoder.zeroOffset(zeroOffset);
+        //sets the absolute encoder configuration
+        setAbsoluteEncoderConfig(inverted, zeroOffset, sensorToMotorRatio, mechanismToSensorRatio, absoluteEncoderRange);
         //sets the feedback sensor for the closed loop controller
         config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAbsoluteEncoder);
 
@@ -438,13 +436,35 @@ abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
+     * sets the configuration for the absolute encoder
+     * @param inverted if the absolute encoder is inverted (the position is reversed)
+     * @param zeroOffset the position the encoder reports that should be considered zero
+     * @param sensorToMotorRatio the number which the reading of the external encoder should be multiplied by to get the motor output
+     * @param mechanismToSensorRatio the number which the reading of the external encoder should be divided by to get the mechanism output
+     * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
+     */
+    protected void setAbsoluteEncoderConfig(boolean inverted, double zeroOffset, double sensorToMotorRatio,
+                                            double mechanismToSensorRatio, AbsoluteEncoderRange absoluteEncoderRange){
+        //sets whether the absolute encoder is inverted or not
+        config.absoluteEncoder.inverted(inverted);
+        //sets the conversion factor for the absolute encoder position and velocity
+        config.absoluteEncoder.positionConversionFactor(sensorToMotorRatio);
+        config.absoluteEncoder.velocityConversionFactor(sensorToMotorRatio);
+        //sets the zero centered range of the absolute encoder
+        config.absoluteEncoder.zeroCentered(absoluteEncoderRange.zeroCentered());
+        //sets the zero offset of the absolute encoder
+        config.absoluteEncoder.zeroOffset(zeroOffset);
+    }
+
+    /**
      * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark MAX)
      * it uses the absolute encoder connected to the Spark MAX data port
      *
      * @param inverted             if the absolute encoder is inverted (the position is reversed)
      * @param zeroOffset           the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio   this value divides the ratio between the sensor and the motor
-     *                             (the value reported by the sensor to get the motor position)
+     * @param sensorToMotorRatio     the number which the reading of the external encoder should be multiplied by to get the motor output
+     *                               a value bigger than 1.0 is a reduction in the motor output.
+     *                               (the motor spins more than the sensor)
      * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
      */
     public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio, AbsoluteEncoderRange absoluteEncoderRange) {
@@ -457,8 +477,9 @@ abstract class BasicSparkBase extends BasicMotor {
      *
      * @param inverted           if the absolute encoder is inverted (the position is reversed)
      * @param zeroOffset         the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
-     *                           (the value reported by the sensor to get the motor position)
+     * @param sensorToMotorRatio     the number which the reading of the external encoder should be multiplied by to get the motor output
+     *                               a value bigger than 1.0 is a reduction in the motor output.
+     *                               (the motor spins more than the sensor)
      */
     public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio) {
         useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, AbsoluteEncoderRange.ZERO_TO_ONE);
@@ -469,10 +490,12 @@ abstract class BasicSparkBase extends BasicMotor {
      * it uses the external encoder connected to the Spark MAX data port
      *
      * @param inverted               if the external encoder is inverted (the position is reversed)
-     * @param sensorToMotorRatio     this value divides the ratio between the sensor and the motor
-     *                               (the value reported by the sensor to get the motor position)
-     * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
-     *                               (the value reported by the sensor to get the mechanism position)
+     * @param sensorToMotorRatio     the number which the reading of the external encoder should be multiplied by to get the motor output
+     *                               a value bigger than 1.0 is a reduction in the motor output.
+     *                               (the motor spins more than the sensor)
+     * @param mechanismToSensorRatio the number which the reading of the external encoder should be divided by to get the mechanism output
+     *                               a value bigger than 1.0 is a reduction in the mechanism output.
+     *                               (the sensor spins more than the mechanism)
      */
     public void useExternalEncoder(boolean inverted, double sensorToMotorRatio, double mechanismToSensorRatio) {
         //sets the feedback sensor for the closed loop controller
@@ -498,8 +521,9 @@ abstract class BasicSparkBase extends BasicMotor {
      * it uses the external encoder connected to the Spark MAX data port
      *
      * @param inverted           if the external encoder is inverted (the position is reversed)
-     * @param sensorToMotorRatio this value divides the ratio between the sensor and the motor
-     *                           (the value reported by the sensor to get the motor position)
+     * @param sensorToMotorRatio the number which the reading of the external encoder should be multiplied by to get the motor output
+     *                           a value bigger than 1.0 is a reduction in the motor output.
+     *                           (the motor spins more than the sensor)
      */
     public void useExternalEncoder(boolean inverted, double sensorToMotorRatio) {
         useExternalEncoder(inverted, sensorToMotorRatio, 1);

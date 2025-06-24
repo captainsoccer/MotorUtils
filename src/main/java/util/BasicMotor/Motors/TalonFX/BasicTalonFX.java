@@ -161,6 +161,8 @@ public class BasicTalonFX extends BasicMotor {
 
         DriverStation.reportWarning(
                 "BasicTalonFXConfig not used, ignoring them motor: " + name, false);
+
+        setIdleMode(config.motorConfig.idleMode);
     }
 
     /**
@@ -176,6 +178,8 @@ public class BasicTalonFX extends BasicMotor {
                 config.motorConfig.name,
                 config.motorConfig.location,
                 config.canBusName);
+
+        setIdleMode(config.motorConfig.idleMode);
 
         setCurrentLimits(config.currentLimitConfig.getCurrentLimits());
     }

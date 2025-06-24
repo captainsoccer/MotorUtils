@@ -1,5 +1,6 @@
 package util.BasicMotor.Configuration;
 
+import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Gains.*;
 import util.BasicMotor.MotorManager;
 
@@ -66,6 +67,13 @@ public class BasicMotorConfig {
          * this is used to convert the motor output to the desired output
          */
         public double gearRatio = 1;
+
+        /**
+         * the idle mode of the motor controller
+         * COAST means the motor will not try to hold its position when not powered
+         * BRAKE means the motor will try to hold its position when not powered
+         */
+        public BasicMotor.IdleMode idleMode = BasicMotor.IdleMode.COAST;
         /**
          * the location of the motor controller
          * <p>

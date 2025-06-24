@@ -4,6 +4,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import util.BasicMotor.Configuration.BasicMotorConfig;
 import util.BasicMotor.Configuration.BasicSparkBaseConfig;
 import util.BasicMotor.Gains.*;
 import util.BasicMotor.MotorManager;
@@ -33,8 +34,34 @@ public class BasicSparkMAX extends BasicSparkBase {
      *
      * @param config the configuration of the motor controller
      */
-    public BasicSparkMAX(BasicSparkBaseConfig config) {
+    public BasicSparkMAX(BasicMotorConfig config) {
         super(new SparkMax(config.motorConfig.id, SparkLowLevel.MotorType.kBrushless), new SparkMaxConfig(), config);
+
+        if(config instanceof BasicSparkBaseConfig sparkBaseConfig) {
+            if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder && sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
+                throw new IllegalArgumentException("motor: " + config.motorConfig.name + " cannot use both absolute and external encoders at the same time");
+            }
+
+            if(sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
+                var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
+
+                useAbsoluteEncoder(
+                        absoluteEncoderConfig.inverted,
+                        absoluteEncoderConfig.zeroOffset,
+                        absoluteEncoderConfig.sensorToMotorRatio,
+                        absoluteEncoderConfig.mechanismToSensorRatio,
+                        absoluteEncoderConfig.absoluteEncoderRange);
+            }
+
+            if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder){
+                var externalEncoderConfig = sparkBaseConfig.externalEncoderConfig;
+
+                useExternalEncoder(
+                        externalEncoderConfig.inverted,
+                        externalEncoderConfig.sensorToMotorRatio,
+                        externalEncoderConfig.mechanismToSensorRatio);
+            }
+        }
     }
 
     @Override
@@ -64,8 +91,8 @@ public class BasicSparkMAX extends BasicSparkBase {
         //sets whether the absolute encoder is inverted or not
         config.alternateEncoder.inverted(inverted);
         //sets the conversion factor for the absolute encoder position and velocity
-        config.alternateEncoder.positionConversionFactor(1 / sensorToMotorRatio);
-        config.alternateEncoder.velocityConversionFactor(1 / sensorToMotorRatio);
+        config.alternateEncoder.positionConversionFactor(sensorToMotorRatio);
+        config.alternateEncoder.velocityConversionFactor(sensorToMotorRatio);
     }
 
     @Override

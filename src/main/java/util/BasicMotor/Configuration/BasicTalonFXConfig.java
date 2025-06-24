@@ -8,7 +8,7 @@ public class BasicTalonFXConfig extends BasicMotorConfig{
      * <p>
      * this is used to set the current limits of the motor controller
      */
-    public final BasicSparkBaseConfig.CurrentLimitConfig currentLimitConfig = new BasicSparkBaseConfig.CurrentLimitConfig();
+    public final CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
 
     /**
      * the CAN bus name to use for the motor controller
