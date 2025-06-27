@@ -15,7 +15,7 @@ import util.BasicMotor.Configuration.BasicTalonFXConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
-import util.BasicMotor.Gains.CurrentLimits;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.Measurements;

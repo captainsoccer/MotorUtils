@@ -5,10 +5,12 @@ import util.BasicMotor.Configuration.BasicMotorConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
-import util.BasicMotor.Gains.CurrentLimits;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.MotorManager.ControllerLocation;
+
+import java.util.Objects;
 
 /**
  * this is a basic motor class, it is used to simplify the process of creating a motor and also
@@ -153,6 +155,10 @@ public abstract class BasicMotor {
      * @param config            the configuration of the motor controller (saved for initialization)
      */
     private BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation, BasicMotorConfig config) {
+        Objects.requireNonNull(controllerGains);
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(controllerLocation);
+        
         this.controllerLocation = controllerLocation;
 
         Runnable setHasPIDGainsChanged = () -> hasPIDGainsChanged = true;

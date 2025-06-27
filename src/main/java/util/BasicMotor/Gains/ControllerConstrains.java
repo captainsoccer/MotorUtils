@@ -6,6 +6,8 @@ import edu.wpi.first.math.MathUtil;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Measurements.Measurements;
 
+import java.util.Objects;
+
 /**
  * this class is used to set the constraints of the controller it handles the limits of the
  * controller and the continuity of the controller and max motor output and min motor output this is
@@ -65,13 +67,14 @@ public class ControllerConstrains {
    * @param minMotorOutput the minimum output of the motor (in volts) this is used for capping the
    *     output of the motor (default is -13.0)
    */
-  public ControllerConstrains(
-      ConstraintType type,
-      double minValue,
-      double maxValue,
-      double maxMotorOutput,
-      double minMotorOutput,
-      double deadband) {
+  public ControllerConstrains(ConstraintType type, double minValue, double maxValue, double maxMotorOutput, double minMotorOutput, double deadband) {
+    //if the type is null, set it to NONE
+    if(type == null) type = ConstraintType.NONE;
+    //check if the min and max values are valid
+    if(minValue > maxValue) {
+      throw new IllegalArgumentException("the minimum value must be less than or equal to the maximum value");
+    }
+
     this.constraintType = type;
     this.minValue = minValue;
     this.maxValue = maxValue;

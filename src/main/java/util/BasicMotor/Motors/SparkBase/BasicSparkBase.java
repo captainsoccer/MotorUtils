@@ -11,6 +11,8 @@ import util.BasicMotor.Configuration.BasicMotorConfig;
 import util.BasicMotor.Configuration.BasicSparkBaseConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.*;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimitsREV;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.RevEncoders.MeasurementsREVAbsolute;

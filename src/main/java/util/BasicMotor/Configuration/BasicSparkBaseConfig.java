@@ -1,6 +1,6 @@
 package util.BasicMotor.Configuration;
 
-import util.BasicMotor.Gains.CurrentLimitsREV;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimitsREV;
 import util.BasicMotor.Motors.SparkBase.BasicSparkBase;
 
 public class BasicSparkBaseConfig extends BasicMotorConfig{

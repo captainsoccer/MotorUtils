@@ -1,6 +1,6 @@
 package util.BasicMotor.Configuration;
 
-import util.BasicMotor.Gains.CurrentLimits;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
 
 public class BasicTalonFXConfig extends BasicMotorConfig{
     /**

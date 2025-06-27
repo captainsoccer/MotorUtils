@@ -32,6 +32,9 @@ public abstract class Measurements {
    * @param gearRatio the gear ratio of the motor
    */
   public Measurements(double gearRatio) {
+    if(gearRatio <= 0) {
+      throw new IllegalArgumentException("Gear ratio must be greater than 0");
+    }
     this.gearRatio = gearRatio;
   }
 

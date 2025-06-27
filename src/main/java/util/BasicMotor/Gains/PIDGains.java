@@ -46,8 +46,7 @@ public class PIDGains {
    *     that the integrator can accumulate
    */
   public PIDGains(
-      double k_P, double k_I, double k_D, double i_Zone, double i_maxAccum, double tolerance)
-      throws IllegalArgumentException {
+      double k_P, double k_I, double k_D, double i_Zone, double i_maxAccum, double tolerance) {
     if (k_P < 0) throw new IllegalArgumentException("k_P must be greater than zero");
     this.k_P = k_P;
 
@@ -74,7 +73,7 @@ public class PIDGains {
    * @param k_I the integral gain (>= 0)
    * @param k_D the derivative gain (>= 0)
    */
-  public PIDGains(double k_P, double k_I, double k_D) throws IllegalArgumentException {
+  public PIDGains(double k_P, double k_I, double k_D) {
     this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, 0);
   }
 
@@ -85,8 +84,7 @@ public class PIDGains {
    * @param k_I the integral gain (>= 0)
    * @param k_D the derivative gain (>= 0)
    */
-  public PIDGains(double k_P, double k_I, double k_D, double tolerance)
-      throws IllegalArgumentException {
+  public PIDGains(double k_P, double k_I, double k_D, double tolerance){
     this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, tolerance);
   }
 

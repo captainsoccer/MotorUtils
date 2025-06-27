@@ -1,4 +1,4 @@
-package util.BasicMotor.Gains;
+package util.BasicMotor.Gains.CurrentLimits;
 
 /**
  * this class takes the current limits class and makes it fully used for REV motor controllers
@@ -34,9 +34,9 @@ public class CurrentLimitsREV extends CurrentLimits{
      */
     public CurrentLimitsREV(int freeSpeedCurrentLimit, int stallCurrentLimit, double freeSpeedRPS, int secondaryCurrentLimit) {
         super(freeSpeedCurrentLimit, 0, 0, 0);
-        this.stallCurrentLimit = stallCurrentLimit;
-        this.freeSpeedRPS = freeSpeedRPS;
-        this.secondaryCurrentLimit = secondaryCurrentLimit;
+        this.stallCurrentLimit = Math.abs(stallCurrentLimit);
+        this.freeSpeedRPS = Math.abs(freeSpeedRPS);
+        this.secondaryCurrentLimit = Math.abs(secondaryCurrentLimit);
     }
 
     /**
