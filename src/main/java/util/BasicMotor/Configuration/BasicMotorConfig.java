@@ -64,7 +64,7 @@ public class BasicMotorConfig {
          * <p>
          * this is used to identify the motor controller in the logger
          */
-        public String name = "";
+        public String name = "motor";
         /**
          * the gear ratio of the motor controller
          * <p>

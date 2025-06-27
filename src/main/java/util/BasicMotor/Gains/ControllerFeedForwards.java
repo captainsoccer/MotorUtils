@@ -47,7 +47,7 @@ public class ControllerFeedForwards {
       double frictionFeedForward,
       double setpointFeedForward,
       Function<Double, Double> feedForwardFunction) {
-    
+
     if(simpleFeedForward < 0)
       throw new IllegalArgumentException("simpleFeedForward must be greater than or equal to zero");
     this.simpleFeedForward = simpleFeedForward;
