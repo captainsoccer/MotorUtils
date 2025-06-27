@@ -41,26 +41,6 @@ public class BasicSparkMAX extends BasicSparkBase {
             if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder && sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
                 throw new IllegalArgumentException("motor: " + config.motorConfig.name + " cannot use both absolute and external encoders at the same time");
             }
-
-            if(sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
-                var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
-
-                useAbsoluteEncoder(
-                        absoluteEncoderConfig.inverted,
-                        absoluteEncoderConfig.zeroOffset,
-                        absoluteEncoderConfig.sensorToMotorRatio,
-                        absoluteEncoderConfig.mechanismToSensorRatio,
-                        absoluteEncoderConfig.absoluteEncoderRange);
-            }
-
-            if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder){
-                var externalEncoderConfig = sparkBaseConfig.externalEncoderConfig;
-
-                useExternalEncoder(
-                        externalEncoderConfig.inverted,
-                        externalEncoderConfig.sensorToMotorRatio,
-                        externalEncoderConfig.mechanismToSensorRatio);
-            }
         }
     }
 

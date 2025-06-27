@@ -45,6 +45,10 @@ public class BasicMotorConfig {
         return new ControllerGains(pidConfig.getGains(), constraintsConfig.getConstraints(), feedForwardConfig.getFeedForwards());
     }
 
+    public boolean usingExternalEncoder() {
+        return false;
+    }
+
     /**
      * the basic motor configuration
      */

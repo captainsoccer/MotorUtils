@@ -11,6 +11,11 @@ public class BasicSparkBaseConfig extends BasicMotorConfig{
 
     public final AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
 
+    @Override
+    public boolean usingExternalEncoder(){
+        return externalEncoderConfig.useExternalEncoder || absoluteEncoderConfig.useAbsoluteEncoder;
+    }
+
     /**
      * the current limit configuration for a spark base motor controller
      */

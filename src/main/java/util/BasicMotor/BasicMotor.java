@@ -188,7 +188,7 @@ public abstract class BasicMotor {
         setIdleMode(config.motorConfig.idleMode);
         setMotorInverted(config.motorConfig.inverted);
 
-        return getMeasurements();
+        return config.usingExternalEncoder() ? getMeasurements() : getDefaultMeasurements();
     }
 
     // getters and setters

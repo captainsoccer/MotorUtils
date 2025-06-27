@@ -56,9 +56,6 @@ public abstract class BasicSparkBase extends BasicMotor {
         // all configs should be stored in code and not on motor
         applyConfig();
 
-        updatePIDGainsToMotor(gains.getPidGains().convertToMotorGains(gearRatio));
-        updateConstraints(gains.getControllerConstrains().convertToMotorConstrains(gearRatio));
-
         configurePeriodicFrames(location.HZ);
 
         defaultMeasurements = new MeasurementsREVRelative(motor.getEncoder(), gearRatio);
@@ -76,23 +73,53 @@ public abstract class BasicSparkBase extends BasicMotor {
             SparkBaseConfig config,
             BasicMotorConfig motorConfig) {
 
-        this(
-                motor,
-                config,
-                motorConfig.getControllerGains(),
-                motorConfig.motorConfig.name,
-                motorConfig.motorConfig.gearRatio,
-                motorConfig.motorConfig.location);
+        super(motorConfig);
 
-        setIdleMode(motorConfig.motorConfig.idleMode);
+        this.motor = motor;
 
-        if (motorConfig instanceof BasicSparkBaseConfig sparkBaseConfig) {
-            setCurrentLimits(sparkBaseConfig.currentLimitConfig.getCurrentLimits());
+        this.config = config;
+        config.voltageCompensation(
+                MotorManager.motorIdleVoltage); // set the voltage compensation to the idle voltage
+        // all configs should be stored in code and not on motor
+        applyConfig();
 
-        } else {
+        configurePeriodicFrames(motorConfig.motorConfig.location.HZ);
+
+        defaultMeasurements = new MeasurementsREVRelative(motor.getEncoder(), motorConfig.motorConfig.gearRatio);
+
+        if (!(motorConfig instanceof BasicSparkBaseConfig sparkBaseConfig)){
             DriverStation.reportWarning(
-                    "Motor config is not a Spark Base config, so the currentLimits config is not applied " + name,
+                    "not using specific Spark Base config for motor: " + name,
                     false);
+            return;
+        }
+
+        setCurrentLimits(sparkBaseConfig.currentLimitConfig.getCurrentLimits());
+
+        if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder && sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder) {
+            return; //let the derived class handle this
+        }
+
+        // if the motor uses an absolute encoder, configure it
+        if(sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
+            var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
+
+            useAbsoluteEncoder(
+                    absoluteEncoderConfig.inverted,
+                    absoluteEncoderConfig.zeroOffset,
+                    absoluteEncoderConfig.sensorToMotorRatio,
+                    absoluteEncoderConfig.mechanismToSensorRatio,
+                    absoluteEncoderConfig.absoluteEncoderRange);
+        }
+
+        // if the motor uses an external encoder, configure it
+        if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder){
+            var externalEncoderConfig = sparkBaseConfig.externalEncoderConfig;
+
+            useExternalEncoder(
+                    externalEncoderConfig.inverted,
+                    externalEncoderConfig.sensorToMotorRatio,
+                    externalEncoderConfig.mechanismToSensorRatio);
         }
     }
 
