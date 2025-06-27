@@ -69,6 +69,13 @@ public class BasicMotorConfig {
         public double gearRatio = 1;
 
         /**
+         * if the motor controller is inverted,
+         * true means clockwise is positive
+         * false means counter-clockwise is positive
+         */
+        public boolean inverted = false;
+
+        /**
          * the idle mode of the motor controller
          * COAST means the motor will not try to hold its position when not powered
          * BRAKE means the motor will try to hold its position when not powered

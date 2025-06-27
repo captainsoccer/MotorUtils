@@ -1,6 +1,7 @@
 package util.BasicMotor;
 
 import edu.wpi.first.wpilibj.RobotState;
+import util.BasicMotor.Configuration.BasicMotorConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
@@ -105,6 +106,17 @@ public abstract class BasicMotor {
     protected final String name;
 
     /**
+     * the configuration of the motor controller
+     * used for initialization
+     */
+    private final BasicMotorConfig config;
+
+    /**
+     * if the motor has been initialized or not
+     */
+    private boolean initialized = false;
+
+    /**
      * updates the constraints of the motor controller this is used to update the constraints of the
      * motor controller when the constraints change
      *
@@ -120,7 +132,27 @@ public abstract class BasicMotor {
      * @param controllerLocation the location of the controller (RIO or motor controller)
      */
     public BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
+        this(controllerGains, name, controllerLocation, null);
+    }
 
+    /**
+     * creates the motor.
+     *
+     * @param config the configuration of the motor controller
+     */
+    public BasicMotor(BasicMotorConfig config) {
+        this(config.getControllerGains(), config.motorConfig.name, config.motorConfig.location, config);
+    }
+
+    /**
+     * creates the motor.
+     *
+     * @param controllerGains    the gains of the controller
+     * @param name               the name of the motor (used for logging)
+     * @param controllerLocation the location of the controller (RIO or motor controller)
+     * @param config            the configuration of the motor controller (saved for initialization)
+     */
+    private BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation, BasicMotorConfig config) {
         this.controllerLocation = controllerLocation;
 
         Runnable setHasPIDGainsChanged = () -> hasPIDGainsChanged = true;
@@ -129,9 +161,34 @@ public abstract class BasicMotor {
 
         this.name = name;
 
+        this.config = config;
+
         MotorManager.getInstance()
                 .registerMotor(
                         name, controllerLocation, this::run, this::updateSensorData, this::getLatestFrame);
+    }
+
+    /**
+     * initializes the motor with the given configuration
+     * @return the default measurements of the motor
+     */
+    public Measurements initializeMotor() {
+        if(initialized) return getDefaultMeasurements();
+
+        double gearRatio = getDefaultMeasurements().getGearRatio();
+
+        updatePIDGainsToMotor(controller.getControllerGains().getPidGains().convertToMotorGains(gearRatio));
+        updateConstraints(controller.getControllerGains().getControllerConstrains().convertToMotorConstrains(gearRatio));
+
+        if(config == null){
+            initialized = true;
+            return getDefaultMeasurements();
+        }
+
+        setIdleMode(config.motorConfig.idleMode);
+        setMotorInverted(config.motorConfig.inverted);
+
+        return getMeasurements();
     }
 
     // getters and setters
@@ -393,6 +450,8 @@ public abstract class BasicMotor {
      * is called on a separate thread
      */
     private void run() {
+        if(!initialized) measurements = initializeMotor();
+
         // doesn't need to do anything if the motor is following another motor
         if (motorState == MotorState.FOLLOWING) {
             return;
