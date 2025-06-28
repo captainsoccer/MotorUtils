@@ -8,6 +8,8 @@ import util.BasicMotor.LogFrame;
 import util.BasicMotor.LogFrame.FeedForwardOutput;
 import util.BasicMotor.Measurements.Measurements;
 
+import java.util.Objects;
+
 /**
  * this is the controller used to control the basic motor class {@link util.BasicMotor.BasicMotor}
  * this handles pid (if needed), feedforward, constraints and profile of the motor
@@ -59,6 +61,10 @@ public class Controller implements Sendable {
    * @param request the request of the controller
    */
   public void setReference(ControllerRequest request) {
+    Objects.requireNonNull(request);
+    Objects.requireNonNull(request.requestType);
+    Objects.requireNonNull(request.goal);
+
     this.request = request;
   }
 

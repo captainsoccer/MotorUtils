@@ -103,6 +103,14 @@ public abstract class BasicMotor {
     private boolean hasConstraintsChanged = false;
 
     /**
+     * updates the constraints of the motor controller this is used to update the constraints of the
+     * motor controller when the constraints change
+     *
+     * @param constraints the new constraints to set
+     */
+    protected abstract void updateConstraints(ControllerConstrains constraints);
+
+    /**
      * the name of the motor (used for logging)
      */
     protected final String name;
@@ -118,14 +126,6 @@ public abstract class BasicMotor {
      */
     private boolean initialized = false;
 
-    /**
-     * updates the constraints of the motor controller this is used to update the constraints of the
-     * motor controller when the constraints change
-     *
-     * @param constraints the new constraints to set
-     */
-    protected abstract void updateConstraints(ControllerConstrains constraints);
-    
     /**
      * creates the motor.
      *
@@ -193,6 +193,8 @@ public abstract class BasicMotor {
 
         setIdleMode(config.motorConfig.idleMode);
         setMotorInverted(config.motorConfig.inverted);
+
+        initialized = true;
 
         return config.usingExternalEncoder() ? getMeasurements() : getDefaultMeasurements();
     }
@@ -335,10 +337,6 @@ public abstract class BasicMotor {
         stopRecordingMeasurements();
     }
 
-    protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
-
-    protected abstract void stopMotorFollow();
-
     /**
      * stops following the motor this will re-enable pid control on this motor and measurements
      * logging
@@ -347,8 +345,12 @@ public abstract class BasicMotor {
         motorState = MotorState.STOPPED;
         stopMotorFollow();
         stopMotorOutput();
-        stopRecordingMeasurements();
+        startRecordingMeasurements(controllerLocation.HZ);
     }
+
+    protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
+
+    protected abstract void stopMotorFollow();
 
     // forwarded functions (for ease of use)
 
@@ -408,16 +410,16 @@ public abstract class BasicMotor {
      *
      * @return true if the motor is at the setpoint, false otherwise
      */
-    public boolean isAtSetpoint() {
+    public boolean atSetpoint() {
         return logFrame.atSetpoint;
     }
 
     /**
-     * if the motor is at the goal this is used to check if the motor is at the goal
+     * if the motor is at the goal, this is used to check if the motor is at the goal
      *
      * @return true if the motor is at the goal, false otherwise
      */
-    public boolean isAtGoal() {
+    public boolean atGoal() {
         return logFrame.atGoal;
     }
 
@@ -446,7 +448,7 @@ public abstract class BasicMotor {
      * latest position)
      */
     public void reset() {
-        resetEncoder(measurements.getGearRatio());
+        resetEncoder(measurements.getPosition());
     }
 
 
