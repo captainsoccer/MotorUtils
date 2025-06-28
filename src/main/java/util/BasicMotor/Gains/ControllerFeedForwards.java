@@ -1,5 +1,7 @@
 package util.BasicMotor.Gains;
 
+import util.BasicMotor.LogFrame;
+
 import java.util.function.Function;
 
 /**
@@ -145,6 +147,22 @@ public class ControllerFeedForwards {
    */
   public double getCalculatedFeedForward(double setpoint) {
     return feedForwardFunction.apply(setpoint);
+  }
+
+  /**
+   * calculates the feed forward output of the controller based on the setpoint, direction of travel, and arbitrary feed forward
+   * @param setpoint the setpoint of the controller
+   * @param directionOfTravel the direction of travel of the motor (1 for forward, -1 for reverse)
+   * @param arbitraryFeedForward the arbitrary feed forward value to add to the output
+   * @return the feed forward output of the controller
+   */
+  public LogFrame.FeedForwardOutput calculateFeedForwardOutput(double setpoint, double directionOfTravel, double arbitraryFeedForward) {
+    return new LogFrame.FeedForwardOutput(
+        simpleFeedForward,
+        frictionFeedForward * directionOfTravel,
+        setpointFeedForward * setpoint,
+        getCalculatedFeedForward(setpoint),
+        arbitraryFeedForward);
   }
 
   public void updateFeedForwards(double value, ChangeType type) {

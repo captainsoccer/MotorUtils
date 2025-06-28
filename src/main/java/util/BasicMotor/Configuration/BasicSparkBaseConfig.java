@@ -3,12 +3,27 @@ package util.BasicMotor.Configuration;
 import util.BasicMotor.Gains.CurrentLimits.CurrentLimitsREV;
 import util.BasicMotor.Motors.SparkBase.BasicSparkBase;
 
+/**
+ * This class represents the configuration for a basic spark base motor controller.
+ * It extends the BasicMotorConfig class and provides specific configurations for spark base motors.
+ */
 public class BasicSparkBaseConfig extends BasicMotorConfig{
 
+    /**
+     * the current limit configuration for the spark base motor controller
+     */
     public final CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
 
+    /**
+     * the external encoder configuration for the spark base motor controller
+     * this is used to configure the external encoder connected directly to the motor controller
+     */
     public final ExternalEncoderConfig externalEncoderConfig = new ExternalEncoderConfig();
 
+    /**
+     * the absolute encoder configuration for the spark base motor controller
+     * this is used to configure the absolute encoder connected directly to the motor controller
+     */
     public final AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
 
     @Override

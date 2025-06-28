@@ -42,7 +42,6 @@ public class Controller implements Sendable {
     this.controllerGains.setHasConstraintsChanged(hasConstraintsChangeRunnable);
 
     this.pidController = new BasicPIDController(controllerGains.getPidGains());
-    updatePIDGains();
   }
 
   /**
@@ -122,11 +121,6 @@ public class Controller implements Sendable {
     return request;
   }
 
-  /** updates the PID gains of the PID controller */
-  public void updatePIDGains() {
-    this.pidController.setGains(controllerGains.getPidGains());
-  }
-
   /**
    * resets the integral sum and the previous error of the PID controller and sets the setpoint to
    * the current position for profiling purposes (will be set to correct in the next loop)
@@ -155,14 +149,7 @@ public class Controller implements Sendable {
    * @return the feed forward of the controller in volts
    */
   public FeedForwardOutput calculateFeedForward(double directionOfTravel) {
-    var feedForwards = this.controllerGains.getControllerFeedForwards();
-
-    return new FeedForwardOutput(
-        feedForwards.getSimpleFeedForward(),
-        feedForwards.getFrictionFeedForward() * directionOfTravel,
-        feedForwards.getSetpointFeedForward() * setpoint.position,
-        feedForwards.getCalculatedFeedForward(setpoint.position),
-        request.arbFeedForward);
+    return controllerGains.getControllerFeedForwards().calculateFeedForwardOutput(this.setpoint.position, directionOfTravel, request.arbFeedForward);
   }
 
   /**
