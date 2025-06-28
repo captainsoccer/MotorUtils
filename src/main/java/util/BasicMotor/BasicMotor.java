@@ -1,13 +1,16 @@
 package util.BasicMotor;
 
 import edu.wpi.first.wpilibj.RobotState;
+import util.BasicMotor.Configuration.BasicMotorConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
-import util.BasicMotor.Gains.CurrentLimits;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.MotorManager.ControllerLocation;
+
+import java.util.Objects;
 
 /**
  * this is a basic motor class, it is used to simplify the process of creating a motor and also
@@ -100,18 +103,29 @@ public abstract class BasicMotor {
     private boolean hasConstraintsChanged = false;
 
     /**
-     * the name of the motor (used for logging)
-     */
-    protected final String name;
-
-    /**
      * updates the constraints of the motor controller this is used to update the constraints of the
      * motor controller when the constraints change
      *
      * @param constraints the new constraints to set
      */
     protected abstract void updateConstraints(ControllerConstrains constraints);
-    
+
+    /**
+     * the name of the motor (used for logging)
+     */
+    protected final String name;
+
+    /**
+     * the configuration of the motor controller
+     * used for initialization
+     */
+    private final BasicMotorConfig config;
+
+    /**
+     * if the motor has been initialized or not
+     */
+    private boolean initialized = false;
+
     /**
      * creates the motor.
      *
@@ -120,7 +134,31 @@ public abstract class BasicMotor {
      * @param controllerLocation the location of the controller (RIO or motor controller)
      */
     public BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation) {
+        this(controllerGains, name, controllerLocation, null);
+    }
 
+    /**
+     * creates the motor.
+     *
+     * @param config the configuration of the motor controller
+     */
+    public BasicMotor(BasicMotorConfig config) {
+        this(config.getControllerGains(), config.motorConfig.name, config.motorConfig.location, config);
+    }
+
+    /**
+     * creates the motor.
+     *
+     * @param controllerGains    the gains of the controller
+     * @param name               the name of the motor (used for logging)
+     * @param controllerLocation the location of the controller (RIO or motor controller)
+     * @param config            the configuration of the motor controller (saved for initialization)
+     */
+    private BasicMotor(ControllerGains controllerGains, String name, ControllerLocation controllerLocation, BasicMotorConfig config) {
+        Objects.requireNonNull(controllerGains);
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(controllerLocation);
+        
         this.controllerLocation = controllerLocation;
 
         Runnable setHasPIDGainsChanged = () -> hasPIDGainsChanged = true;
@@ -129,9 +167,36 @@ public abstract class BasicMotor {
 
         this.name = name;
 
+        this.config = config;
+
         MotorManager.getInstance()
                 .registerMotor(
                         name, controllerLocation, this::run, this::updateSensorData, this::getLatestFrame);
+    }
+
+    /**
+     * initializes the motor with the given configuration
+     * @return the default measurements of the motor
+     */
+    public Measurements initializeMotor() {
+        if(initialized) return getDefaultMeasurements();
+
+        double gearRatio = getDefaultMeasurements().getGearRatio();
+
+        updatePIDGainsToMotor(controller.getControllerGains().getPidGains().convertToMotorGains(gearRatio));
+        updateConstraints(controller.getControllerGains().getControllerConstrains().convertToMotorConstrains(gearRatio));
+
+        if(config == null){
+            initialized = true;
+            return getDefaultMeasurements();
+        }
+
+        setIdleMode(config.motorConfig.idleMode);
+        setMotorInverted(config.motorConfig.inverted);
+
+        initialized = true;
+
+        return config.usingExternalEncoder() ? getMeasurements() : getDefaultMeasurements();
     }
 
     // getters and setters
@@ -272,10 +337,6 @@ public abstract class BasicMotor {
         stopRecordingMeasurements();
     }
 
-    protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
-
-    protected abstract void stopMotorFollow();
-
     /**
      * stops following the motor this will re-enable pid control on this motor and measurements
      * logging
@@ -284,8 +345,12 @@ public abstract class BasicMotor {
         motorState = MotorState.STOPPED;
         stopMotorFollow();
         stopMotorOutput();
-        stopRecordingMeasurements();
+        startRecordingMeasurements(controllerLocation.HZ);
     }
+
+    protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
+
+    protected abstract void stopMotorFollow();
 
     // forwarded functions (for ease of use)
 
@@ -345,16 +410,16 @@ public abstract class BasicMotor {
      *
      * @return true if the motor is at the setpoint, false otherwise
      */
-    public boolean isAtSetpoint() {
+    public boolean atSetpoint() {
         return logFrame.atSetpoint;
     }
 
     /**
-     * if the motor is at the goal this is used to check if the motor is at the goal
+     * if the motor is at the goal, this is used to check if the motor is at the goal
      *
      * @return true if the motor is at the goal, false otherwise
      */
-    public boolean isAtGoal() {
+    public boolean atGoal() {
         return logFrame.atGoal;
     }
 
@@ -383,7 +448,7 @@ public abstract class BasicMotor {
      * latest position)
      */
     public void reset() {
-        resetEncoder(measurements.getGearRatio());
+        resetEncoder(measurements.getPosition());
     }
 
 
@@ -393,6 +458,8 @@ public abstract class BasicMotor {
      * is called on a separate thread
      */
     private void run() {
+        if(!initialized) measurements = initializeMotor();
+
         // doesn't need to do anything if the motor is following another motor
         if (motorState == MotorState.FOLLOWING) {
             return;

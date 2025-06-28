@@ -58,6 +58,10 @@ public class MeasurementsTalonFX extends Measurements {
     timeout = 1 / (refreshHZ * 4);
   }
 
+  /**
+   * sets the update frequency of the signals
+   * @param refreshHZ the refresh rate of the signals (how often to update the signals)
+   */
   public void setUpdateFrequency(double refreshHZ) {
     motorPosition.setUpdateFrequency(refreshHZ);
     motorVelocity.setUpdateFrequency(refreshHZ);

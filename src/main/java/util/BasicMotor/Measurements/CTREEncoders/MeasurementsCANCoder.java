@@ -28,6 +28,7 @@ public class MeasurementsCANCoder extends Measurements {
 
     /**
      * Creates a new measurements object with the given signals
+     * sets the refresh rate of the signals (but doesn't optimize the canbus usage)
      *
      * @param positionSignal the position signal of the motor
      * @param velocitySignal the velocity signal of the motor
@@ -50,10 +51,17 @@ public class MeasurementsCANCoder extends Measurements {
         timeout = 1 / (refreshHZ * 4);
     }
 
-    public void setUpdateFrequency(double refreshHZ) {
-        motorPosition.setUpdateFrequency(refreshHZ);
-        motorVelocity.setUpdateFrequency(refreshHZ);
+    /**
+     * Creates a new measurements object with the given signals
+     *
+     * @param positionSignal the position signal of the motor
+     * @param velocitySignal the velocity signal of the motor
+     * @param refreshHZ the refresh rate of the signals (how often to update the signals)
+     */
+    public  MeasurementsCANCoder(StatusSignal<Angle> positionSignal, StatusSignal<AngularVelocity> velocitySignal, double refreshHZ){
+        this(positionSignal, velocitySignal, refreshHZ, 1.0);
     }
+
 
     @Override
     public Measurement update(double dt) {

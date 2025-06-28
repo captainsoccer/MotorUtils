@@ -8,6 +8,8 @@ import util.BasicMotor.LogFrame;
 import util.BasicMotor.LogFrame.FeedForwardOutput;
 import util.BasicMotor.Measurements.Measurements;
 
+import java.util.Objects;
+
 /**
  * this is the controller used to control the basic motor class {@link util.BasicMotor.BasicMotor}
  * this handles pid (if needed), feedforward, constraints and profile of the motor
@@ -42,7 +44,6 @@ public class Controller implements Sendable {
     this.controllerGains.setHasConstraintsChanged(hasConstraintsChangeRunnable);
 
     this.pidController = new BasicPIDController(controllerGains.getPidGains());
-    updatePIDGains();
   }
 
   /**
@@ -60,6 +61,10 @@ public class Controller implements Sendable {
    * @param request the request of the controller
    */
   public void setReference(ControllerRequest request) {
+    Objects.requireNonNull(request);
+    Objects.requireNonNull(request.requestType);
+    Objects.requireNonNull(request.goal);
+
     this.request = request;
   }
 
@@ -122,11 +127,6 @@ public class Controller implements Sendable {
     return request;
   }
 
-  /** updates the PID gains of the PID controller */
-  public void updatePIDGains() {
-    this.pidController.setGains(controllerGains.getPidGains());
-  }
-
   /**
    * resets the integral sum and the previous error of the PID controller and sets the setpoint to
    * the current position for profiling purposes (will be set to correct in the next loop)
@@ -155,14 +155,7 @@ public class Controller implements Sendable {
    * @return the feed forward of the controller in volts
    */
   public FeedForwardOutput calculateFeedForward(double directionOfTravel) {
-    var feedForwards = this.controllerGains.getControllerFeedForwards();
-
-    return new FeedForwardOutput(
-        feedForwards.getSimpleFeedForward(),
-        feedForwards.getFrictionFeedForward() * directionOfTravel,
-        feedForwards.getSetpointFeedForward() * setpoint.position,
-        feedForwards.getCalculatedFeedForward(setpoint.position),
-        request.arbFeedForward);
+    return controllerGains.getControllerFeedForwards().calculateFeedForwardOutput(this.setpoint.position, directionOfTravel, request.arbFeedForward);
   }
 
   /**

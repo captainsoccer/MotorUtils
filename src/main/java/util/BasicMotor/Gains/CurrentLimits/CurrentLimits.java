@@ -1,4 +1,4 @@
-package util.BasicMotor.Gains;
+package util.BasicMotor.Gains.CurrentLimits;
 
 /**
  * This class is used to set the current limits of the motor controller. It is used to limit the
@@ -41,10 +41,10 @@ public class CurrentLimits {
       int supplyCurrentLimit,
       double supplyLowerTime,
       int supplyLowerLimit) {
-    this.statorCurrentLimit = statorCurrentLimit;
-    this.supplyCurrentLimit = supplyCurrentLimit;
-    this.supplyLowerTime = supplyLowerTime;
-    this.supplyLowerLimit = supplyLowerLimit;
+    this.statorCurrentLimit = Math.abs(statorCurrentLimit);
+    this.supplyCurrentLimit = Math.abs(supplyCurrentLimit);
+    this.supplyLowerTime = Math.abs(supplyLowerTime);
+    this.supplyLowerLimit = Math.abs(supplyLowerLimit);
   }
 
   /**

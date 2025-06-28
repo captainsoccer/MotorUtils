@@ -15,7 +15,7 @@ import util.BasicMotor.Configuration.BasicTalonFXConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
-import util.BasicMotor.Gains.CurrentLimits;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.Measurements.Measurements;
@@ -89,19 +89,17 @@ public class BasicTalonFX extends BasicMotor {
      * @param gearRatio          the gear ratio of the motor
      * @param name               the name of the motor controller
      * @param controllerLocation the location of the motor controller (rio, motor controller)
-     * @param canBusName        the can bus name of the motor controller
      */
     public BasicTalonFX(
             ControllerGains controllerGains,
             int id,
             double gearRatio,
             String name,
-            MotorManager.ControllerLocation controllerLocation,
-            String canBusName) {
+            MotorManager.ControllerLocation controllerLocation) {
 
         super(controllerGains, name, controllerLocation);
 
-        motor = new TalonFX(id, canBusName);
+        motor = new TalonFX(id);
         config = new TalonFXConfiguration();
 
         applyConfig();
@@ -116,33 +114,6 @@ public class BasicTalonFX extends BasicMotor {
         sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
 
         motor.optimizeBusUtilization();
-
-        updatePIDGainsToMotor(controllerGains.getPidGains().convertToMotorGains(gearRatio));
-        updateConstraints(controllerGains.getControllerConstrains().convertToMotorConstrains(gearRatio));
-    }
-
-    /**
-     * Constructor for the TalonFX motor controller
-     *
-     * @param controllerGains    the gains for the motor controller
-     * @param id                 the id of the motor controller
-     * @param gearRatio          the gear ratio of the motor
-     * @param name               the name of the motor controller
-     * @param controllerLocation the location of the motor controller (rio, motor controller)
-     */
-    public BasicTalonFX(
-            ControllerGains controllerGains,
-            int id,
-            double gearRatio,
-            String name,
-            MotorManager.ControllerLocation controllerLocation) {
-        this(
-                controllerGains,
-                id,
-                gearRatio,
-                name,
-                controllerLocation,
-                defaultCanBusName);
     }
 
     /**
@@ -151,37 +122,32 @@ public class BasicTalonFX extends BasicMotor {
      * @param config the configuration for the motor controller
      */
     public BasicTalonFX(BasicMotorConfig config) {
-        this(
-                config.getControllerGains(),
-                config.motorConfig.id,
-                config.motorConfig.gearRatio,
-                config.motorConfig.name,
-                config.motorConfig.location,
-                defaultCanBusName);
+        super(config);
 
-        DriverStation.reportWarning(
-                "BasicTalonFXConfig not used, ignoring them motor: " + name, false);
+        boolean isSpecificConfig = config instanceof BasicTalonFXConfig;
 
-        setIdleMode(config.motorConfig.idleMode);
-    }
+        motor = new TalonFX(config.motorConfig.id,
+                isSpecificConfig ? ((BasicTalonFXConfig) config).canBusName : defaultCanBusName);
+        this.config = new TalonFXConfiguration();
 
-    /**
-     * Constructor for the TalonFX motor controller with a specif configuration
-     *
-     * @param config the configuration for the motor controller
-     */
-    public BasicTalonFX(BasicTalonFXConfig config) {
-        this(
-                config.getControllerGains(),
-                config.motorConfig.id,
-                config.motorConfig.gearRatio,
-                config.motorConfig.name,
-                config.motorConfig.location,
-                config.canBusName);
+        applyConfig();
 
-        setIdleMode(config.motorConfig.idleMode);
+        defaultMeasurements = new MeasurementsTalonFX(
+                motor.getPosition(),
+                motor.getVelocity(),
+                motor.getAcceleration(),
+                controllerLocation.HZ,
+                config.motorConfig.gearRatio);
 
-        setCurrentLimits(config.currentLimitConfig.getCurrentLimits());
+        sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
+
+        motor.optimizeBusUtilization();
+
+        if(!isSpecificConfig) return;
+
+        BasicTalonFXConfig specificConfig = (BasicTalonFXConfig) config;
+
+        setCurrentLimits(specificConfig.currentLimitConfig.getCurrentLimits());
     }
 
     @Override

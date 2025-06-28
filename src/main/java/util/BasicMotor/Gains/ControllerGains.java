@@ -147,7 +147,7 @@ public class ControllerGains {
   }
 
   /**
-   * this function is used to initialize the sendable builder for the controller gains
+   * this function is used to initialize the sendable builder for the controller gains.
    * it adds the PID gains, feed forwards, and motion profile constraints to the sendable builder
    * this is used when the controller gains are added to the SmartDashboard
    * @param builder the sendable builder
@@ -181,7 +181,7 @@ public class ControllerGains {
   }
 
     /**
-     * builds the sendable for the feed forwards (simpleFeedForward, frictionFeedForward, k_V)
+     * builds the sendable for the feed forwards (simpleFeedForward, frictionFeedForward, setpointFeedForward)
      *
      * @param builder the sendable builder
      */
@@ -201,7 +201,7 @@ public class ControllerGains {
                 value, ControllerFeedForwards.ChangeType.FRICTION_FEED_FORWARD));
 
     builder.addDoubleProperty(
-        "k_V",
+        "setpointFeedForward",
         controllerFeedForwards::getSetpointFeedForward,
         (value) ->
             controllerFeedForwards.updateFeedForwards(
@@ -239,6 +239,7 @@ public class ControllerGains {
   }
 
   private void updatePIDGains(double value, PIDGains.ChangeType changeType) {
+    //cheks if the pid gains have changed
     if (pidGains.updatePIDGains(value, changeType)) {
       setHasPIDGainsChanged.run();
     }

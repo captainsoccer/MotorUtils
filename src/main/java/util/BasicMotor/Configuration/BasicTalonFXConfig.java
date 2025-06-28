@@ -1,7 +1,11 @@
 package util.BasicMotor.Configuration;
 
-import util.BasicMotor.Gains.CurrentLimits;
+import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
 
+/**
+ * This class represents the configuration for a basic TalonFX motor controller.
+ * It extends the BasicMotorConfig class and provides specific configurations for TalonFX motors.
+ */
 public class BasicTalonFXConfig extends BasicMotorConfig{
     /**
      * the current limit configuration of the motor controller

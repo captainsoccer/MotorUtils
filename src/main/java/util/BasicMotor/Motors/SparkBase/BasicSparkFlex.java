@@ -52,26 +52,6 @@ public class BasicSparkFlex extends BasicSparkBase {
                         absoluteEncoderConfig.mechanismToSensorRatio,
                         absoluteEncoderConfig.absoluteEncoderRange);
             }
-
-            if(sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder){
-                var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
-
-                useAbsoluteEncoder(
-                        absoluteEncoderConfig.inverted,
-                        absoluteEncoderConfig.zeroOffset,
-                        absoluteEncoderConfig.sensorToMotorRatio,
-                        absoluteEncoderConfig.mechanismToSensorRatio,
-                        absoluteEncoderConfig.absoluteEncoderRange);
-            }
-
-            if(sparkBaseConfig.externalEncoderConfig.useExternalEncoder){
-                var externalEncoderConfig = sparkBaseConfig.externalEncoderConfig;
-
-                useExternalEncoder(
-                        externalEncoderConfig.inverted,
-                        externalEncoderConfig.sensorToMotorRatio,
-                        externalEncoderConfig.mechanismToSensorRatio);
-            }
         }
     }
 

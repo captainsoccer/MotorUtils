@@ -8,10 +8,9 @@ import java.util.function.Function;
 
 /**
  * this class stores all the data on the motor controller. it is used to configure the motor
- * it is a way to pack all the data into one class and make it easier to pass around
- * this class is modeled after the TalonFX configuration
+ * it is a way to pack all the data into one class and make it easier to pass around.
+ * if you want to control current limits or other advanced features, use the motor controller's specific configuration class
  * <p>
- * for any other motor controller, use the appropriate configuration class
  */
 public class BasicMotorConfig {
 
@@ -45,6 +44,10 @@ public class BasicMotorConfig {
         return new ControllerGains(pidConfig.getGains(), constraintsConfig.getConstraints(), feedForwardConfig.getFeedForwards());
     }
 
+    public boolean usingExternalEncoder() {
+        return false;
+    }
+
     /**
      * the basic motor configuration
      */
@@ -60,13 +63,21 @@ public class BasicMotorConfig {
          * <p>
          * this is used to identify the motor controller in the logger
          */
-        public String name = "";
+        public String name = "motor";
         /**
          * the gear ratio of the motor controller
          * <p>
          * this is used to convert the motor output to the desired output
+         * a number greater than 1 means the motor is geared down (a mechanism spins slower than the motor)
          */
         public double gearRatio = 1;
+
+        /**
+         * if the motor controller is inverted,
+         * true means clockwise is positive
+         * false means counter-clockwise is positive
+         */
+        public boolean inverted = false;
 
         /**
          * the idle mode of the motor controller
@@ -107,13 +118,13 @@ public class BasicMotorConfig {
          * <p>
          * this is the zone in which the integral term is applied, outside of this zone the integral term will be zeroed
          */
-        public double iZone = 0;
+        public double iZone = Double.POSITIVE_INFINITY;
         /**
-         * the maximum accumulation of the integral term of the PID controller units are: (voltage * second / unit of measurement)
+         * the maximum accumulation and contribution of the integral term units are: (voltage)
          * <p>
          * this is the maximum value that the integral term can accumulate to, if it exceeds this value, it will be clamped
          */
-        public double iMaxAccum = 0;
+        public double iMaxAccum = MotorManager.defaultMaxMotorOutput;
         /**
          * the tolerance of the PID controller units are: (unit of measurement)
          * <p>
@@ -146,25 +157,25 @@ public class BasicMotorConfig {
          * this is used to compensate for the friction in the motor,
          * it will be applied to the output in the direction of travel
          */
-        public double frictionFF = 0;
+        public double frictionFeedForward = 0;
         /**
          * the k_V feed forward gain of the motor controller units are: (voltage / unit of measurement)
          * <p>
          * this is usually used in velocity control, but it is just a feed forward gain that is multiplied by the setpoint
          */
-        public double k_V = 0;
+        public double setpointFeedForward = 0;
         /**
          * the simple feed forward gain of the motor controller units are: (voltage)
          * <p>
          * it's just a constant voltage applied to the output used, for example, in elevators
          */
-        public double simpleFF = 0;
+        public double simpleFeedForward = 0;
         /**
          * a custom feed forward function that takes the setpoint and returns a value
          * <p>
          * this can be used for more complex feed forwards, like an arm with gravity compensation
          */
-        public Function<Double, Double> customFF = (setpoint) -> 0.0;
+        public Function<Double, Double> customFeedForward = (setpoint) -> 0.0;
 
         /**
          * gets the feed forwards of the controller
@@ -175,7 +186,7 @@ public class BasicMotorConfig {
          */
         public ControllerFeedForwards getFeedForwards() {
             return new ControllerFeedForwards(
-                    simpleFF, frictionFF, k_V, customFF);
+                    simpleFeedForward, frictionFeedForward, setpointFeedForward, customFeedForward);
         }
     }
 

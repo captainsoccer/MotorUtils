@@ -49,7 +49,7 @@ public class BasicPIDController {
     }
     // If the error is within the I_Zone, accumulate the integral and clamp it
     else if (gains.getK_I() != 0) {
-      integral +=
+      integral =
           MathUtil.clamp(
               integral + error * dt,
               -gains.getI_MaxAccum() / gains.getK_I(),
