@@ -114,7 +114,7 @@ public abstract class BasicSimSystem extends BasicMotor {
         double temp = 0; //no temperature in simulation
 
         double dutyCycle = voltageOutput / voltageInput; //duty cycle is the ratio of output to input voltage
-        
+
         return new LogFrame.SensorData(
                 temp,
                 voltageInput,
