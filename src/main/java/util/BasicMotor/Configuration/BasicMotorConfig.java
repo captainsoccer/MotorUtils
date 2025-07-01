@@ -317,15 +317,50 @@ public class BasicMotorConfig {
     }
 
     public static class SimulationConfig {
-
+        /**
+         * the kV gain of the motor controller units are: (voltage / unit of measurement per second)
+         * you can use this and {@link #kA} to simulate the motor controller or use {@link #momentOfInertia}
+         * the kv must be in SI units.
+         * for general use (angular mechanisms), it is in (voltage / radians per second).
+         * for elevators, telescopic arms, and other linear mechanisms,
+         * it is in (voltage / meters per second).
+         * but it is after gear ratio.
+         * for an arm it will be in (voltage / radians per second).
+         * and the radians are the mechanisms, not the motor.
+         */
         public double kV = 0;
 
+        /**
+         * the kA gain of the motor controller units are: (voltage / unit of measurement * per second squared)
+         * the ka must be in SI units.
+         * for general use (angular mechanisms), it is in (voltage / radians per second squared).
+         * for elevators, telescopic arms, and other linear mechanisms,
+         * it is in (voltage / meters per second squared).
+         * but it is after gear ratio.
+         * for an arm it will be in (voltage / radians per second squared).
+         * and the radians are the mechanisms, not the motor.
+         */
         public double kA = 0;
 
+        /**
+         * the moment of inertia of the motor controller units are: (kilogram * meter squared)
+         * this is used to simulate the motor inertia in the simulation
+         * if this is 0, the kV and kA must be provided
+         */
         public double momentOfInertia = 0.0;
 
+        /**
+         * the standard deviation of the position measurement in the simulation
+         * this is used to simulate the noise in the position measurement
+         * units are: (unit of measurement)
+         */
         public double positionStandardDeviation = 0.0;
 
+        /**
+         * the standard deviation of the velocity measurement in the simulation
+         * this is used to simulate the noise in the velocity measurement
+         * units are: (unit of measurement per second)
+         */
         public double velocityStandardDeviation = 0.0;
     }
 }
