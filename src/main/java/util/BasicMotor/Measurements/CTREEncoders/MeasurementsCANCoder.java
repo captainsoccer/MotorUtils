@@ -34,13 +34,15 @@ public class MeasurementsCANCoder extends Measurements {
      * @param velocitySignal the velocity signal of the motor
      * @param refreshHZ the refresh rate of the signals (how often to update the signals)
      * @param gearRatio the gear ratio of the motor (the measurements are divided by this)
+     * @param unitConversion the value that will be multiplied by to convert the measurements to the desired units
      */
     public MeasurementsCANCoder(
             StatusSignal<Angle> positionSignal,
             StatusSignal<AngularVelocity> velocitySignal,
             double refreshHZ,
-            double gearRatio) {
-        super(gearRatio);
+            double gearRatio,
+            double unitConversion) {
+        super(gearRatio, unitConversion);
 
         motorPosition = positionSignal;
         motorVelocity = velocitySignal;
@@ -59,7 +61,7 @@ public class MeasurementsCANCoder extends Measurements {
      * @param refreshHZ the refresh rate of the signals (how often to update the signals)
      */
     public  MeasurementsCANCoder(StatusSignal<Angle> positionSignal, StatusSignal<AngularVelocity> velocitySignal, double refreshHZ){
-        this(positionSignal, velocitySignal, refreshHZ, 1.0);
+        this(positionSignal, velocitySignal, refreshHZ, 1, 1);
     }
 
 

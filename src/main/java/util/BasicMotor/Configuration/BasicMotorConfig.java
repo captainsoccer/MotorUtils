@@ -73,6 +73,21 @@ public class BasicMotorConfig {
         public double gearRatio = 1;
 
         /**
+         * the value that will be multiplied by to convert the measurements to the desired units.
+         * the default units of the motor are rotations.
+         * (rotations, rotations per second, rotations per second squared)
+         * <p>
+         * you can convert to the following units easily:
+         * <p>
+         * * - meters: multiply by the circumference of the wheel (2 * pi * radius)
+         * <p>
+         * * - degrees: multiply by 360 (1 rotation = 360 degrees)
+         * <p>
+         * * - radians: multiply by 2 * pi (1 rotation = 2 * pi radians)
+         */
+        public double unitConversion = 1;
+
+        /**
          * if the motor controller is inverted,
          * true means clockwise is positive
          * false means counter-clockwise is positive

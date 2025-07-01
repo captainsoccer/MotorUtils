@@ -44,8 +44,9 @@ public class MeasurementsTalonFX extends Measurements {
       StatusSignal<AngularVelocity> velocitySignal,
       StatusSignal<AngularAcceleration> accelerationSignal,
       double refreshHZ,
-      double gearRatio) {
-    super(gearRatio);
+      double gearRatio,
+      double unitConversion) {
+    super(gearRatio, unitConversion);
 
     motorPosition = positionSignal;
     motorVelocity = velocitySignal;

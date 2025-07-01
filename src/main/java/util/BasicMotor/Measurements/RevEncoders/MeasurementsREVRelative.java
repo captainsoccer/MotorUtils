@@ -23,9 +23,10 @@ public class MeasurementsREVRelative extends Measurements {
    *
    * @param encoder the encoder used to get the measurements from the motor controller
    * @param gearRatio the gear ratio of the motor (the measurements are divided by this)
+   * @param unitConversion the value that will be multiplied by to convert the measurements to the desired units
    */
-  public MeasurementsREVRelative(RelativeEncoder encoder, double gearRatio) {
-    super(gearRatio);
+  public MeasurementsREVRelative(RelativeEncoder encoder, double gearRatio, double unitConversion) {
+    super(gearRatio, unitConversion);
     this.encoder = encoder;
   }
 

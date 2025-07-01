@@ -27,9 +27,10 @@ public class MeasurementsREVAbsolute extends Measurements {
      *
      * @param encoder the absolute encoder used to get the measurements
      * @param mechanismToSensorRatio the ratio of the mechanism to the sensor (how many rotations of the mechanism are one rotation of the sensor)
+     * @param unitConversion the value that will be multiplied by to convert the measurements to the desired units
      */
-    public MeasurementsREVAbsolute(AbsoluteEncoder encoder, double mechanismToSensorRatio) {
-        super(mechanismToSensorRatio);
+    public MeasurementsREVAbsolute(AbsoluteEncoder encoder, double mechanismToSensorRatio, double unitConversion) {
+        super(mechanismToSensorRatio, unitConversion);
         this.encoder = encoder;
     }
 
