@@ -87,6 +87,7 @@ public class BasicTalonFX extends BasicMotor {
      * @param controllerGains    the gains for the motor controller
      * @param id                 the id of the motor controller
      * @param gearRatio          the gear ratio of the motor
+     * @param unitConversion    the value the rotations of the motor will be multiplied by to convert the measurements to the desired units
      * @param name               the name of the motor controller
      * @param controllerLocation the location of the motor controller (rio, motor controller)
      */
@@ -116,6 +117,24 @@ public class BasicTalonFX extends BasicMotor {
         sensors = new TalonFXSensors(motor, controllerLocation.HZ, controllerLocation);
 
         motor.optimizeBusUtilization();
+    }
+
+    /**
+     * Constructor for the TalonFX motor controller
+     *
+     * @param controllerGains    the gains for the motor controller
+     * @param id                 the id of the motor controller
+     * @param gearRatio          the gear ratio of the motor
+     * @param name               the name of the motor controller
+     * @param controllerLocation the location of the motor controller (rio, motor controller)
+     */
+    public BasicTalonFX(
+            ControllerGains controllerGains,
+            int id,
+            double gearRatio,
+            String name,
+            MotorManager.ControllerLocation controllerLocation) {
+        this(controllerGains, id, gearRatio, 1, name, controllerLocation);
     }
 
     /**
