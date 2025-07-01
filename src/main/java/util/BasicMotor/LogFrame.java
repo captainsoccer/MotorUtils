@@ -117,8 +117,7 @@ public class LogFrame {
 
     /** empty controller frame used when stopping the motor */
     public static final ControllerFrame EMPTY =
-        new ControllerFrame(
-            0, FeedForwardOutput.EMPTY, 0, 0, 0, 0, Controller.RequestType.STOP);
+        new ControllerFrame(0, FeedForwardOutput.EMPTY, 0, 0, 0, 0, Controller.RequestType.STOP);
 
     public ControllerFrame(
         double output, double wanted, double measurement, Controller.RequestType mode) {

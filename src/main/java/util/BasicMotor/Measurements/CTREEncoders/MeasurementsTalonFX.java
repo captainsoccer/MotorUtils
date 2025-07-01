@@ -61,6 +61,7 @@ public class MeasurementsTalonFX extends Measurements {
 
   /**
    * sets the update frequency of the signals
+   *
    * @param refreshHZ the refresh rate of the signals (how often to update the signals)
    */
   public void setUpdateFrequency(double refreshHZ) {

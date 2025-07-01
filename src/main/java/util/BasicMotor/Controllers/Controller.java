@@ -3,12 +3,11 @@ package util.BasicMotor.Controllers;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import java.util.Objects;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.LogFrame.FeedForwardOutput;
 import util.BasicMotor.Measurements.Measurements;
-
-import java.util.Objects;
 
 /**
  * this is the controller used to control the basic motor class {@link util.BasicMotor.BasicMotor}
@@ -155,12 +154,15 @@ public class Controller implements Sendable {
    * @return the feed forward of the controller in volts
    */
   public FeedForwardOutput calculateFeedForward(double directionOfTravel) {
-    return controllerGains.getControllerFeedForwards().calculateFeedForwardOutput(this.setpoint.position, directionOfTravel, request.arbFeedForward);
+    return controllerGains
+        .getControllerFeedForwards()
+        .calculateFeedForwardOutput(
+            this.setpoint.position, directionOfTravel, request.arbFeedForward);
   }
 
   /**
-   * calculates the profile of movement
-   * and sets the setpoint to the calculated profile
+   * calculates the profile of movement and sets the setpoint to the calculated profile
+   *
    * @param dt the time since the last calculation
    */
   public void calculateProfile(double dt) {
@@ -170,8 +172,9 @@ public class Controller implements Sendable {
   }
 
   /**
-   * checks the motor output of the controller
-   * (if it is above or below the maximum output of the motor or is below the minimum output of the motor)
+   * checks the motor output of the controller (if it is above or below the maximum output of the
+   * motor or is below the minimum output of the motor)
+   *
    * @param output the output of the controller in volts
    * @return the checked output of the controller in volts
    */
@@ -184,7 +187,8 @@ public class Controller implements Sendable {
    *
    * @param measurement the measurement of the controller (depending on the request type)
    */
-  public void calculateConstraints(Measurements.Measurement measurement, ControllerRequest request) {
+  public void calculateConstraints(
+      Measurements.Measurement measurement, ControllerRequest request) {
     this.controllerGains.getControllerConstrains().calculateConstraints(measurement, request);
   }
 

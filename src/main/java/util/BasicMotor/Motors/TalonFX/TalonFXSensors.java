@@ -148,8 +148,7 @@ public class TalonFXSensors {
         powerDraw,
         powerOutput,
         dutyCycle,
-        "Not supported by TalonFX"
-        );
+        "Not supported by TalonFX");
   }
 
   /**
