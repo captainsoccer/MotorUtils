@@ -21,6 +21,9 @@ public class LogFrame {
   /** if the motor is at goal (used when using a profile) */
   public boolean atGoal = false;
 
+  /** the torque the motor is applying (in Newton-meters) */
+  public double appliedTorque = 0;
+
   /**
    * the record holding the sensor data of the motor
    *

@@ -1,6 +1,8 @@
 package util.BasicMotor.Configuration;
 
 import java.util.function.Function;
+
+import edu.wpi.first.math.system.plant.DCMotor;
 import util.BasicMotor.BasicMotor;
 import util.BasicMotor.Gains.*;
 import util.BasicMotor.MotorManager;
@@ -108,6 +110,13 @@ public class BasicMotorConfig {
      * feedback
      */
     public MotorManager.ControllerLocation location = MotorManager.ControllerLocation.MOTOR;
+
+    /**
+     * the type of motor that the controller is connected to.
+     * this is used to calculate the motor torque.
+     * also used for simulation purposes.
+     */
+    public DCMotor motorType = DCMotor.getNEO(1);
   }
 
   /**
