@@ -17,6 +17,27 @@ public class BasicSparkMAX extends BasicSparkBase {
      * @param id        the id of the motor controller
      * @param name      the name of the motor controller
      * @param gearRatio the gear ratio of the motor controller
+     * @param unitConversion the value that will be multiplied by to convert the measurements to the desired units
+     * @param location  the location of the motor controller (RIO or MOTOR)
+     */
+    public BasicSparkMAX(
+            ControllerGains gains,
+            int id,
+            String name,
+            double gearRatio,
+            double unitConversion,
+            MotorManager.ControllerLocation location) {
+
+        super(new SparkMax(id, SparkLowLevel.MotorType.kBrushless), new SparkMaxConfig(), gains, name, gearRatio, unitConversion, location);
+    }
+
+    /**
+     * creates a basic spark max motor controller with the given gains and id
+     *
+     * @param gains     the gains of the motor controller
+     * @param id        the id of the motor controller
+     * @param name      the name of the motor controller
+     * @param gearRatio the gear ratio of the motor controller
      * @param location  the location of the motor controller (RIO or MOTOR)
      */
     public BasicSparkMAX(
@@ -26,7 +47,7 @@ public class BasicSparkMAX extends BasicSparkBase {
             double gearRatio,
             MotorManager.ControllerLocation location) {
 
-        super(new SparkMax(id, SparkLowLevel.MotorType.kBrushless), new SparkMaxConfig(), gains, name, gearRatio, location);
+        this(gains, id, name, gearRatio, 1, location);
     }
 
     /**

@@ -21,6 +21,27 @@ public class BasicSparkFlex extends BasicSparkBase {
      * @param id        the id of the motor controller
      * @param name      the name of the motor controller
      * @param gearRatio the gear ratio of the motor controller
+     * @param unitConversion the value that will be multiplied by to convert the measurements to the desired units
+     * @param location  the location of the motor controller (RIO or MOTOR)
+     */
+    public BasicSparkFlex(
+            ControllerGains gains,
+            int id,
+            String name,
+            double gearRatio,
+            double unitConversion,
+            MotorManager.ControllerLocation location) {
+
+        super(new SparkFlex(id, SparkLowLevel.MotorType.kBrushless), new SparkFlexConfig(), gains, name, gearRatio, unitConversion, location);
+    }
+
+    /**
+     * creates a basic spark flex motor controller with the given gains and id
+     *
+     * @param gains     the gains of the motor controller
+     * @param id        the id of the motor controller
+     * @param name      the name of the motor controller
+     * @param gearRatio the gear ratio of the motor controller
      * @param location  the location of the motor controller (RIO or MOTOR)
      */
     public BasicSparkFlex(
@@ -30,7 +51,7 @@ public class BasicSparkFlex extends BasicSparkBase {
             double gearRatio,
             MotorManager.ControllerLocation location) {
 
-        super(new SparkFlex(id, SparkLowLevel.MotorType.kBrushless), new SparkFlexConfig(), gains, name, gearRatio, location);
+        this(gains, id, name, gearRatio, 1, location);
     }
 
     /**
@@ -94,7 +115,7 @@ public class BasicSparkFlex extends BasicSparkBase {
             AbsoluteEncoderRange absoluteEncoderRange) {
 
         //configures the absolute encoder
-        setAbsoluteEncoderConfig(inverted, zeroOffset, sensorToMotorRatio, mechanismToSensorRatio, absoluteEncoderRange);
+        setAbsoluteEncoderConfig(inverted, zeroOffset, sensorToMotorRatio, absoluteEncoderRange);
 
         //sets the external encoder configuration
         useExternalEncoder(inverted, sensorToMotorRatio, mechanismToSensorRatio);
