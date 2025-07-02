@@ -51,13 +51,6 @@ public abstract class BasicSimSystem extends BasicMotor {
     }
 
     @Override
-    protected void setMotorPosition(double position) {
-        double radians = Units.rotationsToRadians(position);
-
-        system.setState(VecBuilder.fill(radians, system.getOutput(1)));
-    }
-
-    @Override
     protected void stopRecordingMeasurements() {
         // does nothing, as this is a simulation system
     }

@@ -7,13 +7,13 @@ import util.BasicMotor.Measurements.Measurements;
 public class MotorSimEncoder extends Measurements {
     private final DCMotorSim motor;
 
-    public MotorSimEncoder(DCMotorSim motor, double gearRatio, double unitConversion) {
-        super(gearRatio, unitConversion);
+    public MotorSimEncoder(DCMotorSim motor, double unitConversion) {
+        super(1, unitConversion);
         this.motor = motor;
     }
 
-    public MotorSimEncoder(DCMotorSim motor, double gearRatio) {
-        this(motor, gearRatio, 1);
+    public MotorSimEncoder(DCMotorSim motor) {
+        this(motor, 1);
     }
 
     @Override
