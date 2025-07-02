@@ -5,6 +5,7 @@ import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.LinearSystemSim;
 import util.BasicMotor.BasicMotor;
+import util.BasicMotor.Configuration.BasicMotorConfig;
 import util.BasicMotor.Controllers.Controller;
 import util.BasicMotor.Gains.ControllerConstrains;
 import util.BasicMotor.Gains.ControllerGains;
@@ -12,6 +13,7 @@ import util.BasicMotor.Gains.CurrentLimits.CurrentLimits;
 import util.BasicMotor.Gains.PIDGains;
 import util.BasicMotor.LogFrame;
 import util.BasicMotor.MotorManager;
+import util.BasicMotor.MotorManager.ControllerLocation;
 
 public abstract class BasicSimSystem extends BasicMotor {
   protected final LinearSystemSim<N2, N1, N2> system;
@@ -21,6 +23,16 @@ public abstract class BasicSimSystem extends BasicMotor {
   public BasicSimSystem(LinearSystemSim<N2, N1, N2> system, String name, ControllerGains gains) {
     super(gains, name, MotorManager.ControllerLocation.RIO);
     this.system = system;
+  }
+
+  public BasicSimSystem(LinearSystemSim<N2, N1, N2> system, BasicMotorConfig config) {
+    super(checkConfig(config));
+    this.system = system;
+  }
+
+  private static BasicMotorConfig checkConfig(BasicMotorConfig config) {
+    config.motorConfig.location = ControllerLocation.RIO;
+    return config;
   }
 
   @Override

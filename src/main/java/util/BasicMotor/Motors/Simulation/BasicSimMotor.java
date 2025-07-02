@@ -21,11 +21,11 @@ public class BasicSimMotor extends BasicSimSystem {
   }
 
   public BasicSimMotor(BasicMotorConfig config) {
-    this(
-        createSimMotor(config),
-        config.motorConfig.name,
-        config.getControllerGains(),
-        config.motorConfig.unitConversion);
+    super(createSimMotor(config), config);
+
+    this.motor = (DCMotorSim) system;
+
+    this.defaultMeasurements = new MotorSimEncoder(motor, config.motorConfig.unitConversion);
   }
 
   private static DCMotorSim createSimMotor(BasicMotorConfig config) {

@@ -153,11 +153,8 @@ public class Controller implements Sendable {
     return this.pidController.calculate(this.setpoint.position, measurement, dt);
   }
 
-  /**
-   * sets the setpoint to the goal
-   * used when not using a profiled control
-   */
-  public void setSetpointToGoal(){
+  /** sets the setpoint to the goal used when not using a profiled control */
+  public void setSetpointToGoal() {
     this.setpoint = request.goal;
   }
 

@@ -15,7 +15,9 @@ public abstract class Measurements {
    * @param velocity
    * @param acceleration
    */
-  public record Measurement(double position, double velocity, double acceleration) {}
+  public record Measurement(double position, double velocity, double acceleration) {
+    public static final Measurement EMPTY = new Measurement(0, 0, 0);
+  }
 
   /**
    * The gear ratio of the motor This is used to convert the measurements from the motor to the
@@ -27,7 +29,7 @@ public abstract class Measurements {
   private final double unitConversion;
 
   /** The last measurement of the motor This is used to store the last measurement of the motor */
-  private Measurement lastMeasurement = new Measurement(0, 0, 0);
+  private Measurement lastMeasurement = Measurement.EMPTY;
 
   /**
    * Creates a new measurements object with the given gear ratio

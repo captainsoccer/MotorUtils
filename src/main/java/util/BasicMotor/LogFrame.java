@@ -7,13 +7,13 @@ import util.BasicMotor.Measurements.Measurements;
 @AutoLog
 public class LogFrame {
   /** the latest frame of the controller */
-  public ControllerFrame controllerFrame;
+  public ControllerFrame controllerFrame = ControllerFrame.EMPTY;
   /** the latest PID output of the controller */
-  public PIDOutput pidOutput;
+  public PIDOutput pidOutput = PIDOutput.EMPTY;
   /** the latest sensor data of the motor */
-  public SensorData sensorData;
+  public SensorData sensorData = SensorData.EMPTY;
   /** the latest measurement of the motor */
-  public Measurements.Measurement measurement;
+  public Measurements.Measurement measurement = Measurements.Measurement.EMPTY;
 
   /** if the motor is at setpoint */
   public boolean atSetpoint = false;
@@ -45,7 +45,9 @@ public class LogFrame {
       double voltageInput,
       double powerDraw,
       double powerOutput,
-      double dutyCycle) {}
+      double dutyCycle) {
+    public static final SensorData EMPTY = new SensorData(0, 0, 0, 0, 0, 0, 0, 0);
+  }
 
   /**
    * the record holding the PID output of the controller
