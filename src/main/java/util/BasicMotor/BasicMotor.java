@@ -560,6 +560,7 @@ public abstract class BasicMotor {
 
     // if using a motion profile, then calculate the profile
     if (controllerRequest.requestType().isProfiled()) controller.calculateProfile(dt);
+    else controller.setSetpointToGoal();
 
     // calculate the direction of travel
     double directionOfTravel =
@@ -629,7 +630,9 @@ public abstract class BasicMotor {
 
     if (controllerLocation == ControllerLocation.MOTOR) logFrame.pidOutput = getPIDLatestOutput();
 
-    if(config != null) logFrame.appliedTorque = config.motorConfig.motorType.getTorque(logFrame.sensorData.currentOutput());
+    if (config != null)
+      logFrame.appliedTorque =
+          config.motorConfig.motorType.getTorque(logFrame.sensorData.currentOutput());
 
     // if the pid has changed, then update the built-in motor pid
     if (hasPIDGainsChanged) {

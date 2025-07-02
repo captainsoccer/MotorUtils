@@ -3,6 +3,7 @@ package util.BasicMotor.Controllers;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.util.sendable.SendableRegistry;
 import java.util.Objects;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.LogFrame;
@@ -14,6 +15,8 @@ import util.BasicMotor.Measurements.Measurements;
  * this handles pid (if needed), feedforward, constraints and profile of the motor
  */
 public class Controller implements Sendable {
+  private static int instances = 0;
+
   /** the gains of the controller pid, feedforward, constraints and profile */
   private final ControllerGains controllerGains;
 
@@ -26,7 +29,7 @@ public class Controller implements Sendable {
   /** the latest request of the controller this contains the control mode and the goal */
   private ControllerRequest request;
   /** the setpoint of the controller this is used when using profiled position and velocity */
-  private TrapezoidProfile.State setpoint;
+  private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   /**
    * creates a controller with the given gains
@@ -43,6 +46,10 @@ public class Controller implements Sendable {
     this.controllerGains.setHasConstraintsChanged(hasConstraintsChangeRunnable);
 
     this.pidController = new BasicPIDController(controllerGains.getPidGains());
+
+    instances++;
+
+    SendableRegistry.add(this, "MotorController", instances);
   }
 
   /**
@@ -144,6 +151,14 @@ public class Controller implements Sendable {
    */
   public LogFrame.PIDOutput calculatePID(double measurement, double dt) {
     return this.pidController.calculate(this.setpoint.position, measurement, dt);
+  }
+
+  /**
+   * sets the setpoint to the goal
+   * used when not using a profiled control
+   */
+  public void setSetpointToGoal(){
+    this.setpoint = request.goal;
   }
 
   /**

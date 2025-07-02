@@ -38,6 +38,7 @@ public class MotorManager extends SubsystemBase {
 
   private MotorManager() {
     // Private constructor to prevent instantiation
+    super();
   }
 
   /**

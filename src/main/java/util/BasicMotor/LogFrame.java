@@ -45,8 +45,7 @@ public class LogFrame {
       double voltageInput,
       double powerDraw,
       double powerOutput,
-      double dutyCycle,
-      String faults) {}
+      double dutyCycle) {}
 
   /**
    * the record holding the PID output of the controller

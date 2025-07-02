@@ -156,8 +156,6 @@ public abstract class BasicSparkBase extends BasicMotor {
     double powerDraw = sparkMaxIdlePowerDraw + powerOutput; // idle power draw + output power
     double currentDraw = powerDraw / voltage; // current draw is power draw / voltage
 
-    String faults = motor.getLastError().name(); // get the faults of the motor
-
     return new LogFrame.SensorData(
         temperature,
         currentDraw,
@@ -166,8 +164,7 @@ public abstract class BasicSparkBase extends BasicMotor {
         voltage,
         powerDraw,
         powerOutput,
-        dutyCycle,
-        faults);
+        dutyCycle);
   }
 
   @Override
