@@ -20,7 +20,6 @@ public class FlyWheelSimEncoder extends Measurements {
      * @param flywheelSim the FlywheelSim to use
      */
     public FlyWheelSimEncoder(FlywheelSim flywheelSim) {
-        super(1, 1); // Assuming unit conversion factor of 1 for simplicity
         this.flywheelSim = flywheelSim;
     }
 

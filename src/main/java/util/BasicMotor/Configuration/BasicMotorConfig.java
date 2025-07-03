@@ -394,6 +394,12 @@ public class BasicMotorConfig {
         public final ElevatorSimConfig elevatorSimConfig = new ElevatorSimConfig();
 
         /**
+         * the arm simulation configuration
+         * used if the motor is an arm or a similar mechanism, and you want to simulate it
+         */
+        public final ArmSimConfig armSimConfig = new ArmSimConfig();
+
+        /**
          * the elevator simulation configuration
          */
         public static class ElevatorSimConfig {
@@ -417,6 +423,14 @@ public class BasicMotorConfig {
              * if the kv and ka are provided, this will be ignored
              */
             public double pulleyRadiusMeters = 0;
+        }
+
+        public static class ArmSimConfig {
+            public double armlengthMeters = 0.0;
+
+            public boolean simulateGravity = true;
+
+            public double startingAngle = 0.0;
         }
     }
 }
