@@ -14,6 +14,7 @@ import util.BasicMotor.Measurements.SimulationEncoder.MotorSimEncoder;
  * use this when you want to simulate a motor in your robot code.
  * this can be anything from a shooter, arm, drivetrain, etc.
  * you will want to use a specific simulation class if available
+ * units are in rotations.
  */
 public class BasicSimMotor extends BasicSimSystem {
   /**

@@ -12,6 +12,7 @@ import util.BasicMotor.Measurements.SimulationEncoder.FlyWheelSimEncoder;
  * A class that simulates a flywheel system using the FlywheelSim class.
  * It is in the basic sim motor system and has all the functionality of a basic sim system.
  * Use this when you want to simulate a flywheel in your robot code.
+ * units are in rotations per second.
  */
 public class BasicSimFlyWheel extends BasicSimSystem {
     /**

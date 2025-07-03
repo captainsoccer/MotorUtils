@@ -11,7 +11,8 @@ import util.BasicMotor.Measurements.SimulationEncoder.ElevatorSimEncoder;
  * a class that simulates an elevator system using the ElevatorSim class.
  * it is in the basic sim motor system and has all the functionality of a basic sim system.
  * use this when you want to simulate an elevator in your robot code.
- * if you have two motors use only one instance of this class and set the position of both motors to the same value.
+ * if you have two motors, use only one instance of this class and set the position of both motors to the same value.
+ * units are in meters.
  */
 public class BasicSimElevator extends BasicSimSystem {
     /**

@@ -390,6 +390,7 @@ public class BasicMotorConfig {
         /**
          * the elevator simulation configuration
          * used if the motor is an elevator or a similar mechanism, and you want to simulate it
+         * when using the elevator, units are meters, other units will break the simulation
          */
         public final ElevatorSimConfig elevatorSimConfig = new ElevatorSimConfig();
 

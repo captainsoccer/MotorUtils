@@ -9,11 +9,30 @@ import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.SimulationEncoder.ArmSimEncoder;
 
+/**
+ * A class that simulates a single-jointed arm system using the SingleJointedArmSim class.
+ * It is in the basic sim motor system and has all the functionality of a basic sim system.
+ * Use this when you want to simulate an arm in your robot code.
+ * units are in rotations.
+ */
 public class BasicSimArm extends BasicSimSystem {
+    /**
+     * The SingleJointedArmSim instance used by this BasicSimArm.
+     */
     private final SingleJointedArmSim armSim;
 
+    /**
+     * The default measurements for the arm simulation.
+     */
     private final Measurements defaultMeasurements;
 
+    /**
+     * Creates a BasicSimArm instance with the provided SingleJointedArmSim and name.
+     *
+     * @param armSim the SingleJointedArmSim to use
+     * @param name   the name of the arm
+     * @param gains  the controller gains for the arm
+     */
     public BasicSimArm(SingleJointedArmSim armSim, String name, ControllerGains gains) {
         super(name, gains);
         this.armSim = armSim;
@@ -21,6 +40,11 @@ public class BasicSimArm extends BasicSimSystem {
         defaultMeasurements = new ArmSimEncoder(armSim);
     }
 
+    /**
+     * Creates a BasicSimArm instance with the provided configuration.
+     *
+     * @param config the configuration for the arm motor
+     */
     public BasicSimArm(BasicMotorConfig config) {
         super(config);
 
@@ -29,6 +53,12 @@ public class BasicSimArm extends BasicSimSystem {
         defaultMeasurements = new ArmSimEncoder(armSim);
     }
 
+    /**
+     * Creates a SingleJointedArmSim based on the provided configuration.
+     *
+     * @param config the configuration for the arm motor
+     * @return a new SingleJointedArmSim instance
+     */
     private static SingleJointedArmSim createArmSim(BasicMotorConfig config) {
         var plant = LinearSystemId.createSingleJointedArmSystem(config.motorConfig.motorType,
                 config.simulationConfig.momentOfInertia, config.motorConfig.gearRatio);
