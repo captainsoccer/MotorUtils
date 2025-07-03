@@ -149,6 +149,8 @@ public abstract class BasicMotor {
   public Measurements initializeMotor() {
     if (initialized) return getDefaultMeasurements();
 
+    if (getDefaultMeasurements() == null) return null;
+
     double gearRatio = getDefaultMeasurements().getGearRatio();
 
     updatePIDGainsToMotor(
@@ -431,7 +433,10 @@ public abstract class BasicMotor {
    * is called on a separate thread
    */
   private void run() {
-    if (!initialized) measurements = initializeMotor();
+    if (!initialized) {
+      measurements = initializeMotor();
+      if (measurements == null) return;
+    }
 
     // doesn't need to do anything if the motor is following another motor
     if (motorState == MotorState.FOLLOWING) {
@@ -632,7 +637,8 @@ public abstract class BasicMotor {
 
     if (config != null)
       logFrame.appliedTorque =
-          config.motorConfig.motorType.getTorque(logFrame.sensorData.currentOutput()) * config.motorConfig.gearRatio;
+          config.motorConfig.motorType.getTorque(logFrame.sensorData.currentOutput())
+              * config.motorConfig.gearRatio;
 
     // if the pid has changed, then update the built-in motor pid
     if (hasPIDGainsChanged) {
