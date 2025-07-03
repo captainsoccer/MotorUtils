@@ -304,7 +304,7 @@ public class BasicMotorConfig {
      */
     public ControllerConstrains getConstraints() {
       return new ControllerConstrains(
-          constraintType, maxValue, minValue, maxOutput, minOutput, voltageDeadband);
+          constraintType, minValue, maxValue, maxOutput, minOutput, voltageDeadband);
     }
   }
 

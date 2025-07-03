@@ -210,9 +210,6 @@ public class Controller implements Sendable {
     controllerGains.initSendable(builder);
 
     builder.addDoubleProperty(
-        "goal", () -> request.goal.position, (value) -> setReference(value, request.requestType));
-
-    builder.addDoubleProperty(
         "setpoint", () -> setpoint.position, (value) -> setReference(value, request.requestType));
   }
 

@@ -91,8 +91,8 @@ public class ControllerGains {
    * @return true if the controller is profiled, false if it is not
    */
   public boolean isProfiled() {
-    return profileConstraints.maxAcceleration != Double.POSITIVE_INFINITY
-        && profileConstraints.maxVelocity != Double.POSITIVE_INFINITY;
+    return profileConstraints.maxVelocity != Double.POSITIVE_INFINITY &&
+              profileConstraints.maxAcceleration != Double.POSITIVE_INFINITY;
   }
 
   /**

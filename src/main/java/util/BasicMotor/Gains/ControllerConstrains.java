@@ -64,6 +64,8 @@ public class ControllerConstrains {
    *     output of the motor (default is 13.0)
    * @param minMotorOutput the minimum output of the motor (in volts) this is used for capping the
    *     output of the motor (default is -13.0)
+   * @param deadband the minumum abosulte voltage the motor needs to apply (in volts), any value
+   *     below this will be ignored and the motor will not move.
    */
   public ControllerConstrains(
       ConstraintType type,
