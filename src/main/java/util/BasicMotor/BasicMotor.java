@@ -631,6 +631,7 @@ public abstract class BasicMotor {
 
   /** gets all the sensor data from the motor (this runs on a separate slower thread) */
   private void updateSensorData() {
+    if(!initialized) return;
     logFrame.sensorData = getSensorData();
 
     if (controllerLocation == ControllerLocation.MOTOR) logFrame.pidOutput = getPIDLatestOutput();
