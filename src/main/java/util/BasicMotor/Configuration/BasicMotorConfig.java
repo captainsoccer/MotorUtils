@@ -425,11 +425,27 @@ public class BasicMotorConfig {
             public double pulleyRadiusMeters = 0;
         }
 
+        /**
+         * the arm simulation configuration
+         * used if the motor is an arm or a similar mechanism, and you want to simulate it
+         */
         public static class ArmSimConfig {
+            /**
+             * the length of the arm in meters
+             * taken from the pivot point to the end of the arm
+             */
             public double armlengthMeters = 0.0;
 
+            /**
+             * should the arm simulate gravity?
+             * <p>if true, there will be a force acting on the arm due to gravity
+             * <p>if false, the arm will not be affected by gravity
+             */
             public boolean simulateGravity = true;
 
+            /**
+             * the starting angle of the arm in rotations
+             */
             public double startingAngle = 0.0;
         }
     }

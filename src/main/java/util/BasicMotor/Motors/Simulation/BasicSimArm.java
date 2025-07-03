@@ -46,6 +46,8 @@ public class BasicSimArm extends BasicSimSystem {
 
         var simConfig = config.simulationConfig;
 
+        double startingAngle = Units.rotationsToRadians(simConfig.armSimConfig.startingAngle);
+
         double positionSTD = Units.rotationsToRadians(simConfig.positionStandardDeviation);
 
         return new SingleJointedArmSim(plant, config.motorConfig.motorType, config.motorConfig.gearRatio,
@@ -53,7 +55,7 @@ public class BasicSimArm extends BasicSimSystem {
                 minAngle,
                 maxAngle,
                 simConfig.armSimConfig.simulateGravity,
-                simConfig.armSimConfig.startingAngle,
+                startingAngle,
                 positionSTD);
     }
 
