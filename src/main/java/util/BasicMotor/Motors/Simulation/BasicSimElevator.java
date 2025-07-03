@@ -31,7 +31,7 @@ public class BasicSimElevator extends BasicSimSystem {
      * @param gains the controller gains for the elevator
      */
     public BasicSimElevator(ElevatorSim elevator, String name, ControllerGains gains) {
-        super(elevator, name, gains);
+        super(name, gains);
         this.elevator = elevator;
 
         defaultMeasurements = new ElevatorSimEncoder(elevator);
@@ -42,12 +42,17 @@ public class BasicSimElevator extends BasicSimSystem {
      * @param config the configuration for the elevator motor
      */
      public BasicSimElevator(BasicMotorConfig config) {
-        super(createElevatorSim(config), config);
+        super(config);
 
-        this.elevator = (ElevatorSim) system;
+        this.elevator = createElevatorSim(config);
 
         defaultMeasurements = new ElevatorSimEncoder(elevator);
      }
+
+    @Override
+    protected void setInputVoltage(double voltage) {
+        elevator.setInputVoltage(voltage);
+    }
 
     /**
      * Creates an ElevatorSim based on the provided configuration.

@@ -35,7 +35,7 @@ public class BasicSimMotor extends BasicSimSystem {
    */
   public BasicSimMotor(
       DCMotorSim motor, String name, ControllerGains gains, double unitConversion) {
-    super(motor, name, gains);
+    super(name, gains);
     this.motor = motor;
 
     defaultMeasurements = new MotorSimEncoder(motor, unitConversion);
@@ -46,11 +46,16 @@ public class BasicSimMotor extends BasicSimSystem {
    * @param config the configuration for the motor
    */
   public BasicSimMotor(BasicMotorConfig config) {
-    super(createSimMotor(config), config);
+    super(config);
 
-    this.motor = (DCMotorSim) system;
+    this.motor = createSimMotor(config);
 
     this.defaultMeasurements = new MotorSimEncoder(motor, config.motorConfig.unitConversion);
+  }
+
+  @Override
+  protected void setInputVoltage(double voltage) {
+    motor.setInputVoltage(voltage);
   }
 
   /**
