@@ -27,7 +27,7 @@ public class Controller implements Sendable {
   private final BasicPIDController pidController;
 
   /** the latest request of the controller this contains the control mode and the goal */
-  private ControllerRequest request;
+  private ControllerRequest request = new ControllerRequest();
   /** the setpoint of the controller this is used when using profiled position and velocity */
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 

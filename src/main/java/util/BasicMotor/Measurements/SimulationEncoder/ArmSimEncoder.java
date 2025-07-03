@@ -5,44 +5,44 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import util.BasicMotor.Measurements.Measurements;
 
 public class ArmSimEncoder extends Measurements {
-    private final SingleJointedArmSim armSim;
+  private final SingleJointedArmSim armSim;
 
-    double currentVelocity = 0.0;
-    double previousVelocity = 0.0;
+  double currentVelocity = 0.0;
+  double previousVelocity = 0.0;
 
-    double acceleration = 0.0;
+  double acceleration = 0.0;
 
-    public  ArmSimEncoder(SingleJointedArmSim armSim) {
-        this.armSim = armSim;
-    }
+  public ArmSimEncoder(SingleJointedArmSim armSim) {
+    this.armSim = armSim;
+  }
 
-    @Override
-    public Measurement update(double dt) {
-        armSim.update(dt);
+  @Override
+  public Measurement update(double dt) {
+    armSim.update(dt);
 
-        var angle = edu.wpi.first.units.Units.RadiansPerSecond.of(armSim.getVelocityRadPerSec());
-        currentVelocity = angle.in(edu.wpi.first.units.Units.RotationsPerSecond);
+    var angle = edu.wpi.first.units.Units.RadiansPerSecond.of(armSim.getVelocityRadPerSec());
+    currentVelocity = angle.in(edu.wpi.first.units.Units.RotationsPerSecond);
 
-        // Calculate acceleration as the change in velocity over time
-        acceleration = (currentVelocity - previousVelocity) / dt;
+    // Calculate acceleration as the change in velocity over time
+    acceleration = (currentVelocity - previousVelocity) / dt;
 
-        previousVelocity = currentVelocity;
+    previousVelocity = currentVelocity;
 
-        return super.update(dt);
-    }
+    return super.update(dt);
+  }
 
-    @Override
-    protected double getUpdatedPosition() {
-        return Units.radiansToRotations(armSim.getAngleRads());
-    }
+  @Override
+  protected double getUpdatedPosition() {
+    return Units.radiansToRotations(armSim.getAngleRads());
+  }
 
-    @Override
-    protected double getUpdatedVelocity() {
-        return currentVelocity;
-    }
+  @Override
+  protected double getUpdatedVelocity() {
+    return currentVelocity;
+  }
 
-    @Override
-    protected double getUpdatedAcceleration() {
-        return acceleration;
-    }
+  @Override
+  protected double getUpdatedAcceleration() {
+    return acceleration;
+  }
 }

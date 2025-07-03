@@ -9,28 +9,22 @@ import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.SimulationEncoder.MotorSimEncoder;
 
 /**
- * a class that simulates a DC motor using the DCMotorSim class.
- * it is in the basic sim motor system and has all the functionality of a basic sim system.
- * use this when you want to simulate a motor in your robot code.
- * this can be anything from a shooter, arm, drivetrain, etc.
- * you will want to use a specific simulation class if available
- * units are in rotations.
+ * a class that simulates a DC motor using the DCMotorSim class. it is in the basic sim motor system
+ * and has all the functionality of a basic sim system. use this when you want to simulate a motor
+ * in your robot code. this can be anything from a shooter, arm, drivetrain, etc. you will want to
+ * use a specific simulation class if available units are in rotations.
  */
 public class BasicSimMotor extends BasicSimSystem {
-  /**
-   * The DCMotorSim instance used by this BasicSimMotor.
-   */
+  /** The DCMotorSim instance used by this BasicSimMotor. */
   private final DCMotorSim motor;
-  /**
-   * The default measurements for the motor simulation.
-   */
+  /** The default measurements for the motor simulation. */
   private final Measurements defaultMeasurements;
 
   /**
    * Creates a BasicSimMotor instance with the provided DCMotorSim and name.
    *
    * @param motor the DCMotorSim to use
-   * @param name  the name of the motor
+   * @param name the name of the motor
    * @param gains the controller gains for the motor
    * @param unitConversion the conversion factor for the motor's position units
    */
@@ -44,6 +38,7 @@ public class BasicSimMotor extends BasicSimSystem {
 
   /**
    * Creates a BasicSimMotor instance with the provided configuration.
+   *
    * @param config the configuration for the motor
    */
   public BasicSimMotor(BasicMotorConfig config) {
@@ -61,6 +56,7 @@ public class BasicSimMotor extends BasicSimSystem {
 
   /**
    * Creates a DCMotorSim based on the provided configuration.
+   *
    * @param config the configuration for the motor
    * @return a new DCMotorSim instance
    */

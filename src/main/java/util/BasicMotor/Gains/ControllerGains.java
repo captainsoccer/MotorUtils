@@ -326,10 +326,10 @@ public class ControllerGains {
    * @param profileConstraints the constraints of the profile
    */
   public ControllerGains(
-          PIDGains pidGains,
-          ControllerConstrains controllerConstrains,
-          ControllerFeedForwards controllerFeedForwards,
-          TrapezoidProfile.Constraints profileConstraints) {
+      PIDGains pidGains,
+      ControllerConstrains controllerConstrains,
+      ControllerFeedForwards controllerFeedForwards,
+      TrapezoidProfile.Constraints profileConstraints) {
     this.pidGains = pidGains;
     this.controllerConstrains = controllerConstrains;
     this.controllerFeedForwards = controllerFeedForwards;

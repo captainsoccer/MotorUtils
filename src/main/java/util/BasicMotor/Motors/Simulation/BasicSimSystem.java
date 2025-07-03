@@ -13,33 +13,31 @@ import util.BasicMotor.MotorManager;
 import util.BasicMotor.MotorManager.ControllerLocation;
 
 public abstract class BasicSimSystem extends BasicMotor {
-  /**
-   * The voltage output of the motor simulation.
-   */
+  /** The voltage output of the motor simulation. */
   private double voltageOutput = 0.0;
 
-    /**
-     * Creates a BasicSimSystem instance with the provided LinearSystemSim and name.
-     *
-     * @param name   the name of the motor
-     * @param gains  the controller gains for the motor
-     */
+  /**
+   * Creates a BasicSimSystem instance with the provided LinearSystemSim and name.
+   *
+   * @param name the name of the motor
+   * @param gains the controller gains for the motor
+   */
   public BasicSimSystem(String name, ControllerGains gains) {
     super(gains, name, MotorManager.ControllerLocation.RIO);
   }
 
-    /**
-     * Creates a BasicSimSystem instance with the provided LinearSystemSim and configuration.
-     *
-     * @param config the configuration for the motor
-     */
+  /**
+   * Creates a BasicSimSystem instance with the provided LinearSystemSim and configuration.
+   *
+   * @param config the configuration for the motor
+   */
   public BasicSimSystem(BasicMotorConfig config) {
     super(checkConfig(config));
   }
 
   /**
-   * makes sure the configuration is valid for a simulation system.
-   * This sets the location to RIO, as simulation systems are always on the RoboRIO.
+   * makes sure the configuration is valid for a simulation system. This sets the location to RIO,
+   * as simulation systems are always on the RoboRIO.
    */
   private static BasicMotorConfig checkConfig(BasicMotorConfig config) {
     config.motorConfig.location = ControllerLocation.RIO;
@@ -108,6 +106,7 @@ public abstract class BasicSimSystem extends BasicMotor {
 
   /**
    * sets the output voltage of the motor simulation.
+   *
    * @param output the output voltage to set
    */
   private void setOutput(double output) {
@@ -120,11 +119,12 @@ public abstract class BasicSimSystem extends BasicMotor {
     setOutput(0);
   }
 
-    /**
-     * sets the input voltage of the motor simulation.
-     * this is abstract because different motor simulations may have different ways of setting input voltage.
-     * @param voltage the input voltage to set
-     */
+  /**
+   * sets the input voltage of the motor simulation. this is abstract because different motor
+   * simulations may have different ways of setting input voltage.
+   *
+   * @param voltage the input voltage to set
+   */
   protected abstract void setInputVoltage(double voltage);
 
   @Override
@@ -156,8 +156,9 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   /**
-   * Gets the current draw of the motor simulation.
-   * this is abstract because different motor simulations may have different ways of calculating current draw.
+   * Gets the current draw of the motor simulation. this is abstract because different motor
+   * simulations may have different ways of calculating current draw.
+   *
    * @return the current draw in amps
    */
   protected abstract double getCurrentDraw();

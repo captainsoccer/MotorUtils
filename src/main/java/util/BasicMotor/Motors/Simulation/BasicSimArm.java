@@ -10,103 +10,103 @@ import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.SimulationEncoder.ArmSimEncoder;
 
 /**
- * A class that simulates a single-jointed arm system using the SingleJointedArmSim class.
- * It is in the basic sim motor system and has all the functionality of a basic sim system.
- * Use this when you want to simulate an arm in your robot code.
- * units are in rotations.
+ * A class that simulates a single-jointed arm system using the SingleJointedArmSim class. It is in
+ * the basic sim motor system and has all the functionality of a basic sim system. Use this when you
+ * want to simulate an arm in your robot code. units are in rotations.
  */
 public class BasicSimArm extends BasicSimSystem {
-    /**
-     * The SingleJointedArmSim instance used by this BasicSimArm.
-     */
-    private final SingleJointedArmSim armSim;
+  /** The SingleJointedArmSim instance used by this BasicSimArm. */
+  private final SingleJointedArmSim armSim;
 
-    /**
-     * The default measurements for the arm simulation.
-     */
-    private final Measurements defaultMeasurements;
+  /** The default measurements for the arm simulation. */
+  private final Measurements defaultMeasurements;
 
-    /**
-     * Creates a BasicSimArm instance with the provided SingleJointedArmSim and name.
-     *
-     * @param armSim the SingleJointedArmSim to use
-     * @param name   the name of the arm
-     * @param gains  the controller gains for the arm
-     */
-    public BasicSimArm(SingleJointedArmSim armSim, String name, ControllerGains gains) {
-        super(name, gains);
-        this.armSim = armSim;
+  /**
+   * Creates a BasicSimArm instance with the provided SingleJointedArmSim and name.
+   *
+   * @param armSim the SingleJointedArmSim to use
+   * @param name the name of the arm
+   * @param gains the controller gains for the arm
+   */
+  public BasicSimArm(SingleJointedArmSim armSim, String name, ControllerGains gains) {
+    super(name, gains);
+    this.armSim = armSim;
 
-        defaultMeasurements = new ArmSimEncoder(armSim);
+    defaultMeasurements = new ArmSimEncoder(armSim);
+  }
+
+  /**
+   * Creates a BasicSimArm instance with the provided configuration.
+   *
+   * @param config the configuration for the arm motor
+   */
+  public BasicSimArm(BasicMotorConfig config) {
+    super(config);
+
+    this.armSim = createArmSim(config);
+
+    defaultMeasurements = new ArmSimEncoder(armSim);
+  }
+
+  /**
+   * Creates a SingleJointedArmSim based on the provided configuration.
+   *
+   * @param config the configuration for the arm motor
+   * @return a new SingleJointedArmSim instance
+   */
+  private static SingleJointedArmSim createArmSim(BasicMotorConfig config) {
+    var plant =
+        LinearSystemId.createSingleJointedArmSystem(
+            config.motorConfig.motorType,
+            config.simulationConfig.momentOfInertia,
+            config.motorConfig.gearRatio);
+
+    double minAngle;
+    double maxAngle;
+    if (config.constraintsConfig.constraintType == ControllerConstrains.ConstraintType.LIMITED) {
+      minAngle = Units.rotationsToRadians(config.constraintsConfig.minValue);
+      maxAngle = Units.rotationsToRadians(config.constraintsConfig.maxValue);
+    } else {
+      minAngle = Double.NEGATIVE_INFINITY;
+      maxAngle = Double.POSITIVE_INFINITY;
     }
 
-    /**
-     * Creates a BasicSimArm instance with the provided configuration.
-     *
-     * @param config the configuration for the arm motor
-     */
-    public BasicSimArm(BasicMotorConfig config) {
-        super(config);
+    var simConfig = config.simulationConfig;
 
-        this.armSim = createArmSim(config);
+    double startingAngle = Units.rotationsToRadians(simConfig.armSimConfig.startingAngle);
 
-        defaultMeasurements = new ArmSimEncoder(armSim);
-    }
+    double positionSTD = Units.rotationsToRadians(simConfig.positionStandardDeviation);
 
-    /**
-     * Creates a SingleJointedArmSim based on the provided configuration.
-     *
-     * @param config the configuration for the arm motor
-     * @return a new SingleJointedArmSim instance
-     */
-    private static SingleJointedArmSim createArmSim(BasicMotorConfig config) {
-        var plant = LinearSystemId.createSingleJointedArmSystem(config.motorConfig.motorType,
-                config.simulationConfig.momentOfInertia, config.motorConfig.gearRatio);
+    return new SingleJointedArmSim(
+        plant,
+        config.motorConfig.motorType,
+        config.motorConfig.gearRatio,
+        simConfig.armSimConfig.armlengthMeters,
+        minAngle,
+        maxAngle,
+        simConfig.armSimConfig.simulateGravity,
+        startingAngle,
+        positionSTD);
+  }
 
-        double minAngle;
-        double maxAngle;
-        if(config.constraintsConfig.constraintType == ControllerConstrains.ConstraintType.LIMITED){
-            minAngle = Units.rotationsToRadians(config.constraintsConfig.minValue);
-            maxAngle = Units.rotationsToRadians(config.constraintsConfig.maxValue);
-        }
-        else{
-            minAngle = Double.NEGATIVE_INFINITY;
-            maxAngle = Double.POSITIVE_INFINITY;
-        }
+  @Override
+  protected void setInputVoltage(double voltage) {
+    armSim.setInputVoltage(voltage);
+  }
 
-        var simConfig = config.simulationConfig;
+  @Override
+  protected double getCurrentDraw() {
+    return armSim.getCurrentDrawAmps();
+  }
 
-        double startingAngle = Units.rotationsToRadians(simConfig.armSimConfig.startingAngle);
+  @Override
+  protected Measurements getDefaultMeasurements() {
+    return defaultMeasurements;
+  }
 
-        double positionSTD = Units.rotationsToRadians(simConfig.positionStandardDeviation);
-
-        return new SingleJointedArmSim(plant, config.motorConfig.motorType, config.motorConfig.gearRatio,
-                simConfig.armSimConfig.armlengthMeters,
-                minAngle,
-                maxAngle,
-                simConfig.armSimConfig.simulateGravity,
-                startingAngle,
-                positionSTD);
-    }
-
-    @Override
-    protected void setInputVoltage(double voltage) {
-        armSim.setInputVoltage(voltage);
-    }
-
-    @Override
-    protected double getCurrentDraw() {
-        return armSim.getCurrentDrawAmps();
-    }
-
-    @Override
-    protected Measurements getDefaultMeasurements() {
-        return defaultMeasurements;
-    }
-
-    @Override
-    protected void setMotorPosition(double position) {
-        double angle = Units.rotationsToRadians(position);
-        armSim.setState(angle, armSim.getVelocityRadPerSec());
-    }
+  @Override
+  protected void setMotorPosition(double position) {
+    double angle = Units.rotationsToRadians(position);
+    armSim.setState(angle, armSim.getVelocityRadPerSec());
+  }
 }
