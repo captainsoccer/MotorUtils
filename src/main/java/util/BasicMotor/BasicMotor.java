@@ -632,7 +632,7 @@ public abstract class BasicMotor {
 
     if (config != null)
       logFrame.appliedTorque =
-          config.motorConfig.motorType.getTorque(logFrame.sensorData.currentOutput());
+          config.motorConfig.motorType.getTorque(logFrame.sensorData.currentOutput()) * config.motorConfig.gearRatio;
 
     // if the pid has changed, then update the built-in motor pid
     if (hasPIDGainsChanged) {

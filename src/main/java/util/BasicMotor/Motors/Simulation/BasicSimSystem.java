@@ -16,20 +16,44 @@ import util.BasicMotor.MotorManager;
 import util.BasicMotor.MotorManager.ControllerLocation;
 
 public abstract class BasicSimSystem extends BasicMotor {
+  /**
+   * The LinearSystemSim instance used by this BasicSimSystem.
+   * this is the simulation system that simulates the motor's behavior.
+   */
   protected final LinearSystemSim<N2, N1, N2> system;
 
+  /**
+   * The voltage output of the motor simulation.
+   */
   private double voltageOutput = 0.0;
 
+    /**
+     * Creates a BasicSimSystem instance with the provided LinearSystemSim and name.
+     *
+     * @param system the LinearSystemSim to use
+     * @param name   the name of the motor
+     * @param gains  the controller gains for the motor
+     */
   public BasicSimSystem(LinearSystemSim<N2, N1, N2> system, String name, ControllerGains gains) {
     super(gains, name, MotorManager.ControllerLocation.RIO);
     this.system = system;
   }
 
+    /**
+     * Creates a BasicSimSystem instance with the provided LinearSystemSim and configuration.
+     *
+     * @param system the LinearSystemSim to use
+     * @param config the configuration for the motor
+     */
   public BasicSimSystem(LinearSystemSim<N2, N1, N2> system, BasicMotorConfig config) {
     super(checkConfig(config));
     this.system = system;
   }
 
+  /**
+   * makes sure the configuration is valid for a simulation system.
+   * This sets the location to RIO, as simulation systems are always on the RoboRIO.
+   */
   private static BasicMotorConfig checkConfig(BasicMotorConfig config) {
     config.motorConfig.location = ControllerLocation.RIO;
     return config;
@@ -133,6 +157,11 @@ public abstract class BasicSimSystem extends BasicMotor {
         dutyCycle);
   }
 
+  /**
+   * Gets the current draw of the motor simulation.
+   * this is abstract because different motor simulations may have different ways of calculating current draw.
+   * @return the current draw in amps
+   */
   protected abstract double getCurrentDraw();
 
   @Override

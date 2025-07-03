@@ -8,10 +8,31 @@ import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.SimulationEncoder.MotorSimEncoder;
 
+/**
+ * a class that simulates a DC motor using the DCMotorSim class.
+ * it is in the basic sim motor system and has all the functionality of a basic sim system.
+ * use this when you want to simulate a motor in your robot code.
+ * this can be anything from a shooter, arm, drivetrain, etc.
+ * you will want to use a specific simulation class if available
+ */
 public class BasicSimMotor extends BasicSimSystem {
+  /**
+   * The DCMotorSim instance used by this BasicSimMotor.
+   */
   private final DCMotorSim motor;
+  /**
+   * The default measurements for the motor simulation.
+   */
   private final Measurements defaultMeasurements;
 
+  /**
+   * Creates a BasicSimMotor instance with the provided DCMotorSim and name.
+   *
+   * @param motor the DCMotorSim to use
+   * @param name  the name of the motor
+   * @param gains the controller gains for the motor
+   * @param unitConversion the conversion factor for the motor's position units
+   */
   public BasicSimMotor(
       DCMotorSim motor, String name, ControllerGains gains, double unitConversion) {
     super(motor, name, gains);
@@ -20,6 +41,10 @@ public class BasicSimMotor extends BasicSimSystem {
     defaultMeasurements = new MotorSimEncoder(motor, unitConversion);
   }
 
+  /**
+   * Creates a BasicSimMotor instance with the provided configuration.
+   * @param config the configuration for the motor
+   */
   public BasicSimMotor(BasicMotorConfig config) {
     super(createSimMotor(config), config);
 
@@ -28,6 +53,11 @@ public class BasicSimMotor extends BasicSimSystem {
     this.defaultMeasurements = new MotorSimEncoder(motor, config.motorConfig.unitConversion);
   }
 
+  /**
+   * Creates a DCMotorSim based on the provided configuration.
+   * @param config the configuration for the motor
+   * @return a new DCMotorSim instance
+   */
   private static DCMotorSim createSimMotor(BasicMotorConfig config) {
     var simConfig = config.simulationConfig;
 

@@ -316,4 +316,25 @@ public class ControllerGains {
     this.controllerConstrains = controllerConstrains;
     this.controllerFeedForwards = controllerFeedForwards;
   }
+
+  /**
+   * creates a controller gains object with the given pid gains, constraints and feed forwards
+   *
+   * @param pidGains the PID gains
+   * @param controllerConstrains the constraints
+   * @param controllerFeedForwards the feed forwards
+   * @param profileConstraints the constraints of the profile
+   */
+  public ControllerGains(
+          PIDGains pidGains,
+          ControllerConstrains controllerConstrains,
+          ControllerFeedForwards controllerFeedForwards,
+          TrapezoidProfile.Constraints profileConstraints) {
+    this.pidGains = pidGains;
+    this.controllerConstrains = controllerConstrains;
+    this.controllerFeedForwards = controllerFeedForwards;
+    this.profileConstraints = profileConstraints;
+
+    this.controllerProfile = new TrapezoidProfile(profileConstraints);
+  }
 }
