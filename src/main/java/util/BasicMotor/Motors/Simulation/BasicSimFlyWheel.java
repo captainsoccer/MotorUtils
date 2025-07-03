@@ -1,7 +1,9 @@
 package util.BasicMotor.Motors.Simulation;
 
 
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import util.BasicMotor.Configuration.BasicMotorConfig;
 import util.BasicMotor.Gains.ControllerGains;
 import util.BasicMotor.Measurements.Measurements;
 import util.BasicMotor.Measurements.SimulationEncoder.FlyWheelSimEncoder;
@@ -34,6 +36,45 @@ public class BasicSimFlyWheel extends BasicSimSystem {
         this.flywheelSim = flywheelSim;
 
         defaultMeasurements = new FlyWheelSimEncoder(flywheelSim);
+    }
+
+    /**
+     * Creates a BasicSimFlyWheel instance with the provided configuration.
+     *
+     * @param config the configuration for the flywheel motor
+     */
+    public BasicSimFlyWheel(BasicMotorConfig config) {
+        super(config);
+
+        this.flywheelSim = createFlywheelSim(config);
+
+        defaultMeasurements = new FlyWheelSimEncoder(flywheelSim);
+    }
+
+    /**
+     * creates a FlywheelSim based on the provided configuration.
+     * @param config the configuration for the flywheel motor
+     * @return a new FlywheelSim instance
+     */
+    private static  FlywheelSim createFlywheelSim(BasicMotorConfig config) {
+        var simConfig = config.simulationConfig;
+
+        if (simConfig.momentOfInertia == 0 && simConfig.kV == 0 && simConfig.kA == 0)
+            throw new IllegalArgumentException(
+                    "you must provide either a moment of inertia or kV and kA for the simulation motor");
+
+        if(simConfig.momentOfInertia == 0) {
+            return new FlywheelSim(
+                    LinearSystemId.identifyVelocitySystem(simConfig.kV, simConfig.kA),
+                    config.motorConfig.motorType,
+                    simConfig.velocityStandardDeviation);
+        }
+        else{
+            return new FlywheelSim(
+                    LinearSystemId.createFlywheelSystem(config.motorConfig.motorType, simConfig.momentOfInertia, config.motorConfig.gearRatio),
+                    config.motorConfig.motorType,
+                    simConfig.velocityStandardDeviation);
+        }
     }
 
     @Override
