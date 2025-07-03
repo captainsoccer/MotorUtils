@@ -146,10 +146,10 @@ public abstract class BasicSimSystem extends BasicMotor {
 
     return new LogFrame.SensorData(
         temp,
-        voltageInput,
-        voltageOutput,
         currentDraw,
         currentOutput,
+        voltageOutput,
+        voltageInput,
         powerDraw,
         powerDraw,
         dutyCycle);

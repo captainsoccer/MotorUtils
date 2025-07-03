@@ -36,7 +36,8 @@ public class BasicSimArm extends BasicSimSystem {
   }
 
   /**
-   * Creates a BasicSimArm instance with the provided configuration.
+   * Creates a BasicSimArm instance with the provided configuration. to use this arm sim you must
+   * set the following config: * moment of inertia * arm length meters
    *
    * @param config the configuration for the arm motor
    */
@@ -76,6 +77,8 @@ public class BasicSimArm extends BasicSimSystem {
     double startingAngle = Units.rotationsToRadians(simConfig.armSimConfig.startingAngle);
 
     double positionSTD = Units.rotationsToRadians(simConfig.positionStandardDeviation);
+    double velocitySTD =
+        Units.rotationsPerMinuteToRadiansPerSecond(simConfig.velocityStandardDeviation * 60);
 
     return new SingleJointedArmSim(
         plant,
@@ -86,7 +89,8 @@ public class BasicSimArm extends BasicSimSystem {
         maxAngle,
         simConfig.armSimConfig.simulateGravity,
         startingAngle,
-        positionSTD);
+        positionSTD,
+        velocitySTD);
   }
 
   @Override

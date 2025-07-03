@@ -431,7 +431,9 @@ public class BasicMotorConfig {
        */
       public boolean simulateGravity = true;
 
-      /** the starting angle of the arm in rotations */
+      /** the starting angle of the arm in rotations 
+       * in simulation, the 0 angle is parralel to the ground (full force of gravity is applied in 0 angle)
+      */
       public double startingAngle = 0.0;
     }
   }

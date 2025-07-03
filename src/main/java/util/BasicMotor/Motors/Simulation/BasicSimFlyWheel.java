@@ -34,7 +34,8 @@ public class BasicSimFlyWheel extends BasicSimSystem {
   }
 
   /**
-   * Creates a BasicSimFlyWheel instance with the provided configuration.
+   * Creates a BasicSimFlyWheel instance with the provided configuration. to use this consturctor
+   * you need to use either moment of inertia or kv and ka
    *
    * @param config the configuration for the flywheel motor
    */
