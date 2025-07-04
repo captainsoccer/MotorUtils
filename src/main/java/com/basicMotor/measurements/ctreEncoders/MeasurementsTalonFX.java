@@ -38,6 +38,7 @@ public class MeasurementsTalonFX extends Measurements {
    * @param accelerationSignal the acceleration signal of the motor
    * @param refreshHZ the refresh rate of the signals (how often to update the signals)
    * @param gearRatio the gear ratio of the motor (the measurements are divided by this)
+   * @param unitConversion the value that will be multiplied by to convert the measurements to the desired units
    */
   public MeasurementsTalonFX(
       StatusSignal<Angle> positionSignal,

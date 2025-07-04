@@ -11,6 +11,11 @@ import com.basicMotor.LogFrame;
 import com.basicMotor.MotorManager.ControllerLocation;
 import edu.wpi.first.wpilibj.RobotController;
 
+/**
+ * this is the base class for all simulation systems in the basic motor system.
+ * it forwards the functions necessary to run a simulation system.
+ * and it ignores the functions that are not necessary for a simulation system.
+ */
 public abstract class BasicSimSystem extends BasicMotor {
   /** The voltage output of the motor simulation. */
   private double voltageOutput = 0.0;

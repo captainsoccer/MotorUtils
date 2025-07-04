@@ -5,6 +5,13 @@ import com.basicMotor.measurements.Measurements;
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 
+/**
+ * A class that holds the latest frame of the controller, PID output, sensor data, and measurement
+ * of the motor.
+ * This is used to log the data of the motor and to provide a snapshot of the motor's
+ * state.
+ * this class is used for logging the data of the motor
+ */
 public class LogFrame {
   /** the latest frame of the controller */
   public ControllerFrame controllerFrame = ControllerFrame.EMPTY;
@@ -45,54 +52,74 @@ public class LogFrame {
       double powerDraw,
       double powerOutput,
       double dutyCycle) {
+
+    /**
+     * empty sensor data used when no sensors are logged.
+     */
     public static final SensorData EMPTY = new SensorData(0, 0, 0, 0, 0, 0, 0, 0);
   }
 
   /**
    * the record holding the PID output of the controller
+   * all units are in volts
    *
-   * @param pOutput the P output of the controller (in volts)
-   * @param iOutput the I output of the controller (in volts)
-   * @param dOutput the D output of the controller (in volts)
-   * @param totalOutput the total output of the controller (in volts)
+   * @param pOutput the P output of the controller
+   * @param iOutput the I output of the controller
+   * @param dOutput the D output of the controller
+   * @param totalOutput the total output of the controller
    */
   public record PIDOutput(double pOutput, double iOutput, double dOutput, double totalOutput) {
+    /**
+     * empty PID output used when no PID controller is active
+     */
     public static final PIDOutput EMPTY = new PIDOutput(0, 0, 0, 0);
   }
 
   /**
    * the record holding the feedforward output of the controller
+   * all units are in volts
    *
-   * @param simpleFeedForward the simple feedforward output of the controller (in volts)
-   * @param frictionFeedForward the friction feedforward output of the controller (in volts)
-   * @param kV the kV output of the controller (in volts)
-   * @param calculatedFeedForward the calculated feedforward output of the controller (in volts)
-   * @param totalOutput the total output of the controller (in volts)
+   * @param simpleFeedForward the simple feedforward output of the controller
+   * @param frictionFeedForward the friction feedforward output of the controller
+   * @param setPointFeedForward the setpoint feedforward output of the controller
+   * @param calculatedFeedForward the calculated feedforward output of the controller
+   * @param totalOutput the total output of the controller
    */
   public record FeedForwardOutput(
       double simpleFeedForward,
       double frictionFeedForward,
-      double kV,
+      double setPointFeedForward,
       double calculatedFeedForward,
       double arbitraryFeedForward,
       double totalOutput) {
+
+    /** empty feedforward output used when no feedForward is active */
     public static final FeedForwardOutput EMPTY = new FeedForwardOutput(0, 0, 0, 0, 0);
 
+    /**
+     * Creates a new feedforward output with the given parameters
+     * all units are in volts
+     * @param simpleFeedForward the simple feedforward output of the controller
+     * @param frictionFeedForward the friction feedforward output of the controller
+     * @param setPointFeedForward the setpoint feedforward output of the controller
+     * @param calculatedFeedForward the feedforward calculated from the feedforward function
+     * @param arbitraryFeedForward the arbitrary feedforward output of the controller
+     */
     public FeedForwardOutput(
         double simpleFeedForward,
         double frictionFeedForward,
-        double kV,
+        double setPointFeedForward,
         double calculatedFeedForward,
         double arbitraryFeedForward) {
       this(
           simpleFeedForward,
           frictionFeedForward,
-          kV,
+          setPointFeedForward,
           calculatedFeedForward,
           arbitraryFeedForward,
           simpleFeedForward
               + frictionFeedForward
-              + kV
+              + setPointFeedForward
               + calculatedFeedForward
               + arbitraryFeedForward);
     }
@@ -122,12 +149,22 @@ public class LogFrame {
     public static final ControllerFrame EMPTY =
         new ControllerFrame(0, FeedForwardOutput.EMPTY, 0, 0, 0, 0, Controller.RequestType.STOP);
 
+    /**
+     * Creates a new controller frame with the given parameters
+     * @param output the total output of the controller (in volts)
+     * @param wanted the setpoint of the controller in units of measurement
+     * @param measurement the measurement of the controller in units of measurement
+     * @param mode the mode of the controller (position, velocity, voltage, percent output)
+     */
     public ControllerFrame(
         double output, double wanted, double measurement, Controller.RequestType mode) {
       this(output, FeedForwardOutput.EMPTY, wanted, measurement, 0, 0, mode);
     }
   }
 
+  /**
+   * the logged version of the LogFrame that implements LoggableInputs
+   */
   public static class LogFrameAutoLogged extends LogFrame implements LoggableInputs, Cloneable {
     @Override
     public void toLog(LogTable table) {

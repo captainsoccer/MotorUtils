@@ -3,6 +3,11 @@ package com.basicMotor.measurements.revEncoders;
 import com.basicMotor.measurements.Measurements;
 import com.revrobotics.AbsoluteEncoder;
 
+/**
+ * A class that provides measurements from a REV Absolute Encoder.
+ * It extends the Measurements class and implements methods to update
+ * position, velocity, and acceleration based on the encoder readings.
+ */
 public class MeasurementsREVAbsolute extends Measurements {
   /** the absolute encoder used to get the measurements */
   private final AbsoluteEncoder encoder;

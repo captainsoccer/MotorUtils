@@ -9,6 +9,11 @@ import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+/**
+ * This class represents a basic Spark Max motor controller.
+ * It extends the BasicSparkBase class
+ * and provides specific implementations for the Spark Max motor controller.
+ */
 public class BasicSparkMAX extends BasicSparkBase {
   /**
    * creates a basic spark max motor controller with the given gains and id

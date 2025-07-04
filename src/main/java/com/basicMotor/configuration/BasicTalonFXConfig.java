@@ -20,6 +20,9 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
    */
   public String canBusName = "rio";
 
+  /**
+   * the config for the current limit of the talonFX motor controller
+   */
   public static class CurrentLimitConfig {
     /**
      * the maximum current output of the motor controller (in amps)

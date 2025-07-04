@@ -67,6 +67,12 @@ public class BasicMotorConfig {
         profileConfig.getProfileConstraints());
   }
 
+  /**
+   * if the motor controller is using an external encoder
+   * used when initializing the motor controller
+   * when creating custom configs, override this method to return true
+   * @return true if the motor controller is using an external encoder, false otherwise
+   */
   public boolean usingExternalEncoder() {
     return false;
   }
@@ -247,7 +253,6 @@ public class BasicMotorConfig {
      * <p>* CONTINUOUS means the output is continuous and wraps around, for example, a wheel that
      * can spin indefinitely or a swerve module
      *
-     * <p>
      */
     public ControllerConstrains.ConstraintType constraintType =
         ControllerConstrains.ConstraintType.NONE;
@@ -261,7 +266,6 @@ public class BasicMotorConfig {
      * <p>* for a continuous constraint, this is the maximum value the position can reach before
      * wrapping around (for example, 360)
      *
-     * <p>
      */
     public double maxValue = 0;
     /**
@@ -274,7 +278,6 @@ public class BasicMotorConfig {
      * <p>* for a continuous constraint, this is the minimum value the position can reach before
      * wrapping around (for example, 0)
      *
-     * <p>
      */
     public double minValue = 0;
     /**
@@ -331,12 +334,21 @@ public class BasicMotorConfig {
      */
     public double maximumMeasurementAcceleration = Double.POSITIVE_INFINITY;
 
+    /**
+     * gets the profile constraints of the controller
+     *
+     * @return the profile constraints of the controller
+     */
     public TrapezoidProfile.Constraints getProfileConstraints() {
       return new TrapezoidProfile.Constraints(
           maximumMeasurementVelocity, maximumMeasurementAcceleration);
     }
   }
 
+  /**
+   * the simulation configuration of the motor controller
+   * used when you want to simulate the motor
+   */
   public static class SimulationConfig {
     /**
      * the kV gain of the motor controller units are: (voltage / unit of measurement per second) you

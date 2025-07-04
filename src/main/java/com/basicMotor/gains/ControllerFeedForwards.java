@@ -16,8 +16,18 @@ public class ControllerFeedForwards {
    * gain to change from the dashboard
    */
   public enum ChangeType {
+    /**
+     * changes the simple feed forward gain (adds constant voltage to the output)
+     */
     SIMPLE_FEED_FORWARD,
+    /**
+     * changes the friction feed forward gain (adds constant voltage to the output based on the
+     * direction of travel)
+     */
     FRICTION_FEED_FORWARD,
+    /**
+     * changes the setpoint feed forward gain (multiplies the setpoint by a constant voltage)
+     */
     SETPOINT_FEED_FORWARD
   }
 
@@ -176,7 +186,18 @@ public class ControllerFeedForwards {
         arbitraryFeedForward);
   }
 
+  /**
+   * updates the feed forward gains based on the change type
+   * if the value is negative, it will be ignored
+   * @param value the value to set the feed forward gain to
+   * @param type the type of change to make to the feed forward gain
+   */
   public void updateFeedForwards(double value, ChangeType type) {
+    if(value < 0) {
+      //ignore negative values
+      return;
+    }
+
     switch (type) {
       case SIMPLE_FEED_FORWARD:
         simpleFeedForward = value;

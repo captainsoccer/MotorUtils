@@ -4,14 +4,38 @@ import com.basicMotor.measurements.Measurements;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
+/**
+ * A class that simulates an arm encoder using the SingleJointedArmSim class.
+ * It is used to get the
+ * position, velocity, and acceleration of the arm in a simulation environment.
+ */
 public class ArmSimEncoder extends Measurements {
+  /**
+   * The SingleJointedArmSim instance used by this ArmSimEncoder.
+   */
   private final SingleJointedArmSim armSim;
 
-  double currentVelocity = 0.0;
-  double previousVelocity = 0.0;
+    /**
+     * The current velocity of the arm in rotations per second.
+     * This is updated in the update method.
+     */
+  private double currentVelocity = 0.0;
+    /**
+     * The previous velocity of the arm in rotations per second.
+     * This is used to calculate acceleration.
+     */
+  private double previousVelocity = 0.0;
 
-  double acceleration = 0.0;
+    /**
+     * The acceleration of the arm in rotations per second squared.
+     * This is calculated as the change in velocity over time.
+     */
+  private double acceleration = 0.0;
 
+  /**
+   * Creates an ArmSimEncoder instance with the provided SingleJointedArmSim.
+   * @param armSim the SingleJointedArmSim to use
+   */
   public ArmSimEncoder(SingleJointedArmSim armSim) {
     this.armSim = armSim;
   }

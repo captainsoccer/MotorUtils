@@ -7,6 +7,10 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 
+/**
+ * A class that provides measurements for the CANCoder sensor.
+ * used when using a CANCoder to measure the position and velocity of a motor.
+ */
 public class MeasurementsCANCoder extends Measurements {
   /**
    * the timeout for the motor controller to wait for the signals to update if it does not update in

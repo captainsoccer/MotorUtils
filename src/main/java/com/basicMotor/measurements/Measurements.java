@@ -11,11 +11,12 @@ public abstract class Measurements {
   /**
    * The measurements of the motor
    *
-   * @param position
-   * @param velocity
-   * @param acceleration
+   * @param position the position of the motor in units
+   * @param velocity the velocity of the motor in units per second
+   * @param acceleration the acceleration of the motor in units per second squared
    */
   public record Measurement(double position, double velocity, double acceleration) {
+    /** an empty measurement (all zeros) */
     public static final Measurement EMPTY = new Measurement(0, 0, 0);
   }
 

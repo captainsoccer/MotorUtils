@@ -153,6 +153,7 @@ public class TalonFXSensors {
   /**
    * sets the duty cycle refresh signal to the default rate used if the motor is a master for a
    * follower motor
+   * @param defaultRate whether to set the duty cycle signal to the default rate
    */
   public void setDutyCycleToDefaultRate(boolean defaultRate) {
     dutyCycleSignal.setUpdateFrequency(defaultRate ? 100 : refreshHZ);
