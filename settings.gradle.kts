@@ -1,1 +1,1 @@
-rootProject.name = "BasicMotor"
+rootProject.name = "basicmotor"

@@ -21,7 +21,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             groupId = "com.basicMotor"
-            artifactId = "your-artifact-id"
+            artifactId = "basicmotor"
         }
     }
     repositories {
