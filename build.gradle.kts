@@ -12,6 +12,9 @@ val phoenix6Version = "25.4.0"
 val revLibVersion = "2025.0.3"
 
 java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
     withJavadocJar()
     withSourcesJar()
 }
