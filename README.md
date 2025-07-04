@@ -18,6 +18,11 @@ Before using BasicMotor, ensure you have the following libraries installed in yo
 - [Phoenix 6](https://v6.docs.ctr-electronics.com/en/stable/docs/installation/installation-frc.html)
 - [REVLib](https://docs.revrobotics.com/revlib/install)
 
+after installing these libraries install the BasicMotor Library with the following url:
+
+```https://captainsoccer.github.io/MotorUtils/BasicMotor.json```
+
+or download it manually to your vendordep folder
 
 
 ## Usage
