@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
 }
 
-group = "com.basicMotor"
+group = "com.basicmotor"
 version = "1.0.0"
 
 val wpilibVersion = "2025.3.2"
@@ -20,8 +20,8 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "com.basicMotor"
-            artifactId = "basicmotor"
+            groupId = "com.basicmotor"
+            artifactId = "basic-motor"
             version = "1.0.0"
         }
     }
