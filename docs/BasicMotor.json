@@ -10,9 +10,9 @@
   "jsonUrl": "https://captainsoccer.github.io/MotorUtils/BasicMotor.json",
   "javaDependencies": [
     {
-      "groupId": "com.basicMotor",
-      "artifactId": "basicmotor",
-      "version": "1.0.0"
+      "groupId": "com.github.captainsoccer",
+      "artifactId": "MotorUtils",
+      "version": "v1.0.0"
     }
   ],
   "jniDependencies": [],
