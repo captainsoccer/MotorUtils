@@ -3,8 +3,8 @@
   "name": "BasicMotor",
   "version": "1.0.0",
   "uuid": "faa487b0-6832-4c4b-9d38-d6e8b4893548",
-  "mavenUrls": ["file:///absolute/path/to/your/project/build/repo"],
-  "jsonUrl": "",
+  "mavenUrls": ["https://github.com/captainsoccer/MotorUtils/packages/"],
+  "jsonUrl": "https://github.com/captainsoccer/MotorUtils/blob/master/BasicMotor.json",
   "javaDependencies": [
     {
       "groupId": "com.basicMotor",

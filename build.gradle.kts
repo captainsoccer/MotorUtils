@@ -22,11 +22,17 @@ publishing {
             from(components["java"])
             groupId = "com.basicMotor"
             artifactId = "basicmotor"
+            version = "1.0.0"
         }
     }
     repositories {
         maven {
-            url = uri("file://${buildDir}/repo") // Local repo for testing
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/captainsoccer/MotorUtils")
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
 }
