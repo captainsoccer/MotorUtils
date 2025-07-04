@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.basicmotor"
-version = "1.0.0"
+version = "1.0.1"
 
 val wpilibVersion = "2025.3.2"
 val advantageKitVersion = "4.1.2"
@@ -17,27 +17,6 @@ java {
     }
     withJavadocJar()
     withSourcesJar()
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            groupId = "com.basicmotor"
-            artifactId = "basic-motor"
-            version = "1.0.0"
-        }
-    }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/captainsoccer/MotorUtils")
-            credentials {
-                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
 }
 
 repositories {

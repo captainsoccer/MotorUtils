@@ -405,6 +405,26 @@ public abstract class BasicMotor {
     }
 
     /**
+     * sets the motor output to voltage.
+     *
+     * @param volts the voltage to set the motor to (in volts) (-12 to 12)
+     */
+    public void setVoltage(double volts){
+        controller.setReference(volts, Controller.RequestType.VOLTAGE);
+    }
+
+    /**
+     * sets the motor output to percent output.
+     *
+     * <p>this is used to set the motor to a percentage of the maximum output (-1 to 1)
+     *
+     * @param percentOutput the percentage of the maximum output (-1 to 1)
+     */
+    public void setPrecentOutput(double percentOutput) {
+        controller.setReference(percentOutput, Controller.RequestType.PRECENT_OUTPUT);
+    }
+
+    /**
      * gets the current position of the motor
      *
      * <p>default units are rotations but can be changed in the measurements
