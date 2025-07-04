@@ -1,7 +1,5 @@
 package com.basicMotor.gains;
 
-import static com.basicMotor.MotorManager.motorIdleVoltage;
-
 import com.basicMotor.MotorManager;
 
 /**
@@ -76,7 +74,7 @@ public class PIDGains {
    * @param k_D the derivative gain (>= 0)
    */
   public PIDGains(double k_P, double k_I, double k_D) {
-    this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, MotorManager.defaultMaxMotorOutput, 0);
+    this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, MotorManager.config.defaultMaxMotorOutput, 0);
   }
 
   /**
@@ -87,7 +85,7 @@ public class PIDGains {
    * @param k_D the derivative gain (>= 0)
    */
   public PIDGains(double k_P, double k_I, double k_D, double tolerance) {
-    this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, MotorManager.defaultMaxMotorOutput, tolerance);
+    this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, MotorManager.config.defaultMaxMotorOutput, tolerance);
   }
 
   /** creates an empty PID gains object (no k_P, no k_I, no k_D) */
@@ -175,6 +173,8 @@ public class PIDGains {
    * @return the duty cycle gains
    */
   public PIDGains convertToDutyCycle() {
+    double motorIdleVoltage = MotorManager.config.motorIdealVoltage;
+
     return new PIDGains(
         k_P / motorIdleVoltage,
         k_I / motorIdleVoltage,

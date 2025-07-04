@@ -194,7 +194,7 @@ public abstract class BasicMotor {
    */
   public void setDefaultMeasurements() {
     this.measurements = getDefaultMeasurements();
-    startRecordingMeasurements(controllerLocation.HZ);
+    startRecordingMeasurements(controllerLocation.getHZ());
   }
 
   /**
@@ -319,7 +319,7 @@ public abstract class BasicMotor {
     motorState = MotorState.STOPPED;
     stopMotorFollow();
     stopMotorOutput();
-    startRecordingMeasurements(controllerLocation.HZ);
+    startRecordingMeasurements(controllerLocation.getHZ());
   }
 
   protected abstract void setMotorFollow(BasicMotor master, boolean inverted);
@@ -453,7 +453,7 @@ public abstract class BasicMotor {
     else return;
 
     var motorOutput =
-        runController(measurement, 1 / controllerLocation.HZ, controller.getRequest());
+        runController(measurement, 1 / controllerLocation.getHZ(), controller.getRequest());
 
     double tolerance = controller.getControllerGains().getPidGains().getTolerance();
 
@@ -488,7 +488,7 @@ public abstract class BasicMotor {
       measurements = getDefaultMeasurements();
     }
 
-    return measurements.update(1 / controllerLocation.HZ);
+    return measurements.update(1 / controllerLocation.getHZ());
   }
 
   /**

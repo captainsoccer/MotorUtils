@@ -16,7 +16,6 @@ import java.util.function.Function;
  * current limits or other advanced features, use the motor controller's specific configuration
  * class
  *
- * <p>
  */
 public class BasicMotorConfig {
 
@@ -162,7 +161,7 @@ public class BasicMotorConfig {
      * <p>this is the maximum value that the integral term can accumulate to, if it exceeds this
      * value, it will be clamped
      */
-    public double iMaxAccum = MotorManager.defaultMaxMotorOutput;
+    public double iMaxAccum = MotorManager.config.defaultMaxMotorOutput;
     /**
      * the tolerance of the PID controller units are: (unit of measurement)
      *
@@ -283,13 +282,13 @@ public class BasicMotorConfig {
      *
      * <p>this is the maximum output of the motor controller in the forward direction
      */
-    public double maxOutput = MotorManager.defaultMaxMotorOutput;
+    public double maxOutput = MotorManager.config.defaultMaxMotorOutput;
     /**
      * the minimum output of the constraint units are: (voltage)
      *
      * <p>this is the minimum output of the motor controller in the reverse direction
      */
-    public double minOutput = -MotorManager.defaultMaxMotorOutput;
+    public double minOutput = -MotorManager.config.defaultMaxMotorOutput;
     /**
      * the voltage deadband of the constraint units are: (voltage)
      *

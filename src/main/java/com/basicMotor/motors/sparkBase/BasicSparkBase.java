@@ -58,11 +58,11 @@ public abstract class BasicSparkBase extends BasicMotor {
 
     this.config = config;
     config.voltageCompensation(
-        MotorManager.motorIdleVoltage); // set the voltage compensation to the idle voltage
+        MotorManager.config.motorIdealVoltage); // set the voltage compensation to the idle voltage
     // all configs should be stored in code and not on motor
     applyConfig();
 
-    configurePeriodicFrames(location.HZ);
+    configurePeriodicFrames(location.getHZ());
 
     defaultMeasurements =
         new MeasurementsREVRelative(motor.getEncoder(), gearRatio, unitConversion);
@@ -84,11 +84,11 @@ public abstract class BasicSparkBase extends BasicMotor {
 
     this.config = config;
     config.voltageCompensation(
-        MotorManager.motorIdleVoltage); // set the voltage compensation to the idle voltage
+        MotorManager.config.motorIdealVoltage); // set the voltage compensation to the idle voltage
     // all configs should be stored in code and not on motor
     applyConfig();
 
-    configurePeriodicFrames(motorConfig.motorConfig.location.HZ);
+    configurePeriodicFrames(motorConfig.motorConfig.location.getHZ());
 
     defaultMeasurements =
         new MeasurementsREVRelative(
@@ -152,7 +152,7 @@ public abstract class BasicSparkBase extends BasicMotor {
     double temperature = motor.getMotorTemperature();
     double dutyCycle = motor.getAppliedOutput();
 
-    double outputVoltage = motor.getAppliedOutput() * MotorManager.motorIdleVoltage;
+    double outputVoltage = motor.getAppliedOutput() * MotorManager.config.motorIdealVoltage;
     double powerOutput = outputVoltage * current;
 
     double powerDraw = sparkMaxIdlePowerDraw + powerOutput; // idle power draw + output power
@@ -247,9 +247,11 @@ public abstract class BasicSparkBase extends BasicMotor {
 
   @Override
   protected void updateConstraints(ControllerConstrains constraints) {
+    double idleVoltage = MotorManager.config.motorIdealVoltage;
+
     // sets the max voltage to the max motor output
-    config.closedLoop.maxOutput(constraints.getMaxMotorOutput() / MotorManager.motorIdleVoltage);
-    config.closedLoop.minOutput(constraints.getMinMotorOutput() / MotorManager.motorIdleVoltage);
+    config.closedLoop.maxOutput(constraints.getMaxMotorOutput() / idleVoltage);
+    config.closedLoop.minOutput(constraints.getMinMotorOutput() / idleVoltage);
 
     if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
       // sets the soft limits to the max and min values
@@ -342,7 +344,7 @@ public abstract class BasicSparkBase extends BasicMotor {
   private void configurePeriodicFrames(double mainLoopHZ) {
     var signals = config.signals;
     int sensorLoopPeriodMs =
-        (int) ((1 / MotorManager.SENSOR_LOOP_HZ) * 1000); // convert to milliseconds
+        (int) ((1 / MotorManager.config.SENSOR_LOOP_HZ) * 1000); // convert to milliseconds
     int mainLoopPeriodMs = (int) ((1 / mainLoopHZ) * 1000); // convert to milliseconds
 
     signals.busVoltagePeriodMs(sensorLoopPeriodMs); // currently does nothing
@@ -476,7 +478,7 @@ public abstract class BasicSparkBase extends BasicMotor {
     // sets the feedback sensor for the closed loop controller
     config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAbsoluteEncoder);
 
-    int periodMs = (int) ((1 / controllerLocation.HZ) * 1000); // convert to milliseconds
+    int periodMs = (int) ((1 / controllerLocation.getHZ()) * 1000); // convert to milliseconds
     // sets the period for the absolute encoder position and velocity
     // (the default encoder period is automatically disabled)
     config.signals.absoluteEncoderPositionPeriodMs(periodMs);
@@ -596,7 +598,7 @@ public abstract class BasicSparkBase extends BasicMotor {
 
     configExternalEncoder(inverted, sensorToMotorRatio, mechanismToSensorRatio);
 
-    int periodMs = (int) ((1 / controllerLocation.HZ) * 1000); // convert to milliseconds
+    int periodMs = (int) ((1 / controllerLocation.getHZ()) * 1000); // convert to milliseconds
     // sets the period for the absolute encoder position and velocity
     // (the default encoder period is automatically disabled)
     config.signals.externalOrAltEncoderPosition(periodMs);

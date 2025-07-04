@@ -1,7 +1,6 @@
 package com.basicMotor.gains;
 
-import static com.basicMotor.MotorManager.defaultMaxMotorOutput;
-
+import com.basicMotor.MotorManager;
 import com.basicMotor.controllers.Controller;
 import com.basicMotor.measurements.Measurements;
 import edu.wpi.first.math.MathUtil;
@@ -86,10 +85,10 @@ public class ControllerConstrains {
     this.minValue = minValue;
     this.maxValue = maxValue;
     this.maxMotorOutput =
-        MathUtil.clamp(maxMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+        MathUtil.clamp(maxMotorOutput, -MotorManager.config.defaultMaxMotorOutput, MotorManager.config.defaultMaxMotorOutput);
     if (minMotorOutput > 0) minMotorOutput = -minMotorOutput;
     this.minMotorOutput =
-        MathUtil.clamp(minMotorOutput, -defaultMaxMotorOutput, defaultMaxMotorOutput);
+        MathUtil.clamp(minMotorOutput, -MotorManager.config.defaultMaxMotorOutput, MotorManager.config.defaultMaxMotorOutput);
     this.voltageDeadband = Math.abs(deadband);
   }
 
@@ -103,7 +102,7 @@ public class ControllerConstrains {
    *     round to, if limited is the maximum value of the limits)
    */
   public ControllerConstrains(ConstraintType type, double minValue, double maxValue) {
-    this(type, minValue, maxValue, defaultMaxMotorOutput, -defaultMaxMotorOutput, 0);
+    this(type, minValue, maxValue, MotorManager.config.defaultMaxMotorOutput, -MotorManager.config.defaultMaxMotorOutput, 0);
   }
 
   /**
@@ -112,7 +111,7 @@ public class ControllerConstrains {
    * @param voltageDeadband the minimum output voltage of the motor, * any output below this value
    */
   public ControllerConstrains(double voltageDeadband) {
-    this(ConstraintType.NONE, 0, 0, defaultMaxMotorOutput, -defaultMaxMotorOutput, voltageDeadband);
+    this(ConstraintType.NONE, 0, 0, MotorManager.config.defaultMaxMotorOutput, -MotorManager.config.defaultMaxMotorOutput, voltageDeadband);
   }
 
   /**
@@ -128,7 +127,7 @@ public class ControllerConstrains {
    */
   public ControllerConstrains(
       ConstraintType type, double minValue, double maxValue, double voltageDeadband) {
-    this(type, minValue, maxValue, defaultMaxMotorOutput, -defaultMaxMotorOutput, voltageDeadband);
+    this(type, minValue, maxValue, MotorManager.config.defaultMaxMotorOutput, -MotorManager.config.defaultMaxMotorOutput, voltageDeadband);
   }
 
   /**
@@ -163,7 +162,7 @@ public class ControllerConstrains {
    * output
    */
   public ControllerConstrains() {
-    this(ConstraintType.NONE, 0, 0, defaultMaxMotorOutput, -defaultMaxMotorOutput, 0);
+    this(ConstraintType.NONE, 0, 0, MotorManager.config.defaultMaxMotorOutput, -MotorManager.config.defaultMaxMotorOutput, 0);
   }
 
   /**
