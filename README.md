@@ -18,7 +18,7 @@ Before using BasicMotor, ensure you have the following libraries installed in yo
 - [Phoenix 6](https://v6.docs.ctr-electronics.com/en/stable/docs/installation/installation-frc.html)
 - [REVLib](https://docs.revrobotics.com/revlib/install)
 
-Add these dependencies to your build system (e.g., Gradle) as required by your project setup.
+
 
 ## Usage
 
