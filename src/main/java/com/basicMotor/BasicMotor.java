@@ -657,8 +657,10 @@ public abstract class BasicMotor {
 
         // if the controller is on the motor, then we can just return the feedforward output
         if (controllerLocation == ControllerLocation.MOTOR) {
+            double totalPIDOutput = logFrame.pidOutput.totalOutput();
+
             return new LogFrame.ControllerFrame(
-                    FFOutput.totalOutput(),
+                    FFOutput.totalOutput() + totalPIDOutput,
                     FFOutput,
                     controller.getSetpoint().position,
                     referenceMeasurement,
