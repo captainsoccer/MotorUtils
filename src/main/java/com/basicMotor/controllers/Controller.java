@@ -9,6 +9,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
+import edu.wpi.first.wpilibj.DriverStation;
 
 import java.util.Objects;
 
@@ -79,6 +80,10 @@ public class Controller implements Sendable {
         Objects.requireNonNull(request);
         Objects.requireNonNull(request.requestType);
         Objects.requireNonNull(request.goal);
+
+        if(request.requestType.isProfiled() && !controllerGains.isProfiled()){
+            DriverStation.reportWarning("Using a profiled request type without a profile set in the controller gains. using normal request",  false);
+        }
 
         this.request = request;
     }

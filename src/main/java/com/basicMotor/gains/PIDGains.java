@@ -188,7 +188,6 @@ public class PIDGains {
      */
     public PIDGains convertToMotorGains(double gearRatio) {
         double i_Zone = this.i_Zone == Double.POSITIVE_INFINITY ? 0 : this.i_Zone;
-        double i_maxAccum = this.i_maxAccum == Double.POSITIVE_INFINITY ? 0 : this.i_maxAccum;
 
         return new PIDGains(
                 k_P / gearRatio,
