@@ -29,6 +29,8 @@ or download it manually to your vendordep folder
 For detailed documentation, guides, and advanced usage tips, please visit our [Wiki](https://github.com/captainsoccer/MotorUtils/wiki).  
 The wiki contains additional resources to help you get started, troubleshoot issues, and explore advanced features of the MotorUtils library.
 
+For more sepecif information about API, check the [java doc](https://javadoc.jitpack.io/com/github/captainsoccer/MotorUtils/latest/javadoc/index.html)
+
 
 ## Usage
 
