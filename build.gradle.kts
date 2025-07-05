@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.basicmotor"
-version = "1.0.2"
+version = "1.0.3"
 
 val wpilibVersion = "2025.3.2"
 val advantageKitVersion = "4.1.2"
