@@ -30,6 +30,12 @@ public class MeasurementsCANCoder extends Measurements {
   private double lastVelocity = 0;
   private double acceleration = 0;
 
+    /**
+     * Flag to enable Pro features of the measurements, such as latency compensation.
+     * If true, the measurements will wait for all signals to update before returning values.
+     */
+  private boolean enablePro = false;
+
   /**
    * Creates a new measurements object with the given signals sets the refresh rate of the signals
    * (but doesn't optimize the canbus usage)
@@ -74,7 +80,8 @@ public class MeasurementsCANCoder extends Measurements {
 
   @Override
   public Measurement update(double dt) {
-    BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity);
+    if(enablePro) BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity);
+    else BaseStatusSignal.refreshAll(motorPosition, motorVelocity);
 
     var position = BaseStatusSignal.getLatencyCompensatedValue(motorPosition, motorVelocity);
     positionLatencyCompensatedValue = position.in(Units.Rotations);
@@ -86,6 +93,14 @@ public class MeasurementsCANCoder extends Measurements {
     lastVelocity = currentVelocity;
 
     return super.update(dt);
+  }
+
+  /**
+   * enable or disable the Pro features of the measurements.
+   * @param enable true to enable Pro features, false to disable
+   */
+  public void setEnablePro(boolean enable) {
+    this.enablePro = enable;
   }
 
   @Override

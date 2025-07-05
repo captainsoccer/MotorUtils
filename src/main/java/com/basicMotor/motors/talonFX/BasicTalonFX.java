@@ -165,6 +165,8 @@ public class BasicTalonFX extends BasicMotor {
     BasicTalonFXConfig specificConfig = (BasicTalonFXConfig) config;
 
     setCurrentLimits(specificConfig.currentLimitConfig.getCurrentLimits());
+
+    enableFOC(specificConfig.enablePro);
   }
 
   @Override
@@ -363,6 +365,10 @@ public class BasicTalonFX extends BasicMotor {
     positionRequest.EnableFOC = enable;
     voltageRequest.EnableFOC = enable;
     dutyCycleRequest.EnableFOC = enable;
+    sensors.setEnablePro(enable);
+    if(defaultMeasurements instanceof MeasurementsTalonFX measurements) {
+      measurements.setEnablePro(enable);
+    }
   }
 
   /** applies the configuration to the motor controller */

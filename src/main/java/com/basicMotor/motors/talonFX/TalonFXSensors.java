@@ -55,6 +55,11 @@ public class TalonFXSensors {
   private LogFrame.PIDOutput latestPIDOutput = LogFrame.PIDOutput.EMPTY;
 
   /**
+   * whether to use wait for all or refresh all.
+   */
+  private boolean enablePro = false;
+
+  /**
    * Constructor for TalonFX Sensors
    *
    * @param motor the motor to get the sensors from
@@ -117,7 +122,8 @@ public class TalonFXSensors {
    * @return the sensor data from the motor controller
    */
   public LogFrame.SensorData getSensorData() {
-    BaseStatusSignal.waitForAll(1 / (refreshHZ * 4), statusSignals);
+    if(enablePro) BaseStatusSignal.waitForAll(1 / (refreshHZ * 4), statusSignals);
+    else BaseStatusSignal.refreshAll(statusSignals);
 
     double temperature = temperatureSignal.getValueAsDouble();
     double currentDraw = supplyCurrentSignal.getValueAsDouble();
@@ -159,6 +165,15 @@ public class TalonFXSensors {
     dutyCycleSignal.setUpdateFrequency(defaultRate ? 100 : refreshHZ);
   }
 
+  /**
+   * sets the enable pro.
+   * if pro is enabled, code will use wait for all status signals for better reliability
+   * else it will use refresh all.
+   * @param enable if to enable pro
+   */
+  public void setEnablePro(boolean enable) {
+    this.enablePro = enable;
+  }
   /**
    * gets the latest pid output from the motor controller this is used for logging
    *

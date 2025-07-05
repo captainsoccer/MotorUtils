@@ -21,6 +21,12 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
   public String canBusName = "rio";
 
   /**
+   * if the motor uses phoenix pro, this enables to motor to use FOC (filed oriented control) to enhance motor performance.
+   * and also allows synchronizing the status signals of the motor for better reliability.
+   */
+  public boolean enablePro = false;
+
+  /**
    * the config for the current limit of the talonFX motor controller
    */
   public static class CurrentLimitConfig {
