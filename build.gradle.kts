@@ -19,6 +19,19 @@ java {
     withSourcesJar()
 }
 
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = "com.basicmotor"
+            artifactId = "basic-motor"
+            version = version
+        }
+    }
+}
+
+
 repositories {
     mavenCentral()
     mavenLocal()
