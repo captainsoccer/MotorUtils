@@ -43,12 +43,6 @@ public abstract class BasicSparkBase extends BasicMotor {
      */
     private final Measurements defaultMeasurements;
 
-    /**
-     * the integral gain used for the PID controller.
-     * used for logging the I output.
-     */
-    private double kI = 0; // the integral gain, used for logging the I output
-
     /** the idle power draw of the Spark MAX in watts (according to ChatGPT) */
     private static final double sparkMaxIdlePowerDraw = 0.72;
 
@@ -242,7 +236,12 @@ public abstract class BasicSparkBase extends BasicMotor {
         // spark max supports only integral accumulation, so we will return the I accumulator value
         double iAccum = motor.getClosedLoopController().getIAccum();
 
-        return new LogFrame.PIDOutput(0, iAccum * kI, 0, 0);
+        //the ideal voltage is used to convert the duty cycle to voltage
+        //it is on the same thread as the sensor data so it works fine
+        double inputVoltage = logFrame.sensorData.voltageInput();
+
+        //total output is zero because it is incomplete in Spark MAX
+        return new LogFrame.PIDOutput(0, iAccum * inputVoltage, 0, 0);
     }
 
     @Override
@@ -260,8 +259,6 @@ public abstract class BasicSparkBase extends BasicMotor {
                             + name,
                     false);
         }
-
-        kI = gains.getK_I(); // store the integral gain for later use
 
         applyConfig();
     }
