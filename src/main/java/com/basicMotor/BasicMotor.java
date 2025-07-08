@@ -179,7 +179,7 @@ public abstract class BasicMotor {
      *
      * @return the default measurements of the motor
      */
-    public Measurements initializeMotor() {
+    private Measurements initializeMotor() {
         if (initialized) return getDefaultMeasurements();
 
         if (getDefaultMeasurements() == null) return null;
