@@ -1,5 +1,6 @@
 package com.basicMotor;
 
+import com.basicMotor.Manager.MotorManager;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.controllers.Controller;
 import com.basicMotor.gains.ControllerConstrains;
@@ -7,7 +8,7 @@ import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.currentLimits.CurrentLimits;
 import com.basicMotor.gains.PIDGains;
 import com.basicMotor.measurements.Measurements;
-import com.basicMotor.MotorManager.ControllerLocation;
+import com.basicMotor.Manager.MotorManager.ControllerLocation;
 import edu.wpi.first.wpilibj.RobotState;
 
 import java.util.Objects;

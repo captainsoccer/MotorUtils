@@ -12,7 +12,7 @@ import com.basicMotor.LogFrame;
 import com.basicMotor.measurements.ctreEncoders.MeasurementsCANCoder;
 import com.basicMotor.measurements.ctreEncoders.MeasurementsTalonFX;
 import com.basicMotor.measurements.Measurements;
-import com.basicMotor.MotorManager;
+import com.basicMotor.Manager.MotorManager;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;

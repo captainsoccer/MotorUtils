@@ -1,7 +1,7 @@
 package com.basicMotor.motors.talonFX;
 
 import com.basicMotor.LogFrame;
-import com.basicMotor.MotorManager;
+import com.basicMotor.Manager.MotorManager;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;

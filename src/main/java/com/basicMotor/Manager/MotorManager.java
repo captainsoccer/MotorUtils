@@ -1,5 +1,6 @@
-package com.basicMotor;
+package com.basicMotor.Manager;
 
+import com.basicMotor.LogFrame;
 import edu.wpi.first.wpilibj.Notifier;
 
 import java.util.ArrayList;

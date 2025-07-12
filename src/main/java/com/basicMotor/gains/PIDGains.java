@@ -1,6 +1,6 @@
 package com.basicMotor.gains;
 
-import com.basicMotor.MotorManager;
+import com.basicMotor.Manager.MotorManager;
 
 /**
  * This class is used to set the PID gains of the motor controller. It is used to set the PID gains

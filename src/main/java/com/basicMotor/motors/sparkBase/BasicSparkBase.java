@@ -13,7 +13,7 @@ import com.basicMotor.LogFrame;
 import com.basicMotor.measurements.Measurements;
 import com.basicMotor.measurements.revEncoders.MeasurementsREVAbsolute;
 import com.basicMotor.measurements.revEncoders.MeasurementsREVRelative;
-import com.basicMotor.MotorManager;
+import com.basicMotor.Manager.MotorManager;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.*;
