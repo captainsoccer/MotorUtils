@@ -1,66 +1,66 @@
 package com.basicMotor.configuration;
 
 import com.basicMotor.gains.currentLimits.CurrentLimitsREV;
-import com.basicMotor.motors.sparkBase.BasicSparkBase;
 
 /**
- * This class represents the configuration for a basic spark base motor controller. It extends the
- * BasicMotorConfig class and provides specific configurations for spark base motors.
+ * This class represents the configuration for a basic spark base motor controller.
+ * It extends the BasicMotorConfig class and provides specific configurations for spark base motors.
  */
 public class BasicSparkBaseConfig extends BasicMotorConfig {
 
-  /** the current limit configuration for the spark base motor controller */
+  /** The current limit configuration for the spark base motor controller. */
   public final CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
 
   /**
-   * the external encoder configuration for the spark base motor controller this is used to
-   * configure the external encoder connected directly to the motor controller
+   * The external encoder configuration for the spark base motor controller.
+   * If you want to use an external encoder (connected directly to the motor controller), you can use this to simplify the process.
    */
   public final ExternalEncoderConfig externalEncoderConfig = new ExternalEncoderConfig();
 
   /**
-   * the absolute encoder configuration for the spark base motor controller this is used to
-   * configure the absolute encoder connected directly to the motor controller
+   * The absolute encoder configuration for the spark base motor controller.
+   * If you want to use an Absolute encoder (connected directly to the motor controller), you can use this to simplify the process.
    */
   public final AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
 
+  //check if using either external or absolute encoder
   @Override
   public boolean usingExternalEncoder() {
     return externalEncoderConfig.useExternalEncoder || absoluteEncoderConfig.useAbsoluteEncoder;
   }
 
-  /** the current limit configuration for a spark base motor controller */
+  /** Handles configuration for the currentLimits, It has current limits specifically tailored to the spark base motor controllers. */
   public static class CurrentLimitConfig {
     /**
-     * the maximum current output of the motor controller while in free speed (in amps) free speed
-     * can be defined in {@link #freeSpeedRPS}
-     *
-     * <p>this is the max current the motor windings will allow before stopping, this will usually
-     * be higher than the supply current limit by a wide margin.
+     * The maximum current output (i.e. applied current and not current draw) of the motor controller while in free speed (in amps).
+     * Free speed can be defined in {@link #freeSpeedRPS}.
+     * Use this to limit the current draw of the motor controller when it is not stalled.
      */
     public int freeSpeedCurrentLimit = 0;
     /**
-     * the maximum current draw of the motor controller while in stall (in amps) anything below the
-     * free speed is considered stall, free speed can be defined in {@link #freeSpeedRPS}
+     * The maximum current output (i.e. applied current and not current draw) of the motor controller while in stall (in amps).
+     * Anything below the free speed is considered stall, free speed can be defined in {@link #freeSpeedRPS}
      */
     public int stallCurrentLimit = 0;
     /**
-     * the free speed of the motor controller (in RPS (revolutions per second)) any speed above this
-     * speed is considered free speed and the free speed current limit will be applied, if below
-     * this speed the motor is considered in stall and the stall current limit is applied. gear rato
-     * is automatically applied to the free speed so no need to divide by it
+     * The free speed of the motor controller (in Hz (revolutions per second)).
+     * Any speed above this speed is considered free speed and the free speed current limit will be applied.
+     * If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
+     * This value is in the mechanisms rotations per second (after the gear ratio is applied).
      */
     public double freeSpeedRPS = 0;
     /**
-     * the max current output of the motor controller (in amps) if the current output of the motor
-     * controller exceeds this limit, the motor controller will stop for a short time
+     * The max current output of the motor controller (in amps).
+     * If the current output of the motor exceeds this limit, the motor will stop for a short time.
+     * This should be only used for extreme cases where the motor is drawing too much current.
+     * This is especially useful for small motors like the neo 550, which can burn out quickly.
      */
     public int secondaryCurrentLimit = 0;
 
     /**
-     * creates the current limit configuration with the given values
+     * Creates the current limit configuration with the given values
      *
-     * @return the current limits of the motor controller
+     * @return The current limits of the motor controller
      */
     public CurrentLimitsREV getCurrentLimits() {
       return new CurrentLimitsREV(
@@ -68,62 +68,96 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
     }
   }
 
-  /** the config of a spark base motor controller external encoder */
+  /** Handles the configuration parameters for the external encoder */
   public static class ExternalEncoderConfig {
-    /** should the motor use an external encoder (connected directly to the motor controller)? */
+    /**
+     * Should the motor use an external encoder (connected directly to the motor controller)?
+     * Change this to true if you want to use an external encoder.
+     * If you want the encoder to be initialized with an absolute encoder, use also {@link BasicSparkBaseConfig.AbsoluteEncoderConfig}.
+     */
     public boolean useExternalEncoder = false;
 
-    /** is the external encoder inverted (does it count in the opposite direction of the motor)? */
+    /**
+     * Is the external encoder inverted (does it count in the opposite direction of the motor)?
+     * Unlike motors, external encoders default positive direction is usually clockwise.
+     */
     public boolean inverted = false;
 
     /**
-     * the number that the reading of the external encoder should be multiplied by to get the motor
-     * output a value bigger than 1.0 is a reduction in the motor output. (the motor spins more than
-     * the sensor)
+     * The number that the reading of the external encoder should be multiplied by to get the motor position.
+     * In most cases, the sensor will be in a reduction to the motor, so this value will be greater than 1.0.
+     * If the sensor is mounted not directly on the mechanism, use also {@link #mechanismToSensorRatio}
      */
     public double sensorToMotorRatio = 1.0;
 
     /**
-     * the number that the reading of the external encoder should be divided by to get the mechanism
-     * output a value bigger than 1.0 is a reduction in the mechanism output. (the sensor spins more
-     * than the mechanism)
+     * The number that the reading of the external encoder should be divided by to get the mechanism position.
+     * In most cases, this number will stay 1, due to the sensor being mounted directly on the mechanism.
+     * But if the sensor has a reduction to the mechanism, this value will be greater than 1.0.
+     * (i.e. the sensor spins more than the mechanism)
      */
     public double mechanismToSensorRatio = 1.0;
   }
 
-  /** the config of a spark base motor controller absolute encoder */
+  /** Handles the configuration parameters for an absolute encoder*/
   public static class AbsoluteEncoderConfig {
-    /** should the motor use an absolute encoder (connected directly to the motor controller)? */
+    /**
+     * Should the motor use an absolute encoder (connected directly to the motor controller)?
+     * Change this to true if you want to use an absolute encoder.
+     * If you want to use also an external encoder (relative encoder), use {@link BasicSparkBaseConfig.ExternalEncoderConfig}.
+     */
     public boolean useAbsoluteEncoder = false;
 
-    /** is the absolute encoder inverted (does it count in the opposite direction of the motor)? */
+    /**
+     * Is the absolute encoder inverted (does it count in the opposite direction of the motor)?
+     * Unlike motors, absolute encoders default positive direction is usually clockwise.
+     */
     public boolean inverted = false;
 
     /**
-     * the zero offset of the absolute encoder (in rotations) the reading of the absolute encoder
-     * with this value will be considered zero
+     * The position of the absolute encoder where the mechanism is at it's zero position (in rotations).
+     * If changed {@link #absoluteEncoderRange}, adjust this value accordingly.
+     * Default is a range of 0.0 to 1.0, so the zero offset is 0.0.
      */
     public double zeroOffset = 0.0;
 
     /**
-     * the number that the reading of the absolute encoder should be multiplied by to get the motor
-     * output a value bigger than 1.0 is a reduction in the motor output. (the motor spins more than
-     * the sensor)
+     * The number that the reading of the absolute encoder should be multiplied by to get the motor position.
+     * In most cases, the sensor will be in a reduction to the motor, so this value will be greater than 1.0.
      */
     public double sensorToMotorRatio = 1.0;
 
     /**
-     * the number that the reading of the absolute encoder should be divided by to get the mechanism
-     * output a value bigger than 1.0 is a reduction in the mechanism output. (the sensor spins more
-     * than the mechanism)
+     * The range that the absolute encoder reads.
+     * This affects how the sensor reading is interpreted.
+     * Default is {@link AbsoluteEncoderRange#ZERO_TO_ONE} which means the sensor reads from 0.0 to 1.0.
+     * If you want the sensor to read from -0.5 to 0.5, use {@link AbsoluteEncoderRange#HALF_REVOLUTION}.
+     * Half revolution is useful for a swerve steer motor to get to the zero angle the fastest at the start.
      */
-    public double mechanismToSensorRatio = 1.0;
+    public AbsoluteEncoderRange absoluteEncoderRange = AbsoluteEncoderRange.ZERO_TO_ONE;
+
 
     /**
-     * the range of the absolute encoder this is used to determine the range of the absolute encoder
-     * it can be set to ZERO_TO_ONE or HALF_ROTATION.
+     * An enum representing the range of the absolute encoder.
      */
-    public BasicSparkBase.AbsoluteEncoderRange absoluteEncoderRange =
-        BasicSparkBase.AbsoluteEncoderRange.ZERO_TO_ONE;
+    public enum AbsoluteEncoderRange {
+      /**
+       * 0 to 1 of range.
+       */
+      ZERO_TO_ONE,
+      /**
+       * -0.5 to 0.5 of range.
+       */
+      HALF_REVOLUTION;
+
+      /**
+       * Checks if the range is zero centered (i.e. -0.5 to 0.5)
+       *
+       * @return True if the range is zero centered, false otherwise
+       */
+      public boolean zeroCentered() {
+        return this == HALF_REVOLUTION;
+      }
+    }
   }
 }
