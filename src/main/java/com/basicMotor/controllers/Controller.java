@@ -10,149 +10,220 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.DriverStation;
+import com.basicMotor.gains.ControllerFeedForwards;
 
 import java.util.Objects;
 
 /**
- * this is the controller used to control the basic motor class {@link BasicMotor} this handles pid
- * (if needed), feedforward, constraints and profile of the motor
+ * This class is used to control the {@link BasicMotor}.
+ * It handles the PID loop, feedforward, constraints, and profiling of the motor.
+ * See the <a href="wiki link">wiki</a> //TODO: add wiki link.
+ * for more information on how to use this class.
  */
 public class Controller implements Sendable {
+    /**
+     * Counts the number of instances of the controller.
+     * This is used to give each Controller a unique number when sending it to the dashboard.
+     */
     private static int instances = 0;
 
     /**
-     * the gains of the controller pid, feedforward, constraints and profile
+     * The gains of the controller.
+     * This stores the PID gains, feedforward, constraints, and profile of the controller.
      */
     private final ControllerGains controllerGains;
 
     /**
-     * the controller of the controller this is used to calculate the output of the controller pid,
-     * feedforward, constraints and profile
+     * The PID controller used to calculate the PID output of the controller.
      */
     private final BasicPIDController pidController;
 
     /**
-     * the latest request of the controller this contains the control mode and the goal
+     * The latest request of the controller this contains the control mode and the goal.
+     * This is set by the user to control the motor.
      */
     private ControllerRequest request = new ControllerRequest();
     /**
-     * the setpoint of the controller this is used when using profiled position and velocity
+     * The setpoint of the controller.
+     * Most of the time it is the same as the goal of the request,
+     * but when using motion profiling it will be calculated each loop until the goal is reached.
      */
     private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
     /**
-     * creates a controller with the given gains
+     * Creates a controller with the given gains
      *
-     * @param controllerGains              the gains of the controller
-     * @param hasPIDGainsChangeRunnable    the runnable that is called when the PID gains are changed
-     * @param hasConstraintsChangeRunnable the runnable that is called when the constraints are changed
+     * @param controllerGains              The gains of the controller
+     * @param hasPIDGainsChangeRunnable    The function to run when the PID gains are changed.
+     *                                     This function is to flag when the PID gains are changed
+     *                                     so the motor can send the updates to the motor controller on a slower thread.
+     * @param hasConstraintsChangeRunnable The function to run when the constraints are changed.
+     *                                     This function is to flag when the constraints are changed
+     *                                     so the motor can send the updates to the motor controller on a slower thread.
      */
     public Controller(
             ControllerGains controllerGains,
             Runnable hasPIDGainsChangeRunnable,
             Runnable hasConstraintsChangeRunnable) {
         this.controllerGains = controllerGains;
+        //sets the callbacks for when the PID gains or constraints are changed
         this.controllerGains.setHasPIDGainsChanged(hasPIDGainsChangeRunnable);
         this.controllerGains.setHasConstraintsChanged(hasConstraintsChangeRunnable);
 
+        //creates the PID controller with the given gains
         this.pidController = new BasicPIDController(controllerGains.getPidGains());
 
+        //increments the instance count and registers the controller with the sendable registry
         instances++;
 
+        // registers the controller with the sendable registry (used when sending to the dashboard)
         SendableRegistry.add(this, "MotorController", instances);
     }
 
     /**
-     * gets the controller gains of the controller
+     * Gets the controller gains of the controller
      *
-     * @return the controller gains of the controller
+     * @return The controller gains of the controller
      */
     public ControllerGains getControllerGains() {
         return controllerGains;
     }
 
     /**
-     * sets the reference of the controller
+     * Sets the reference of the controller
+     * The request must be non-null and must have a valid request type and goal.
      *
-     * @param request the request of the controller
+     * @param request The new request for the controller
      */
     public void setReference(ControllerRequest request) {
         Objects.requireNonNull(request);
-        Objects.requireNonNull(request.requestType);
+        Objects.requireNonNull(request.controlMode);
         Objects.requireNonNull(request.goal);
 
-        if(request.requestType.isProfiled() && !controllerGains.isProfiled()){
-            DriverStation.reportWarning("Using a profiled request type without a profile set in the controller gains. using normal request",  false);
+        if (request.controlMode.isProfiled() && !controllerGains.isProfiled()) {
+            DriverStation.reportWarning("Using a profiled request type without a profile set in the controller gains. using normal request", false);
         }
 
         this.request = request;
     }
 
     /**
-     * sets the reference of the controller
+     * Sets the reference of the controller
      *
-     * @param setpoint    the setpoint of the controller
-     * @param requestType the request type of the controller
+     * @param setpoint    The new setpoint (the goal if using a profiled control).
+     * @param controlMode The mode of control.
      */
-    public void setReference(double setpoint, RequestType requestType) {
-        setReference(new ControllerRequest(setpoint, requestType));
+    public void setReference(double setpoint, ControlMode controlMode) {
+        setReference(new ControllerRequest(setpoint, controlMode));
     }
 
     /**
-     * sets the reference of the controller
+     * Sets the reference of the controller.
+     * This function is used when you want to control the end velocity of the movement.
+     * use this function only when using profiled control.
      *
-     * @param setpoint         the setpoint of the controller
-     * @param setpointVelocity the setpoint velocity of the controller (used for profiled position and
-     *                         velocity)
-     * @param requestType      the request type of the controller
+     * @param goal         the new goal
+     * @param goalVelocity The setpoint velocity of the controller (used for profiled position and
+     *                     velocity)
+     * @param controlMode  The control mode of the controller. (must be a profiled control mode)
      */
-    public void setReference(double setpoint, double setpointVelocity, RequestType requestType) {
-        setReference(new ControllerRequest(setpoint, setpointVelocity, requestType));
+    public void setReference(double goal, double goalVelocity, ControlMode controlMode) {
+        if (!controlMode.isProfiled()) {
+            DriverStation.reportWarning("Using a function made for profiled control for a non profiled control mode", true);
+        }
+
+        setReference(new ControllerRequest(goal, goalVelocity, controlMode));
     }
 
     /**
-     * sets the reference of the controller
+     * Sets the reference of the controller.
+     * Use this only when using profiled control.
      *
-     * @param goal        the setpoint of the controller
-     * @param requestType the request type of the controller
+     * @param goal        The new goal for the controller.
+     * @param controlMode The control mode of the controller. (must be a profiled control mode)
      */
-    public void setReference(TrapezoidProfile.State goal, RequestType requestType) {
-        setReference(new ControllerRequest(goal, requestType));
+    public void setReference(TrapezoidProfile.State goal, ControlMode controlMode) {
+        if (!controlMode.isProfiled()) {
+            DriverStation.reportWarning("Using a function made for profiled control for a non profiled control mode", true);
+        }
+
+        setReference(new ControllerRequest(goal, controlMode));
     }
 
     /**
-     * gets the current setpoint of the controller
+     * Gets the current setpoint of the controller
+     * Usually this will be the same as the setpoint set by the user,
+     * but if using profiled control it will be calculated each loop until the goal is reached.
+     * When using profiled control, use {@link #getGoal()} to get the goal of the controller.
      *
-     * @return the current setpoint of the controller
+     * @return The current setpoint of the controller
      */
     public TrapezoidProfile.State getSetpoint() {
         return setpoint;
     }
 
     /**
-     * gets the current request type of the controller
+     * Gets the current setpoint of the controller as a double.
+     * This is the position of the setpoint in units of measurement.
+     * If using profiled control, this will be the position of the setpoint calculated each loop until the goal is reached.
      *
-     * @return the current request type of the controller
+     * @return The current setpoint of the controller as a double
      */
-    public RequestType getRequestType() {
-        return request.requestType;
+    public double getSetpointAsDouble() {
+        return setpoint.position;
     }
 
     /**
-     * gets the current request of the controller
+     * Gets the goal of the controller
+     * This is the goal set by the user in the request.
+     * If not using profiled control, this will be the same as the setpoint.
      *
-     * @return the current request of the controller
+     * @return The goal of the controller
+     */
+    public TrapezoidProfile.State getGoal() {
+        return request.goal;
+    }
+
+    /**
+     * Gets the goal of the controller as a double.
+     * This is the position of the goal in units of measurement.
+     * If not using profiled control, this will be the same as the setpoint.
+     *
+     * @return The goal of the controller as a double
+     */
+    public double getGoalAsDouble() {
+        return request.goal.position;
+    }
+
+    /**
+     * Gets the current control mode of the controller.
+     *
+     * @return The current request type of the controller
+     */
+    public ControlMode getControlMode() {
+        return request.controlMode;
+    }
+
+    /**
+     * Gets the latest request of the controller.
+     *
+     * @return The current request of the controller
      */
     public ControllerRequest getRequest() {
         return request;
     }
 
     /**
-     * resets the integral sum and the previous error of the PID controller and sets the setpoint to
-     * the current position for profiling purposes (will be set to correct in the next loop)
+     * This will reset the PID controller (last error and integral gain)
+     * and will reset the motion profile to the current position.
+     * This will be called automatically when the robot exists disable to make sure the motion profile won't freak out.
      *
-     * @param measurement         the measurement is the unit of control.
-     * @param measurementVelocity the measurement velocity is the unit of control per second.
+     * @param measurement         The current measurement of the controller (depending on the control mode).
+     *                            If Position control is used, this should be the current position of the motor.
+     *                            If Velocity control is used, this should be the current velocity of the motor.
+     * @param measurementVelocity The current measurement velocity of the controller (used for profiled control).
+     *                            If Position control is used, this should be the current velocity of the motor.
+     *                            If Velocity control is used, this should be the current acceleration of the motor.
      */
     public void reset(double measurement, double measurementVelocity) {
         this.pidController.reset();
@@ -162,29 +233,37 @@ public class Controller implements Sendable {
     // calculations
 
     /**
-     * calculates the PID of the controller
+     * Calculates the output of the PID controller.
+     * This uses the saved setpoint for calculating the PID output.
+     * so make sure to set the setpoint before calling this function.
+     * {@link #setSetpointToGoal()} or {@link #calculateProfile(double dt)} to update the setpoint.
      *
-     * @param measurement the measurement of the controller (depending on the request type)
-     * @param dt          the time since the last calculation
-     * @return the output PID of the controller in volts
+     * @param measurement The measurement of the controller. This will change depending on the control mode.
+     * @param dt          The time since the last calculation (in seconds), used to calculate the derivative and integral of the error.
+     * @return The PID output of the controller. (in volts)
      */
     public LogFrame.PIDOutput calculatePID(double measurement, double dt) {
         return this.pidController.calculate(this.setpoint.position, measurement, dt);
     }
 
     /**
-     * sets the setpoint to the goal used when not using a profiled control
+     * Sets the setpoint to the goal.
+     * This is used when the controller is not using a motion profile.
+     * if using a motion profile, use {@link #calculateProfile(double dt)} to update the setpoint.
      */
     public void setSetpointToGoal() {
         this.setpoint = request.goal;
     }
 
     /**
-     * calculates the feed forward of the controller
+     * Calculates the feed forward of the controller.
+     * This calculates the outputs of the feed forwards.
+     * It uses the saved setpoint for calculating the feed forward output.
+     * This includes the arbitrary feed forward set by the user.
      *
      * @param directionOfTravel the direction of travel of the motor (used to calculate the friction
      *                          feed forward)
-     * @return the feed forward of the controller in volts
+     * @return The feed forward of the controller in volts
      */
     public FeedForwardOutput calculateFeedForward(double directionOfTravel) {
         return controllerGains
@@ -194,9 +273,12 @@ public class Controller implements Sendable {
     }
 
     /**
-     * calculates the profile of movement and sets the setpoint to the calculated profile
+     * Calculates the motion profile of the controller.
+     * use this if you are using a profiled control mode.
+     * else use {@link #setSetpointToGoal()}.
+     * this updates the setpoint to the next position in the profile
      *
-     * @param dt the time since the last calculation
+     * @param dt The time since the last calculation
      */
     public void calculateProfile(double dt) {
         var profile = this.controllerGains.getControllerProfile();
@@ -205,21 +287,23 @@ public class Controller implements Sendable {
     }
 
     /**
-     * checks the motor output of the controller (if it is above or below the maximum output of the
-     * motor or is below the minimum output of the motor)
+     * Checks the motor output.
+     * This checks if the motor output exceeds the max output of the controller.
+     * This also checks if the output is above the deadband of the controller.
      *
-     * @param output the output of the controller in volts
-     * @return the checked output of the controller in volts
+     * @param output The calculated output of the controller in volts.
+     * @return The output after checking the constraints.
      */
     public double checkMotorOutput(double output) {
         return controllerGains.getControllerConstrains().checkMotorOutput(output);
     }
 
     /**
-     * calculates the constraints of the controller based on the measurement and the last request
+     * Calculates the constraints on the goal or setpoint of the controller.
+     * If using a soft limit or continuous warp, this function will check accordingly.
      *
-     * @param measurement the measurement of the controller (depending on the request type)
-     * @param request     the request of the controller
+     * @param measurement The measurement of the controller (depending on the control mode).
+     * @param request     The latest request of the controller. (the function will update the goal in the request if needed)
      */
     public void calculateConstraints(
             Measurements.Measurement measurement, ControllerRequest request) {
@@ -231,75 +315,91 @@ public class Controller implements Sendable {
     public void initSendable(SendableBuilder builder) {
         controllerGains.initSendable(builder);
 
+        //this acts both as the setpoint and the goal of the controller
         builder.addDoubleProperty(
-                "setpoint", () -> setpoint.position, (value) -> setReference(value, request.requestType));
+                "setpoint", () -> setpoint.position, (value) -> setReference(value, request.controlMode));
     }
 
     /**
-     * the type of the mode to control the motor
+     * An enum that represents the control mode of the controller.
      */
-    public enum RequestType {
+    public enum ControlMode {
         /**
-         * stops the motor
+         * Stops motor output.
          */
         STOP,
         /**
-         * controls the motor with a voltage output
+         * Control directly the voltage applied to the coils.
          */
         VOLTAGE,
         /**
-         * controls the motor with a percent output (duty cycle) (-1 to 1)
+         * Controls the duty cycle of the motor output. (a fraction of the input voltage).
+         * Known as (precent output and duty cycle output)
          */
         PRECENT_OUTPUT,
         /**
-         * controls the motor with a position output (needs a pid controller)
+         * Controls the motor with a closed loop position control.
+         * Needs pid gains to be set in the controller gains.
+         * If you want to use a motion profile, use {@link #PROFILED_POSITION} instead.
          */
         POSITION,
         /**
-         * controls the motor with a profiled position output (needs a pid controller and a profile)
+         * Controls the motor with a profiled position output.
+         * This is the same as {@link #POSITION} but uses a motion profile to smooth the movement.
+         * The motion profile is set in the controller gains.
+         * The motion profile is always calculated on the rio (not using the built-in controllers features).
          */
         PROFILED_POSITION,
         /**
-         * controls the motor with a velocity output (needs a pid controller and recommended to use
-         * feedforward)
+         * Controls the motor with a closed loop velocity control.
+         * Needs pid gains to be set in the controller gains.
+         * Also recommended to use a setpoint feedforward to help the motor stay in the requested velocity.
+         * If you want to use a motion profile, use {@link #PROFILED_VELOCITY} instead.
          */
         VELOCITY,
         /**
-         * controls the motor with a profiled velocity output (needs a pid controller and a profile)
+         * Controls the motor with a profiled velocity output.
+         * This is the same as {@link #VELOCITY} but uses a motion profile to smooth the movement.
+         * The motion profile is set in the controller gains.
+         * The motion profile is always calculated on the rio (not using the built-in controllers features).
          */
         PROFILED_VELOCITY;
 
         /**
-         * checks if the request type is a position control
+         * Checks if the request type is a position control
+         * This function is used for calculating the constraints of the controller.
          *
-         * @return true if the request type is a position control
+         * @return True if the request type is a position control
          */
         public boolean isPositionControl() {
             return this == POSITION || this == PROFILED_POSITION;
         }
 
         /**
-         * checks if the request type is a velocity control
+         * Checks if the request type is a velocity control
+         * This function is used for calculating the constraints of the controller.
          *
-         * @return true if the request type is a velocity control
+         * @return True if the request type is a velocity control
          */
         public boolean isVelocityControl() {
             return this == VELOCITY || this == PROFILED_VELOCITY;
         }
 
         /**
-         * checks if the request type is a profiled control
+         * Checks if the request type is a profiled control
+         * This function is used for checking if the controller is using a motion profile.
          *
-         * @return true if the request type is a profiled control
+         * @return True if the request type is a profiled control
          */
         public boolean isProfiled() {
             return this == PROFILED_POSITION || this == PROFILED_VELOCITY;
         }
 
         /**
-         * checks if the request type requires a pid controller
+         * Checks if the request type requires a pid controller
+         * Used to check if there is a need to calculate the PID output.
          *
-         * @return true if the request type requires a pid controller
+         * @return True if the request type requires a pid controller
          */
         public boolean requiresPID() {
             return this != VOLTAGE && this != PRECENT_OUTPUT && this != STOP;
@@ -307,65 +407,84 @@ public class Controller implements Sendable {
     }
 
     /**
-     * the request of the controller this contains the control mode and the goal
+     * The request used to control the motor.
+     * This will be set by the user to control the motor.
      *
-     * @param goal           the goal of the controller
-     * @param requestType    the request type of the controller
-     * @param arbFeedForward a voltage feedforward given by the user that will be added to the motor
-     *                       output
+     * @param goal           The goal of the controller. (if not using a motion profile, this will be the setpoint).
+     * @param controlMode    The control mode used to control the motor.
+     * @param arbFeedForward A voltage feedforward given by the user that will be added to the motor output.
+     *                       Useful when using outside calculations easily.
+     *                       Similar to the function feedForward in the {@link ControllerFeedForwards}
      */
     public record ControllerRequest(
-            TrapezoidProfile.State goal, RequestType requestType, double arbFeedForward) {
+            TrapezoidProfile.State goal, ControlMode controlMode, double arbFeedForward) {
         /**
-         * creates a controller request with a goal and a mode
+         * Creates a controller request with a goal.
          *
-         * @param goal        the goal
-         * @param requestType the mode
+         * @param goal        The new goal (if not using a motion profile, this will be the setpoint).
+         * @param controlMode The new control mode used to control the motor.
          */
-        public ControllerRequest(double goal, RequestType requestType) {
-            this(new TrapezoidProfile.State(goal, 0), requestType, 0);
+        public ControllerRequest(double goal, ControlMode controlMode) {
+            this(new TrapezoidProfile.State(goal, 0), controlMode, 0);
         }
 
         /**
-         * creates a controller request with a goal and mode
+         * Creates a controller request with a custom goal.
+         * use only when using profiled control.
+         * Use this when you want to control the goal velocity.
          *
-         * @param goal        the goal of the controller
-         * @param requestType the request type of the controller
+         * @param goal        The goal of the controller.
+         * @param controlMode The control mode used to control the motor.
          */
-        public ControllerRequest(TrapezoidProfile.State goal, RequestType requestType) {
-            this(goal, requestType, 0);
+        public ControllerRequest(TrapezoidProfile.State goal, ControlMode controlMode) {
+            this(goal, controlMode, 0);
         }
 
         /**
-         * creates a controller request with a goal, setpoint velocity and mode
+         * Creates a controller request with a goal and a setpoint velocity.
+         * use only when using profiled control.
+         * Use this when you want to control the goal velocity.
+         * Same as {@link #ControllerRequest(TrapezoidProfile.State goal, ControlMode controlMode)}
          *
-         * @param goal             the goal of the controller
-         * @param setpointVelocity the setpoint velocity of the controller (used for profiled position and
-         *                         velocity)
-         * @param requestType      the request type of the controller
+         * @param goal         The new goal of the controller.
+         * @param goalVelocity The goal velocity of the controller.
+         *                     (i.e. the velocity the motor should be at when reaching the goal)
+         * @param controlMode  The control mode used to control the motor.
          */
-        public ControllerRequest(double goal, double setpointVelocity, RequestType requestType) {
-            this(new TrapezoidProfile.State(goal, setpointVelocity), requestType, 0);
+        public ControllerRequest(double goal, double goalVelocity, ControlMode controlMode) {
+            this(new TrapezoidProfile.State(goal, goalVelocity), controlMode, 0);
         }
 
         /**
-         * creates an empty controller request
-         * * This is used to stop the motor and reset the controller
+         * Creates an empty controller request.
+         * Used to stop the motor.
          */
         public ControllerRequest() {
-            this(new TrapezoidProfile.State(), RequestType.STOP, 0);
+            this(new TrapezoidProfile.State(), ControlMode.STOP, 0);
         }
 
         /**
-         * creates a controller request with a goal, mode and an arbitrary feedforward
+         * Creates a controller request with a goal and an arbitrary feed forward.
          *
-         * @param goal           the goal of the controller
-         * @param requestType    the request type of the controller
-         * @param arbFeedForward a voltage feedforward given by the user that will be added to the motor
-         *                       output
+         * @param goal           The new goal of the controller. (if not using a motion profile, this will be the setpoint).
+         * @param controlMode    The control mode used to control the motor.
+         * @param arbFeedForward A voltage feedforward given by the user that will be added to the motor output.
          */
-        public ControllerRequest(double goal, RequestType requestType, double arbFeedForward) {
-            this(new TrapezoidProfile.State(goal, 0), requestType, arbFeedForward);
+        public ControllerRequest(double goal, ControlMode controlMode, double arbFeedForward) {
+            this(new TrapezoidProfile.State(goal, 0), controlMode, arbFeedForward);
+        }
+
+        /**
+         * Creates a controller request with a goal and an arbitrary feed forward.
+         *
+         * @param goal           The new goal of the controller. (if not using a motion profile, this will be the setpoint).
+         * @param goalVelocity   The goal velocity of the controller.
+         *                       (i.e. the velocity the motor should be at when reaching the goal)
+         * @param controlMode    The control mode used to control the motor.
+         * @param arbFeedForward A voltage feedforward given by the user that will be added to the motor output.
+         */
+        public ControllerRequest(double goal, double goalVelocity, ControlMode controlMode, double arbFeedForward) {
+            this(new TrapezoidProfile.State(goal, goalVelocity), controlMode, arbFeedForward);
         }
     }
 }
