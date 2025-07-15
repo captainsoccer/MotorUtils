@@ -37,22 +37,23 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
   public static class CurrentLimitConfig {
     /**
      * The maximum current output (i.e. applied current and not current draw) of the motor controller while in free speed (in amps).
-     * Free speed can be defined in {@link #freeSpeedRPS}.
+     * Free speed can be defined in {@link #freeSpeedRPM}.
      * Use this to limit the current draw of the motor controller when it is not stalled.
      */
     public int freeSpeedCurrentLimit = 0;
     /**
      * The maximum current output (i.e. applied current and not current draw) of the motor controller while in stall (in amps).
-     * Anything below the free speed is considered stall, free speed can be defined in {@link #freeSpeedRPS}
+     * Anything below the free speed is considered stall, free speed can be defined in {@link #freeSpeedRPM}
      */
     public int stallCurrentLimit = 0;
     /**
-     * The free speed of the motor controller (in Hz (revolutions per second)).
+     * The free speed of the motor controller (in RPM).
      * Any speed above this speed is considered free speed and the free speed current limit will be applied.
      * If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
-     * This value is in the mechanisms rotations per second (after the gear ratio is applied).
+     * This value is in the motors rotations per minute (RPM), not the mechanisms rotations per minute (RPM).
+     * (so no gear ratio, no unit conversion).
      */
-    public double freeSpeedRPS = 0;
+    public int freeSpeedRPM = 0;
     /**
      * The max current output of the motor controller (in amps).
      * If the current output of the motor exceeds this limit, the motor will stop for a short time.
@@ -68,7 +69,7 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
      */
     public CurrentLimitsSparkBase getCurrentLimits() {
       return new CurrentLimitsSparkBase(
-          freeSpeedCurrentLimit, stallCurrentLimit, freeSpeedRPS, secondaryCurrentLimit);
+          freeSpeedCurrentLimit, stallCurrentLimit, freeSpeedRPM, secondaryCurrentLimit);
     }
   }
 

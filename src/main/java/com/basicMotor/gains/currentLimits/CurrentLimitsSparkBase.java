@@ -11,7 +11,7 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
     /**
      * The maximum current output of the motor controller (in amps) when not in stall.
      * If the stall current limit is not set, the motor will use this as the current limit at all times.
-     * Free speed is any speed above {@link #freeSpeed}.
+     * Free speed is any speed above {@link #freeSpeedRPM}.
      * If the motor reaches this current limit, it will lower the output voltage to prevent exceeding this limit.
      */
     private final int freeSpeedCurrentLimit;
@@ -19,7 +19,7 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
     /**
      * The maximum current output of the motor controller (in amps) while in stall.
      * If this value is not set, the motor will use only the {@link #freeSpeedCurrentLimit} as the current limit at all times.
-     * Stall is defined as any speed below {@link #freeSpeed}.
+     * Stall is defined as any speed below {@link #freeSpeedRPM}.
      * If the motor reaches this current limit, it will lower the output voltage to prevent exceeding this limit.
      */
     private final int stallCurrentLimit;
@@ -33,13 +33,14 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
     private final int secondaryCurrentLimit;
 
     /**
-     * The speed of the mechanism in Hz (revolutions per second) that is considered as free speed.
+     * The speed of the mechanism in RPM that is considered as free speed.
      * Any speed below this speed is considered stall and the stall current limit is applied.
      * Otherwise, the free speed current limit is applied.
-     * This value is in the mechanism's velocity after the gear ratio and unit conversion are applied.
+     * This value is in the motors rotations per minute (RPM).
+     * (no gear ratio, no unit conversion).
      * If this value is zero, the motor will linearly interpolate between the free speed current limit and the stall current limit.
      */
-    private final double freeSpeed;
+    private final int freeSpeedRPM;
 
     /**
      * Creates a current limit with the given values
@@ -50,14 +51,15 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
      *                              If this and stallCurrentLimit are zero, the motor will not limit the current output.
      * @param stallCurrentLimit     The maximum current output of the motor controller (in amps) while in stall.
      *                              If this value is zero, the motor will use only the {@link #freeSpeedCurrentLimit} as the current limit at all times.
-     * @param freeSpeed             The speed of the mechanism (units by default are in Hz (revolutions per second) but can be changed by the unit conversion).
+     * @param freeSpeedRPM          The speed of the mechanism in RPM that is considered as free speed.
      *                              If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
      *                              Otherwise, the free speed current limit is applied.
+     *                              This value is in the motors rotations per minute (RPM), not the mechanisms rotations per minute (RPM).
      *                              If this value is zero, the motor will linearly interpolate between the free speed current limit and the stall current limit.
      * @param secondaryCurrentLimit The secondary current limit of the motor controller (in amps).
      *                              When the motor reaches this current limit, it will stop for a short time.
      */
-    public CurrentLimitsSparkBase(int freeSpeedCurrentLimit, int stallCurrentLimit, double freeSpeed, int secondaryCurrentLimit) {
+    public CurrentLimitsSparkBase(int freeSpeedCurrentLimit, int stallCurrentLimit, int freeSpeedRPM, int secondaryCurrentLimit) {
 
         if (freeSpeedCurrentLimit < 0) {
             throw new IllegalArgumentException("Free speed current limit must be non-negative.");
@@ -69,10 +71,10 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
         }
         this.stallCurrentLimit = stallCurrentLimit;
 
-        if (freeSpeed < 0) {
+        if (freeSpeedRPM < 0) {
             throw new IllegalArgumentException("Free speed RPS must be non-negative.");
         }
-        this.freeSpeed = freeSpeed;
+        this.freeSpeedRPM = freeSpeedRPM;
 
         if (secondaryCurrentLimit < 0) {
             throw new IllegalArgumentException("Secondary current limit must be non-negative.");
@@ -89,16 +91,14 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
      * @param stallCurrentLimit     The maximum current output of the motor controller (in amps) while in
      *                              stall.
      *                              If this value is zero, the motor will use only the {@link #freeSpeedCurrentLimit} as the current limit at all times.
-     * @param freeSpeed             The speed of the mechanism (units by default are in Hz (revolutions per second) but can be changed by the unit conversion).
+     * @param freeSpeedRPM          The speed of the mechanism in RPM that is considered as free speed.
      *                              If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
      *                              Otherwise, the free speed current limit is applied.
+     *                              This value is in the motors rotations per minute (RPM), not the mechanisms rotations per minute (RPM).
      *                              If this value is zero, the motor will linearly interpolate between the free speed current limit and the stall current limit.
      */
-    public CurrentLimitsSparkBase(
-            int freeSpeedCurrentLimit,
-            int stallCurrentLimit,
-            double freeSpeed) {
-        this(freeSpeedCurrentLimit, stallCurrentLimit, freeSpeed, 0);
+    public CurrentLimitsSparkBase(int freeSpeedCurrentLimit, int stallCurrentLimit, int freeSpeedRPM) {
+        this(freeSpeedCurrentLimit, stallCurrentLimit, freeSpeedRPM, 0);
     }
 
     /**
@@ -117,7 +117,7 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
     /**
      * Creates a current limit with the given values
      *
-     * @param currentLimit          The maximum current output of the motor controller (in amps).
+     * @param currentLimit The maximum current output of the motor controller (in amps).
      */
     public CurrentLimitsSparkBase(int currentLimit) {
         this(currentLimit, 0, 0, 0);
@@ -141,11 +141,10 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
      * Any speed above this speed is considered free speed and the free speed current limit will be applied.
      * If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
      *
-     * @return The free speed of the motor controller.
-     * (default units are in Hz (revolutions per second) but can be changed by the unit conversion)
+     * @return The free speed of the motor controller in RPM (revolutions per minute).
      */
-    public double getFreeSpeed() {
-        return freeSpeed;
+    public int getFreeSpeedRPM() {
+        return freeSpeedRPM;
     }
 
     /**
