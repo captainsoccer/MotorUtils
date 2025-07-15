@@ -1,6 +1,6 @@
 package com.basicMotor.configuration;
 
-import com.basicMotor.gains.currentLimits.CurrentLimits;
+import com.basicMotor.gains.currentLimits.CurrentLimitsTalonFX;
 
 /**
  * This class represents the configuration for a basic TalonFX motor controller.
@@ -66,8 +66,8 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
      *
      * @return The current limits of the motor controller
      */
-    public CurrentLimits getCurrentLimits() {
-      return new CurrentLimits(
+    public CurrentLimitsTalonFX getCurrentLimits() {
+      return new CurrentLimitsTalonFX(
           statorCurrentLimit, supplyCurrentLimit, lowerLimitTime, lowerCurrentLimit);
     }
   }

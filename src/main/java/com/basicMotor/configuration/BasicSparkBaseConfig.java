@@ -1,6 +1,6 @@
 package com.basicMotor.configuration;
 
-import com.basicMotor.gains.currentLimits.CurrentLimitsREV;
+import com.basicMotor.gains.currentLimits.CurrentLimitsSparkBase;
 
 /**
  * This class represents the configuration for a basic spark base motor controller.
@@ -66,8 +66,8 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
      *
      * @return The current limits of the motor controller
      */
-    public CurrentLimitsREV getCurrentLimits() {
-      return new CurrentLimitsREV(
+    public CurrentLimitsSparkBase getCurrentLimits() {
+      return new CurrentLimitsSparkBase(
           freeSpeedCurrentLimit, stallCurrentLimit, freeSpeedRPS, secondaryCurrentLimit);
     }
   }

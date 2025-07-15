@@ -1,73 +1,126 @@
 package com.basicMotor.gains.currentLimits;
 
 /**
- * this class takes the current limits class and makes it fully used for REV motor controllers the
- * rev motor controllers ignore the supply current limit and supply lower time if you don't need to
- * use the free speed RPM or stall current limit, you can use the normal CurrentLimits class
+ * This class represents the current limits of a Spark Base motor controller.
+ * It can be used on a Spark Max or a Spark Flex motor controller.
+ * It has specific current limits offered by the Spark Base motor controller.
+ * Use this for Spark Max and Spark Flex motor controllers instead of the generic {@link CurrentLimits} interface.
  */
-public class CurrentLimitsREV implements CurrentLimits {
+public class CurrentLimitsSparkBase implements CurrentLimits {
 
     /**
-     * the maximum current output of the motor controller (in amps) when not in stall this is
-     * different from stallCurrentLimit
+     * The maximum current output of the motor controller (in amps) when not in stall.
+     * If the stall current limit is not set, the motor will use this as the current limit at all times.
+     * Free speed is any speed above {@link #freeSpeed}.
+     * If the motor reaches this current limit, it will lower the output voltage to prevent exceeding this limit.
      */
     private final int freeSpeedCurrentLimit;
 
     /**
-     * the maximum current output of the motor controller (in amps) while in stall
+     * The maximum current output of the motor controller (in amps) while in stall.
+     * If this value is not set, the motor will use only the {@link #freeSpeedCurrentLimit} as the current limit at all times.
+     * Stall is defined as any speed below {@link #freeSpeed}.
+     * If the motor reaches this current limit, it will lower the output voltage to prevent exceeding this limit.
      */
     private final int stallCurrentLimit;
 
     /**
-     * the secondary current limit if the current output of the motor controller exceeds this limit,
-     * the motor controller will stop for a short time
+     * The secondary current limit of the motor controller (in amps).
+     * If the motor reaches this current limit, it will stop for a short time.
+     * This is output current limit, not supply current limit.
+     * Useful for small motors like the Neo 550, which can burn out quickly.
      */
     private final int secondaryCurrentLimit;
 
     /**
-     * the free speed of the motor controller (in RPS) if below this speed the motor is considered in
-     * stall and the stall current limit is applied
+     * The speed of the mechanism in Hz (revolutions per second) that is considered as free speed.
+     * Any speed below this speed is considered stall and the stall current limit is applied.
+     * Otherwise, the free speed current limit is applied.
+     * This value is in the mechanism's velocity after the gear ratio and unit conversion are applied.
+     * If this value is zero, the motor will linearly interpolate between the free speed current limit and the stall current limit.
      */
-    private final double freeSpeedRPS;
+    private final double freeSpeed;
 
     /**
-     * creates a current limit with the given values
+     * Creates a current limit with the given values
      *
-     * @param freeSpeedCurrentLimit the maximum current output of the motor controller (in amps) when
-     *                              not in stall
-     * @param stallCurrentLimit     the maximum current output of the motor controller (in amps) while in
-     *                              stall
-     * @param freeSpeed             The speed of the mechanism in Hz (revolutions per second) that is considered as free speed.
+     * @param freeSpeedCurrentLimit The maximum current output of the motor controller (in amps) when
+     *                              not in stall.
+     *                              If the stall current limit is not set, the motor will use this as the current limit at all times.
+     *                              If this and stallCurrentLimit are zero, the motor will not limit the current output.
+     * @param stallCurrentLimit     The maximum current output of the motor controller (in amps) while in stall.
+     *                              If this value is zero, the motor will use only the {@link #freeSpeedCurrentLimit} as the current limit at all times.
+     * @param freeSpeed             The speed of the mechanism (units by default are in Hz (revolutions per second) but can be changed by the unit conversion).
      *                              If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
      *                              Otherwise, the free speed current limit is applied.
-     * @param secondaryCurrentLimit a secondary current limit that is not used by REV controllers
+     *                              If this value is zero, the motor will linearly interpolate between the free speed current limit and the stall current limit.
+     * @param secondaryCurrentLimit The secondary current limit of the motor controller (in amps).
+     *                              When the motor reaches this current limit, it will stop for a short time.
      */
-    public CurrentLimitsREV(
-            int freeSpeedCurrentLimit,
-            int stallCurrentLimit,
-            double freeSpeed,
-            int secondaryCurrentLimit) {
+    public CurrentLimitsSparkBase(int freeSpeedCurrentLimit, int stallCurrentLimit, double freeSpeed, int secondaryCurrentLimit) {
 
-        if(freeSpeedCurrentLimit < 0) {
+        if (freeSpeedCurrentLimit < 0) {
             throw new IllegalArgumentException("Free speed current limit must be non-negative.");
         }
         this.freeSpeedCurrentLimit = freeSpeedCurrentLimit;
 
-        if(stallCurrentLimit < 0) {
+        if (stallCurrentLimit < 0) {
             throw new IllegalArgumentException("Stall current limit must be non-negative.");
         }
         this.stallCurrentLimit = stallCurrentLimit;
 
-        if(freeSpeed < 0) {
+        if (freeSpeed < 0) {
             throw new IllegalArgumentException("Free speed RPS must be non-negative.");
         }
-        this.freeSpeedRPS = freeSpeed;
+        this.freeSpeed = freeSpeed;
 
-        if(secondaryCurrentLimit < 0) {
+        if (secondaryCurrentLimit < 0) {
             throw new IllegalArgumentException("Secondary current limit must be non-negative.");
         }
         this.secondaryCurrentLimit = secondaryCurrentLimit;
+    }
 
+    /**
+     * Creates a current limit with the given values
+     *
+     * @param freeSpeedCurrentLimit The maximum current output of the motor controller (in amps) when
+     *                              not in stall.
+     *                              If this and stallCurrentLimit are zero, the motor will not limit the current output.
+     * @param stallCurrentLimit     The maximum current output of the motor controller (in amps) while in
+     *                              stall.
+     *                              If this value is zero, the motor will use only the {@link #freeSpeedCurrentLimit} as the current limit at all times.
+     * @param freeSpeed             The speed of the mechanism (units by default are in Hz (revolutions per second) but can be changed by the unit conversion).
+     *                              If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
+     *                              Otherwise, the free speed current limit is applied.
+     *                              If this value is zero, the motor will linearly interpolate between the free speed current limit and the stall current limit.
+     */
+    public CurrentLimitsSparkBase(
+            int freeSpeedCurrentLimit,
+            int stallCurrentLimit,
+            double freeSpeed) {
+        this(freeSpeedCurrentLimit, stallCurrentLimit, freeSpeed, 0);
+    }
+
+    /**
+     * Creates a current limit with the given values
+     *
+     * @param currentLimit          The maximum current output of the motor controller (in amps).
+     *                              If this is zero, there will be no current limit.
+     * @param secondaryCurrentLimit The secondary current limit of the motor controller (in amps).
+     *                              When the motor reaches this current limit, it will stop for a short time.
+     *                              If this value is zero, the motor will not limit the current output.
+     */
+    public CurrentLimitsSparkBase(int currentLimit, int secondaryCurrentLimit) {
+        this(currentLimit, 0, 0, secondaryCurrentLimit);
+    }
+
+    /**
+     * Creates a current limit with the given values
+     *
+     * @param currentLimit          The maximum current output of the motor controller (in amps).
+     */
+    public CurrentLimitsSparkBase(int currentLimit) {
+        this(currentLimit, 0, 0, 0);
     }
 
     @Override
@@ -76,27 +129,29 @@ public class CurrentLimitsREV implements CurrentLimits {
     }
 
     /**
-     * gets the stall current limit of the motor controller
-     *
-     * @return the stall current limit of the motor controller (in amps)
+     * Gets the stall current limit of the motor controller.
+     * If it is not set, the motor will use only the {@link #getCurrentLimit()} as the current limit at all times.
      */
     public int getStallCurrentLimit() {
         return stallCurrentLimit;
     }
 
     /**
-     * gets the free speed of the motor controller
+     * Gets the free speed of the motor controller.
+     * Any speed above this speed is considered free speed and the free speed current limit will be applied.
+     * If the motor speed is below this speed, the motor is considered in stall and the stall current limit is applied.
      *
-     * @return the free speed of the motor controller (in RPS (revolutions per second))
+     * @return The free speed of the motor controller.
+     * (default units are in Hz (revolutions per second) but can be changed by the unit conversion)
      */
-    public double getFreeSpeedRPS() {
-        return freeSpeedRPS;
+    public double getFreeSpeed() {
+        return freeSpeed;
     }
 
     /**
-     * gets the secondary current limit of the motor controller
+     * Gets the secondary current limit of the motor controller
      *
-     * @return the secondary current limit of the motor controller (in amps)
+     * @return The secondary current limit of the motor controller (in amps)
      */
     public int getSecondaryCurrentLimit() {
         return secondaryCurrentLimit;
