@@ -405,7 +405,7 @@ public class ControllerConstraints {
      *                       This is used to convert the constraints to motor units.
      * @return The motor ready constraints.
      */
-    public ControllerConstraints convertToMotorConstrains(double gearRatio, double unitConversion) {
+    public ControllerConstraints convertToMotorConstraints(double gearRatio, double unitConversion) {
         return new ControllerConstraints(
                 constraintType,
                 (minValue / unitConversion) * gearRatio,

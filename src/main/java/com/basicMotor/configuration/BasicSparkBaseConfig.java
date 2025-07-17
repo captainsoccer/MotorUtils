@@ -1,6 +1,7 @@
 package com.basicMotor.configuration;
 
 import com.basicMotor.gains.currentLimits.CurrentLimitsSparkBase;
+import com.basicMotor.configuration.BasicMotorConfig.MotorConfig;
 
 /**
  * This class represents the configuration for a basic spark base motor controller.
@@ -91,7 +92,8 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
     /**
      * The number that the reading of the external encoder should be multiplied by to get the motor position.
      * In most cases, the sensor will be in a reduction to the motor, so this value will be greater than 1.0.
-     * If the sensor is mounted not directly on the mechanism, use also {@link #mechanismToSensorRatio}
+     * If the sensor is mounted not directly on the mechanism, use also {@link #mechanismToSensorRatio}.
+     * In Most cases, this value will be the same as {@link MotorConfig#gearRatio}.
      */
     public double sensorToMotorRatio = 1.0;
 
@@ -129,6 +131,7 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
     /**
      * The number that the reading of the absolute encoder should be multiplied by to get the motor position.
      * In most cases, the sensor will be in a reduction to the motor, so this value will be greater than 1.0.
+     * This value will be the same as {@link MotorConfig#gearRatio}.
      */
     public double sensorToMotorRatio = 1.0;
 

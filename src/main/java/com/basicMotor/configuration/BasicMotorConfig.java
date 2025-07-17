@@ -2,7 +2,7 @@ package com.basicMotor.configuration;
 
 import com.basicMotor.BasicMotor;
 import com.basicMotor.Manager.MotorManagerConfig;
-import com.basicMotor.gains.ControllerConstrains;
+import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerFeedForwards;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.PIDGains;
@@ -99,7 +99,9 @@ public class BasicMotorConfig {
      * <p>This is used to convert the number of rotations the motor does to the number of rotations the mechanism does.
      * The different measurements (positon, velocity, acceleration) will be divided by this value
      * do not include unit conversion in this value, it is only the gear ratio (i.e reduction ratio)
-     * if you want to convert the output to a different unit, use {@link #unitConversion}
+     * if you want to convert the output to a different unit, use {@link #unitConversion}.
+     * If using an external encoder, still set this value to the gear ratio of the motor,
+     * this is important for correct conversions and torque calculations.
      */
     public double gearRatio = 1;
 
@@ -268,8 +270,8 @@ public class BasicMotorConfig {
      * The most common use case is a swerve module steering motor.
      *
      */
-    public ControllerConstrains.ConstraintType constraintType =
-        ControllerConstrains.ConstraintType.NONE;
+    public ControllerConstraints.ConstraintType constraintType =
+        ControllerConstraints.ConstraintType.NONE;
 
     /**
      * The maximum value of the constraint units are: (unit of position (default is rotations))
@@ -328,8 +330,8 @@ public class BasicMotorConfig {
      *
      * @return The constraints of the controller
      */
-    public ControllerConstrains getConstraints() {
-      return new ControllerConstrains(
+    public ControllerConstraints getConstraints() {
+      return new ControllerConstraints(
           constraintType, minValue, maxValue, maxOutput, minOutput, voltageDeadband);
     }
   }
