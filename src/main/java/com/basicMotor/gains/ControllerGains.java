@@ -2,49 +2,152 @@ package com.basicMotor.gains;
 
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import com.basicMotor.controllers.Controller;
+import com.basicMotor.BasicMotor;
 
 /**
- * this class is used to store the gains of the controller it is used to set the PID gains, feed
- * forwards, and constraints
+ * This class stores all the controller gains, constraints, and feed forwards for a motor controller.
+ * It is used directly by the {@link Controller}.
  */
 public class ControllerGains {
     /**
-     * the gains of the PID controller this is used to set the PID gains of the motor controller
+     * The PID gains of the controller.
      */
     private PIDGains pidGains = new PIDGains();
     /**
-     * the constraints of the controller this is used to set the constraints of the motor controller
+     * The constraints of the controller. (soft limits, deadband, etc.)
      */
-    private ControllerConstrains controllerConstrains = new ControllerConstrains();
+    private ControllerConstraints controllerConstraints = new ControllerConstraints();
     /**
-     * the feed forwards of the controller this is used to set the feed forwards of the motor
-     * controller
+     * The feed forwards of the controller.
      */
     private ControllerFeedForwards controllerFeedForwards = new ControllerFeedForwards();
 
     /**
-     * the constraints of the profile this is used to set the constraints of the motor controller
+     * The constraints of the profile (used for motion profiling).
+     * Has the maximum velocity and maximum acceleration.
+     * (changes based on the control mode)
      */
     private TrapezoidProfile.Constraints profileConstraints =
             new TrapezoidProfile.Constraints(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
     /**
-     * the profile of the controller (used for motion profiling)
+     * The trapezoid profile used for motion profiling.
+     * It uses the {@link #profileConstraints} to calculate the profile.
+     * changes only when the profile constraints are changed.
      */
     private TrapezoidProfile controllerProfile = new TrapezoidProfile(profileConstraints);
 
     /**
-     * the function that is called when the PID gains are changed this is used to update the motor
-     * controller on the slower thread
+     * The function that is called when the PID gains are changed.
+     * Used to set a flag in the {@link BasicMotor} to update the PID gains on the slower thread.
      */
     private Runnable setHasPIDGainsChanged;
 
+    /**
+     * The function that is called when the constraints are changed.
+     * Used to set a flag in the {@link BasicMotor} to update the constraints on the slower thread.
+     */
     private Runnable setHasConstraintsChanged;
 
     /**
-     * the function that is called when the PID gains are changed this is used to update the motor
-     * controller on the slower thread
-     * @param hasPIDGainsChanged  the function that is called when the PID gains are changed
+     * Creates an empty controller gains object (no PID gains, no feed forwards, no constraints).
+     */
+    public ControllerGains() {
+    }
+
+    /**
+     * Creates a controller gains object with the given PID gains.
+     *
+     * @param k_P The proportional gain (>= 0) (volts per unit of control)
+     * @param k_I The integral gain (>= 0) (volts second per unit of control)
+     * @param k_D The derivative gain (>= 0) (volts per unit of control per second)
+     */
+    public ControllerGains(double k_P, double k_I, double k_D) {
+        pidGains = new PIDGains(k_P, k_I, k_D);
+    }
+
+    /**
+     * Creates a controller gains object with the given PID gains
+     *
+     * @param pidGains The PID gains
+     */
+    public ControllerGains(PIDGains pidGains) {
+        this.pidGains = pidGains;
+    }
+
+    /**
+     * Creates a controller gains object with the given feed forwards.
+     *
+     * @param controllerFeedForwards The feed forwards of the controller.
+     */
+    public ControllerGains(ControllerFeedForwards controllerFeedForwards) {
+        this.controllerFeedForwards = controllerFeedForwards;
+    }
+
+    /**
+     * Creates a controller gains object with the given pid gains and constraints.
+     *
+     * @param pidGains              The PID gains
+     * @param controllerConstraints The constraints of the controller (soft limits, deadband, etc.)
+     */
+    public ControllerGains(PIDGains pidGains, ControllerConstraints controllerConstraints) {
+        this.pidGains = pidGains;
+        this.controllerConstraints = controllerConstraints;
+    }
+
+    /**
+     * Creates a controller gains object with the given pid gains and feed forwards.
+     *
+     * @param pidGains               The PID gains
+     * @param controllerFeedForwards The feed forwards of the controller
+     */
+    public ControllerGains(PIDGains pidGains, ControllerFeedForwards controllerFeedForwards) {
+        this.pidGains = pidGains;
+        this.controllerFeedForwards = controllerFeedForwards;
+    }
+
+    /**
+     * Creates a controller gains object with the given pid gains, constraints and feed forwards.
+     *
+     * @param pidGains               The PID gains
+     * @param controllerConstraints  The constraints of the controller (soft limits, deadband, etc.)
+     * @param controllerFeedForwards The feed forwards of the controller
+     */
+    public ControllerGains(PIDGains pidGains, ControllerConstraints controllerConstraints, ControllerFeedForwards controllerFeedForwards) {
+        this.pidGains = pidGains;
+        this.controllerConstraints = controllerConstraints;
+        this.controllerFeedForwards = controllerFeedForwards;
+    }
+
+    /**
+     * Creates a controller with all the gains, constraints, and feed forwards.
+     *
+     * @param pidGains               The PID gains
+     * @param controllerConstraints  The constraints of the controller (soft limits, deadband, etc.)
+     * @param controllerFeedForwards The feed forwards of the controller
+     * @param profileConstraints     The constraints of the profile (used for motion profiling).
+     */
+    public ControllerGains(
+            PIDGains pidGains,
+            ControllerConstraints controllerConstraints,
+            ControllerFeedForwards controllerFeedForwards,
+            TrapezoidProfile.Constraints profileConstraints) {
+        this.pidGains = pidGains;
+        this.controllerConstraints = controllerConstraints;
+        this.controllerFeedForwards = controllerFeedForwards;
+        this.profileConstraints = profileConstraints;
+
+        this.controllerProfile = new TrapezoidProfile(profileConstraints);
+    }
+
+    /**
+     * Sets the callback function that is called when the PID gains are changed.
+     * Used only once to set the callback function.
+     * (Used by the {@link Controller}).
+     * The callback function is not set in the constructor so the user doesn't need to set it.
+     *
+     * @param hasPIDGainsChanged The function that is called when the PID gains are changed.
      */
     public void setHasPIDGainsChanged(Runnable hasPIDGainsChanged) {
         if (this.setHasPIDGainsChanged != null) return;
@@ -52,9 +155,12 @@ public class ControllerGains {
     }
 
     /**
-     * the function that is called when the constraints are changed this is used to update the motor
-     * controller on the slower thread
-     * @param hasConstraintsChanged the function that is called when the constraints are changed
+     * Sets the callback function that is called when the constraints are changed.
+     * Used only once to set the callback function.
+     * (Used by the {@link Controller}).
+     * The callback function is not set in the constructor so the user doesn't need to set it.
+     *
+     * @param hasConstraintsChanged The function that is called when the constraints are changed.
      */
     public void setHasConstraintsChanged(Runnable hasConstraintsChanged) {
         if (this.setHasConstraintsChanged != null) return;
@@ -62,45 +168,46 @@ public class ControllerGains {
     }
 
     /**
-     * gets the PID gains of the controller
+     * Gets the PID gains of the controller
      *
-     * @return the PID gains of the controller
+     * @return The PID gains of the controller
      */
     public PIDGains getPidGains() {
         return pidGains;
     }
 
     /**
-     * gets the constraints of the controller
+     * Gets the constraints of the controller
      *
-     * @return the constraints of the controller
+     * @return The constraints of the controller
      */
-    public ControllerConstrains getControllerConstrains() {
-        return controllerConstrains;
+    public ControllerConstraints getControllerConstrains() {
+        return controllerConstraints;
     }
 
     /**
-     * gets the feed forwards of the controller
+     * Gets the feed forwards of the controller
      *
-     * @return the feed forwards of the controller
+     * @return The feed forwards of the controller
      */
     public ControllerFeedForwards getControllerFeedForwards() {
         return controllerFeedForwards;
     }
 
     /**
-     * gets the constraints of the profile
+     * Gets the constraints of the profile
      *
-     * @return the constraints of the profile
+     * @return The constraints of the profile
      */
     public TrapezoidProfile getControllerProfile() {
         return controllerProfile;
     }
 
     /**
-     * checks if the controller is profiled
+     * Checks if the controller is profiled.
+     * The Controller is profiled if both the maximum velocity and maximum acceleration are changed from the default value.
      *
-     * @return true if the controller is profiled, false if it is not
+     * @return True if the controller is profiled, false otherwise.
      */
     public boolean isProfiled() {
         return profileConstraints.maxVelocity != Double.POSITIVE_INFINITY
@@ -108,21 +215,10 @@ public class ControllerGains {
     }
 
     /**
-     * sets the PID gains of the controller
+     * Sets the PID gains of the controller.
+     * Calls the {@link #setHasPIDGainsChanged} function to notify that the PID gains have changed.
      *
-     * @param k_P the proportional gain
-     * @param k_I the integral gain
-     * @param k_D the derivative gain
-     */
-    public void setPidGains(double k_P, double k_I, double k_D) {
-        this.pidGains = new PIDGains(k_P, k_I, k_D);
-        setHasPIDGainsChanged.run();
-    }
-
-    /**
-     * sets the PID gains of the controller
-     *
-     * @param pidGains the PID gains
+     * @param pidGains The PID gains of the controller
      */
     public void setPidGains(PIDGains pidGains) {
         this.pidGains = pidGains;
@@ -130,28 +226,41 @@ public class ControllerGains {
     }
 
     /**
-     * sets the constraints of the controller
+     * Sets the PID gains of the controller.
+     * Calls the {@link #setHasPIDGainsChanged} function to notify that the PID gains have changed.
      *
-     * @param controllerConstrains the constraints of the controller
+     * @param k_P The proportional gain (>= 0) (volts per unit of control)
+     * @param k_I The integral gain (>= 0) (volts second per unit of control)
+     * @param k_D The derivative gain (>= 0) (volts per unit of control per second)
      */
-    public void setControllerConstrains(ControllerConstrains controllerConstrains) {
-        this.controllerConstrains = controllerConstrains;
+    public void setPidGains(double k_P, double k_I, double k_D) {
+        setPidGains(new PIDGains(k_P, k_I, k_D));
+    }
+
+    /**
+     * Sets the constraints of the controller.
+     * Also calls the {@link #setHasConstraintsChanged} function to notify that the constraints have changed.
+     *
+     * @param controllerConstraints The constraints of the controller
+     */
+    public void setControllerConstrains(ControllerConstraints controllerConstraints) {
+        this.controllerConstraints = controllerConstraints;
         setHasConstraintsChanged.run();
     }
 
     /**
-     * sets the feed forwards of the controller
+     * Sets the feed forwards of the controller.
      *
-     * @param controllerFeedForwards the feed forwards of the controller
+     * @param controllerFeedForwards The feed forwards of the controller
      */
     public void setControllerFeedForwards(ControllerFeedForwards controllerFeedForwards) {
         this.controllerFeedForwards = controllerFeedForwards;
     }
 
     /**
-     * sets the constraints of the profile
+     * Sets the constraints of the profile, used for motion profiling.
      *
-     * @param profileConstraints the constraints of the profile
+     * @param profileConstraints The constraints of the profile
      */
     public void setControllerProfile(TrapezoidProfile.Constraints profileConstraints) {
         this.profileConstraints = profileConstraints;
@@ -159,11 +268,12 @@ public class ControllerGains {
     }
 
     /**
-     * this function is used to initialize the sendable builder for the controller gains. it adds the
-     * PID gains, feed forwards, and motion profile constraints to the sendable builder this is used
-     * when the controller gains are added to the SmartDashboard
+     * This function is used to initialize the sendable for the controller gains.
+     * Used when the {@link Controller} is sent to the dashboard.
+     * If you want to control the constraints of the motion profile through the dashboard,
+     * you must give them an initial value before calling this function.
      *
-     * @param builder the sendable builder
+     * @param builder The sendable builder to use for the controller gains.
      */
     public void initSendable(SendableBuilder builder) {
         if (isProfiled()) {
@@ -172,21 +282,13 @@ public class ControllerGains {
             builder.addDoubleProperty(
                     "maxVelocity",
                     () -> profileConstraints.maxVelocity,
-                    (x) -> {
-                        profileConstraints =
-                                new TrapezoidProfile.Constraints(x, profileConstraints.maxAcceleration);
-                        controllerProfile = new TrapezoidProfile(profileConstraints);
-                    });
+                    (x) -> setControllerProfile(new TrapezoidProfile.Constraints(x, profileConstraints.maxAcceleration)));
 
             builder.addDoubleProperty(
                     "maxAcceleration",
                     () -> profileConstraints.maxAcceleration,
-                    (x) -> {
-                        profileConstraints =
-                                new TrapezoidProfile.Constraints(profileConstraints.maxVelocity, x);
+                    (x) -> setControllerProfile(new TrapezoidProfile.Constraints(profileConstraints.maxVelocity, x)));
 
-                        controllerProfile = new TrapezoidProfile(profileConstraints);
-                    });
         } else builder.setSmartDashboardType("PIDController");
 
         buildPIDSendable(builder);
@@ -194,15 +296,15 @@ public class ControllerGains {
     }
 
     /**
-     * builds the sendable for the feed forwards (simpleFeedForward, frictionFeedForward,
-     * setpointFeedForward)
+     * Builds the sendable for the feed forwards (simpleFeedForward, frictionFeedForward, setpointFeedForward).
      *
-     * @param builder the sendable builder
+     * @param builder The sendable builder
      */
     private void buildFeedForwardSendable(SendableBuilder builder) {
         builder.addDoubleProperty(
                 "simpleFeedForward",
                 controllerFeedForwards::getSimpleFeedForward,
+
                 (value) ->
                         controllerFeedForwards.updateFeedForwards(
                                 value, ControllerFeedForwards.ChangeType.SIMPLE_FEED_FORWARD));
@@ -210,6 +312,7 @@ public class ControllerGains {
         builder.addDoubleProperty(
                 "frictionFeedForward",
                 controllerFeedForwards::getFrictionFeedForward,
+
                 (value) ->
                         controllerFeedForwards.updateFeedForwards(
                                 value, ControllerFeedForwards.ChangeType.FRICTION_FEED_FORWARD));
@@ -217,16 +320,16 @@ public class ControllerGains {
         builder.addDoubleProperty(
                 "setpointFeedForward",
                 controllerFeedForwards::getSetpointFeedForward,
+
                 (value) ->
                         controllerFeedForwards.updateFeedForwards(
                                 value, ControllerFeedForwards.ChangeType.SETPOINT_FEED_FORWARD));
     }
 
     /**
-     * builds the sendable for the PID gains (k_P, k_I, k_D, i_Zone, i_MaxAccum, tolerance, maxOutput,
-     * minOutput)
+     * Builds the sendable for the PID gains. (p, i, d, izone, iMaxAccum, tolerance).
      *
-     * @param builder the sendable builder
+     * @param builder The sendable builder
      */
     private void buildPIDSendable(SendableBuilder builder) {
         builder.addDoubleProperty(
@@ -252,104 +355,17 @@ public class ControllerGains {
                 (value) -> updatePIDGains(value, PIDGains.ChangeType.TOLERANCE));
     }
 
+    /**
+     * Sets the PID gains of the controller.
+     * Calls the {@link #setHasPIDGainsChanged} function to notify that the PID gains have changed.
+     * @param value The value to set the gain to (must be greater than or equal to zero)
+     * @param changeType Which gain to change
+     */
     private void updatePIDGains(double value, PIDGains.ChangeType changeType) {
-        // cheks if the pid gains have changed
-        if (pidGains.updatePIDGains(value, changeType)) {
-            setHasPIDGainsChanged.run();
-        }
+        boolean hasChanged = pidGains.updatePIDGains(value, changeType);
+
+        if (hasChanged) setHasPIDGainsChanged.run();
     }
 
-    /**
-     * creates an empty controller gains object (no PID gains, no feed forwards, no constraints)
-     */
-    public ControllerGains() {
-    }
 
-    /**
-     * creates a controller gains object with the given PID gains
-     *
-     * @param k_P the proportional gain
-     * @param k_I the integral gain
-     * @param k_D the derivative gain
-     */
-    public ControllerGains(double k_P, double k_I, double k_D) {
-        pidGains = new PIDGains(k_P, k_I, k_D);
-    }
-
-    /**
-     * creates a controller gains object with the given PID gains
-     *
-     * @param pidGains the PID gains
-     */
-    public ControllerGains(PIDGains pidGains) {
-        this.pidGains = pidGains;
-    }
-
-    /**
-     * creates a controller gains object with the given feed forwards
-     *
-     * @param controllerFeedForwards the feed forwards
-     */
-    public ControllerGains(ControllerFeedForwards controllerFeedForwards) {
-        this.controllerFeedForwards = controllerFeedForwards;
-    }
-
-    /**
-     * creates a controller gains object with the given pid gains and constraints
-     *
-     * @param pidGains             the PID gains
-     * @param controllerConstrains the constraints
-     */
-    public ControllerGains(PIDGains pidGains, ControllerConstrains controllerConstrains) {
-        this.pidGains = pidGains;
-        this.controllerConstrains = controllerConstrains;
-    }
-
-    /**
-     * creates a controller gains object with the given pid gains and feed forwards
-     *
-     * @param pidGains               the PID gains
-     * @param controllerFeedForwards the feed forwards
-     */
-    public ControllerGains(PIDGains pidGains, ControllerFeedForwards controllerFeedForwards) {
-        this.pidGains = pidGains;
-        this.controllerFeedForwards = controllerFeedForwards;
-    }
-
-    /**
-     * creates a controller gains object with the given pid gains, constraints and feed forwards
-     *
-     * @param pidGains               the PID gains
-     * @param controllerConstrains   the constraints
-     * @param controllerFeedForwards the feed forwards
-     */
-    public ControllerGains(
-            PIDGains pidGains,
-            ControllerConstrains controllerConstrains,
-            ControllerFeedForwards controllerFeedForwards) {
-        this.pidGains = pidGains;
-        this.controllerConstrains = controllerConstrains;
-        this.controllerFeedForwards = controllerFeedForwards;
-    }
-
-    /**
-     * creates a controller gains object with the given pid gains, constraints and feed forwards
-     *
-     * @param pidGains               the PID gains
-     * @param controllerConstrains   the constraints
-     * @param controllerFeedForwards the feed forwards
-     * @param profileConstraints     the constraints of the profile
-     */
-    public ControllerGains(
-            PIDGains pidGains,
-            ControllerConstrains controllerConstrains,
-            ControllerFeedForwards controllerFeedForwards,
-            TrapezoidProfile.Constraints profileConstraints) {
-        this.pidGains = pidGains;
-        this.controllerConstrains = controllerConstrains;
-        this.controllerFeedForwards = controllerFeedForwards;
-        this.profileConstraints = profileConstraints;
-
-        this.controllerProfile = new TrapezoidProfile(profileConstraints);
-    }
 }
