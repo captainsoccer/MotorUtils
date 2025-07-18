@@ -2,6 +2,7 @@ package com.basicMotor.measurements.revEncoders;
 
 import com.basicMotor.measurements.Measurements;
 import com.revrobotics.AbsoluteEncoder;
+import com.basicMotor.configuration.BasicMotorConfig.MotorConfig;
 
 /**
  * A class that provides measurements from a REV Absolute Encoder.
@@ -9,55 +10,62 @@ import com.revrobotics.AbsoluteEncoder;
  * position, velocity, and acceleration based on the encoder readings.
  */
 public class MeasurementsREVAbsolute extends Measurements {
-  /** the absolute encoder used to get the measurements */
-  private final AbsoluteEncoder encoder;
+    /**
+     * The absolute encoder used for taking measurements
+     */
+    private final AbsoluteEncoder encoder;
 
-  /** the current velocity of the motor in rotations per second */
-  private double currentVelocity;
-  /** the previous velocity of the motor in rotations per second */
-  private double previousVelocity;
-  /** the acceleration of the motor in rotations per second squared */
-  private double acceleration;
+    /**
+     * The current velocity of the encoder in rotations per second
+     */
+    private double currentVelocity;
+    /**
+     * The previous velocity of the encoder in rotations per second. This is used for acceleration calculation
+     */
+    private double previousVelocity;
+    /**
+     * The acceleration of the encoder, calculated from the velocity.
+     */
+    private double acceleration;
 
-  /**
-   * Creates a new measurements object with the given encoder and mechanism to a sensor ratio
-   *
-   * @param encoder the absolute encoder used to get the measurements
-   * @param mechanismToSensorRatio the ratio of the mechanism to the sensor (how many rotations of
-   *     the mechanism are one rotation of the sensor)
-   * @param unitConversion the value that will be multiplied by to convert the measurements to the
-   *     desired units
-   */
-  public MeasurementsREVAbsolute(
-      AbsoluteEncoder encoder, double mechanismToSensorRatio, double unitConversion) {
-    super(mechanismToSensorRatio, unitConversion);
-    this.encoder = encoder;
-  }
+    /**
+     * Creates a new measurements object with the given absolute encoder and unit conversion factor.
+     * There is no gear ratio as the absolute encoder will always be connected in a 1:1 ratio to the mechanism.
+     *
+     * @param encoder        The absolute encoder used to get the measurements from the motor controller
+     * @param unitConversion The value that will be multiplied by to convert the measurements to the desired units.
+     *                       This will be desired units per rotation.
+     *                       See {@link MotorConfig#unitConversion} for more details.
+     */
+    public MeasurementsREVAbsolute(AbsoluteEncoder encoder, double unitConversion) {
+        super(1, unitConversion);
+        this.encoder = encoder;
+    }
 
-  @Override
-  public Measurement update(double dt) {
-    // converts rpm to rps
-    currentVelocity = encoder.getVelocity() / 60;
+    @Override
+    public Measurement update(double dt) {
+        // converts rpm to rps
+        currentVelocity = encoder.getVelocity() / 60;
 
-    acceleration = (currentVelocity - previousVelocity) / dt;
+        acceleration = (currentVelocity - previousVelocity) / dt;
 
-    previousVelocity = currentVelocity;
+        previousVelocity = currentVelocity;
 
-    return super.update(dt);
-  }
+        return super.update(dt);
+    }
 
-  @Override
-  protected double getUpdatedPosition() {
-    return encoder.getPosition();
-  }
+    @Override
+    protected double getUpdatedPosition() {
+        return encoder.getPosition();
+    }
 
-  @Override
-  protected double getUpdatedVelocity() {
-    return currentVelocity;
-  }
+    @Override
+    protected double getUpdatedVelocity() {
+        return currentVelocity;
+    }
 
-  @Override
-  protected double getUpdatedAcceleration() {
-    return acceleration;
-  }
+    @Override
+    protected double getUpdatedAcceleration() {
+        return acceleration;
+    }
 }

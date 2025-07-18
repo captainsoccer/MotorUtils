@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 /**
  * A class that simulates a flywheel encoder using the FlywheelSim class.
  * It is used to get the position, velocity, and acceleration of the flywheel in a simulation environment.
+ * As the flywheels main component is its velocity, it will sum the velocity over time to get the position.
  */
 public class FlyWheelSimEncoder extends Measurements {
     /**
@@ -28,7 +29,7 @@ public class FlyWheelSimEncoder extends Measurements {
     /**
      * Creates a FlyWheelSimEncoder instance with the provided FlywheelSim.
      *
-     * @param flywheelSim the FlywheelSim to use
+     * @param flywheelSim The FlywheelSim to use.
      */
     public FlyWheelSimEncoder(FlywheelSim flywheelSim) {
         this.flywheelSim = flywheelSim;
