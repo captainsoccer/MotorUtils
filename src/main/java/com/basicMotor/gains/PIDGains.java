@@ -1,78 +1,79 @@
 package com.basicMotor.gains;
 
 import com.basicMotor.Manager.MotorManager;
+import com.basicMotor.controllers.BasicPIDController;
 
 /**
- * This class is used to set the PID gains of the motor controller. It is used to set the PID gains
- * of the motor controller.
- *
- * <p>it contains the following values: k_P: the proportional gain (>= 0) k_I: the integral gain (>=
- * 0) k_D: the derivative gain (>= 0) i_Zone: the integrator zone (>= 0) this is the zone where the
- * integrator is active i_maxAccum: the maximum accumulation of the integrator (>= 0) this is the
- * maximum value that the
+ * This class contains the PID gains for a PID controller.
+ * Used mainly by the {@link BasicPIDController}.
  */
 public class PIDGains {
 
     /**
-     * what to change when updating the PID gains
+     * What kind of gain to change in the PID controller.
+     * Used for updating the PID gains from the dashboard.
      */
     public enum ChangeType {
         /**
-         * changes the proportional gain (k_P)
+         * Changes the proportional gain (k_P)
          */
         K_P,
         /**
-         * changes the integral gain (k_I)
+         * Changes the integral gain (k_I)
          */
         K_I,
         /**
-         * changes the derivative gain (k_D)
+         * Changes the derivative gain (k_D)
          */
         K_D,
         /**
-         * changes the integrator zone (i_Zone)
+         * Changes the integrator zone (i_Zone)
          */
         I_ZONE,
         /**
-         * changes the maximum accumulation of the integrator (i_maxAccum)
+         * Changes the maximum accumulation of the integrator (i_maxAccum)
          */
         I_MAX_ACCUM,
         /**
-         * changes the tolerance of the PID controller (tolerance)
+         * Changes the tolerance of the PID controller
          */
         TOLERANCE
     }
 
     /**
-     * the PID elements of the gains
+     * The PID elements of the PID controller.
      */
     private double k_P, k_I, K_D;
 
     /**
-     * the integrator modifies
+     * The integrator limiters.
+     * This is used to limit the accumulation of the integrator to prevent windup.
+     * The i_Zone is the zone where the integrator is active,
+     * and the i_maxAccum is the maximum value that the integrator can accumulate.
      */
     private double i_Zone, i_maxAccum;
 
     /**
-     * the tolerance of the PID controller (if the error is less than this value, the controller will
-     * stop)
+     * The error tolerance of the PID controller.
+     * Any error less than this value will be considered as at setpoint.
      */
     private double tolerance;
 
     /**
-     * creates a PID gains object with the given values
+     * Creates a PID gains object with the given values.
      *
-     * @param k_P        the proportional gain (>= 0)
-     * @param k_I        the integral gain (>= 0)
-     * @param k_D        the derivative gain (>= 0)
-     * @param i_Zone     the integrator zone (>= 0) this is the zone where the integrator is active
-     * @param i_maxAccum the maximum accumulation of the integrator (>= 0) this is the maximum value
-     *                   that the integrator can accumulate
-     * @param tolerance  the tolerance of the PID controller (>= 0), when the error is less than this value,
-     *                   the motor will register as at setpoint
+     * @param k_P        The proportional gain (>= 0) (units are volts per unit of control)
+     * @param k_I        The integral gain (>= 0) (units are volt seconds per unit of control)
+     * @param k_D        The derivative gain (>= 0) (units are volts per unit of control per second)
+     * @param i_Zone     The integrator zone (>= 0) (units are unit of control).
+     *                   If this is zero, I accumulation is disabled.
+     *                   The Default value is infinity, meaning the integrator is always active.
+     * @param i_maxAccum The maximum accumulation of the integrator (>= 0) (units are volts)
+     *                   If this is zero, I accumulation is disabled.
+     *                   The Default value is the maximum motor output of the motor controller.
+     * @param tolerance  The tolerance of the PID controller (>= 0) (units are unit of control)
      */
-    public PIDGains(
-            double k_P, double k_I, double k_D, double i_Zone, double i_maxAccum, double tolerance) {
+    public PIDGains(double k_P, double k_I, double k_D, double i_Zone, double i_maxAccum, double tolerance) {
         if (k_P < 0) throw new IllegalArgumentException("k_P must be greater than zero");
         this.k_P = k_P;
 
@@ -93,116 +94,125 @@ public class PIDGains {
     }
 
     /**
-     * creates a PID gains object with the given values
+     * Creates a PID gains object with the given values.
      *
-     * @param k_P the proportional gain (>= 0)
-     * @param k_I the integral gain (>= 0)
-     * @param k_D the derivative gain (>= 0)
+     * @param k_P The proportional gain (>= 0) (units are volts per unit of control)
+     * @param k_I The integral gain (>= 0) (units are volt seconds per unit of control)
+     * @param k_D The derivative gain (>= 0) (units are volts per unit of control per second)
      */
     public PIDGains(double k_P, double k_I, double k_D) {
         this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, MotorManager.config.defaultMaxMotorOutput, 0);
     }
 
     /**
-     * creates a PID gains object with the given values
+     * Creates a PID gains object with the given values and a tolerance.
      *
-     * @param k_P the proportional gain (>= 0)
-     * @param k_I the integral gain (>= 0)
-     * @param k_D the derivative gain (>= 0)
-     * @param tolerance the tolerance of the PID controller (>= 0), when the error is less than this value,
-     *                  the motor will register as at setpoint
+     * @param k_P       The proportional gain (>= 0) (units are volts per unit of control)
+     * @param k_I       The integral gain (>= 0) (units are volt seconds per unit of control)
+     * @param k_D       The derivative gain (>= 0) (units are volts per unit of control per second)
+     * @param tolerance The tolerance of the PID controller (>= 0) (units are unit of control)
      */
     public PIDGains(double k_P, double k_I, double k_D, double tolerance) {
         this(k_P, k_I, k_D, Double.POSITIVE_INFINITY, MotorManager.config.defaultMaxMotorOutput, tolerance);
     }
 
     /**
-     * creates an empty PID gains object (no k_P, no k_I, no k_D)
+     * Creates an empty PID gains object.
      */
     public PIDGains() {
         this(0, 0, 0);
     }
 
     /**
-     * gets the proportional gain of the PID controller units are volts per unit of measurement
+     * Gets the proportional gain of the PID controller.
+     * Units are volts per unit of control.
      *
-     * @return the proportional gain of the PID controller
+     * @return The proportional gain of the PID controller
      */
     public double getK_P() {
         return k_P;
     }
 
     /**
-     * gets the integral gain of the PID controller units are volt second per unit of measurement
+     * Gets the integral gain of the PID controller.
+     * Units are volt seconds per unit of control.
      *
-     * @return the integral gain of the PID controller
+     * @return The integral gain of the PID controller
      */
     public double getK_I() {
         return k_I;
     }
 
     /**
-     * gets the derivative gain of the PID controller units are volts per unit of measurement per
-     * second
+     * Gets the derivative gain of the PID controller.
+     * Units are volts per unit of control per second.
      *
-     * @return the derivative gain of the PID controller
+     * @return The derivative gain of the PID controller
      */
     public double getK_D() {
         return K_D;
     }
 
     /**
-     * gets the integrator zone of the PID controller units are unit of measurement
+     * Gets the integrator zone of the PID controller.
+     * The integrator zone is the zone where the integrator is active.
+     * Units are unit of control.
      *
-     * @return the integrator zone of the PID controller
+     * @return The integrator zone of the PID controller
      */
     public double getI_Zone() {
         return i_Zone;
     }
 
     /**
-     * gets the maximum accumulation of the integrator of the PID controller units are unit of
-     * measurement seconds
+     * Gets the maximum accumulation of the integrator of the PID controller.
+     * This is used to limit the accumulation of the integrator to prevent windup.
+     * Units are volts.
      *
-     * @return the maximum accumulation of the integrator of the PID controller
+     * @return The maximum accumulation of the integrator of the PID controller
      */
     public double getI_MaxAccum() {
         return i_maxAccum;
     }
 
     /**
-     * gets the tolerance of the PID controller units are unit of measurement
+     * Gets the tolerance of the PID controller.
+     * This is the error tolerance of the PID controller.
+     * Any error less than this value will be considered as at setpoint.
+     * Units are unit of control.
      *
-     * @return the tolerance of the PID controller
+     * @return The tolerance of the PID controller
      */
     public double getTolerance() {
         return tolerance;
     }
 
     /**
-     * converts the PID gains to motor gains this is used to convert the PID gains to motor gains it
-     * is necessary to offset the gear ratio of the motor (that the output stays the same)
+     * Converts the PID gains to motor gains.
+     * Needed because the motor unit of control is different from the mechanisms unit of control.
      *
-     * @param gearRatio the gear ratio of the motor
-     * @return the motor gains
+     * @param gearRatio      The gear ratio of the motor (unitless)
+     * @param unitConversion the value that will be divided to get rotations.
+     * @return The motor gains with the same PID structure but adjusted for the motor's unit of control.
      */
-    public PIDGains convertToMotorGains(double gearRatio) {
+    public PIDGains convertToMotorGains(double gearRatio, double unitConversion) {
+        //motors don't support infinite i_Zone, so we set it to 0
         double i_Zone = this.i_Zone == Double.POSITIVE_INFINITY ? 0 : this.i_Zone;
 
         return new PIDGains(
-                k_P / gearRatio,
-                k_I / gearRatio,
-                K_D / gearRatio,
-                i_Zone * gearRatio,
-                i_maxAccum,
-                tolerance * gearRatio);
+                (k_P / gearRatio) * unitConversion,
+                (k_I / gearRatio) * unitConversion,
+                (K_D / gearRatio) * unitConversion,
+                (i_Zone / unitConversion) * gearRatio,
+                i_maxAccum, //stays at volts
+                (tolerance / unitConversion) * gearRatio);
     }
 
     /**
-     * converts the PID gains to duty cycle gains this is used to convert the PID gains to duty cycle
-     * gains it is necessary if the motor controller uses a duty cycle instead of a voltage
+     * Converts the PID gains to duty cycle gains.
+     * This is used for motors that their built-in controller uses duty cycle instead of voltage.
      *
-     * @return the duty cycle gains
+     * @return The PID gains with the same PID structure but adjusted for duty cycle.
      */
     public PIDGains convertToDutyCycle() {
         double motorIdleVoltage = MotorManager.config.motorIdealVoltage;
@@ -217,15 +227,18 @@ public class PIDGains {
     }
 
     /**
-     * updates the PID gains from the dashboard
+     * Updates the PID gains based on the change type.
+     * If the value is negative, it will be ignored.
+     * If the value is the same as the current value, it will not change.
      *
-     * @param value      the value to set the gain to
-     * @param changeType which gain to change
-     * @return true if the value has changed, false if it has not (used for setting the built-in
-     * controller values)
+     * @param value      The value to set the PID gain to (must be greater than or equal to zero)
+     * @param changeType Which gain to change
+     * @return True if the value has changed, false otherwise.
      */
     public boolean updatePIDGains(double value, ChangeType changeType) {
-        if (value < 0) throw new IllegalArgumentException("value must be greater than zero");
+        //ignore negative values for gains
+        if (value < 0) return false;
+
         double oldValue = getValue(changeType);
 
         if (oldValue == value) {
@@ -237,10 +250,12 @@ public class PIDGains {
     }
 
     /**
-     * sets the value of the PID gain based on the change type
+     * Sets the value of the PID gain based on the change type.
+     * Any value sent to here must be post checking for negative values.
+     * Used by the {@link #updatePIDGains(double, ChangeType)} method
      *
-     * @param value      the value to set the gain to
-     * @param changeType which gain to change
+     * @param value      The value to set the PID gain to (must be greater than or equal to zero)
+     * @param changeType Which gain to change
      */
     private void setValue(double value, ChangeType changeType) {
         switch (changeType) {
@@ -254,10 +269,11 @@ public class PIDGains {
     }
 
     /**
-     * gets the value of the PID gain based on the change type
+     * Gets the current value of the PID gain based on the change type.
+     * Used for the {@link #updatePIDGains(double, ChangeType)} method
      *
-     * @param changeType which gain to get
-     * @return the value of the PID gain
+     * @param changeType Which gain to get the value of
+     * @return The current value of the PID gain
      */
     private double getValue(ChangeType changeType) {
         return switch (changeType) {
