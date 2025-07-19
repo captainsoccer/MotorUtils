@@ -25,11 +25,19 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
   public String canBusName = "rio";
 
   /**
-   * This enables Phoenix Pro.
-   * Use this only if your device is licensed for Phoenix Pro.
-   * This enables multiple features such as: FOC, synchronized canBus communication, fused canCoder, and more.
+   * This enables the Field Oriented Control (FOC) for the TalonFX motor controller.
+   * This is supported only on the TalonFX, with a licensed phoenix pro firmware.
+   * For more information on FOC, see the FOC section in the
+   * <a href="https://v6.docs.ctr-electronics.com/en/latest/docs/migration/new-to-phoenix.html">phoenix documentation</a>.
    */
-  public boolean enablePro = false;
+  public boolean enableFOC = false;
+
+  /**
+   * This flag determines whether the measurements will wait for all signals to update before returning values.
+   * This will work only if the device is connected to a CANivore and the Pro features are enabled.
+   * Otherwise, it will be ignored.
+   */
+  public boolean waitForAllSignals = false;
 
   /**
    * Handles the configuration for the current limits.
