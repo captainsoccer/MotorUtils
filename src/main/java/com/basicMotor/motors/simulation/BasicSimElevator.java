@@ -1,17 +1,17 @@
 package com.basicMotor.motors.simulation;
 
 import com.basicMotor.configuration.BasicMotorConfig;
-import com.basicMotor.gains.ControllerConstrains;
+import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.measurements.Measurements;
 import com.basicMotor.measurements.simulationEncoder.ElevatorSimEncoder;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 
 /**
- * a class that simulates an elevator system using the ElevatorSim class. it is in the basic sim
- * motor system and has all the functionality of a basic sim system. use this when you want to
- * simulate an elevator in your robot code. if you have two motors, use only one instance of this
- * class and set the position of both motors to the same value. units are in meters.
+ * A class that simulates an elevator system using the ElevatorSim class. It is part of the
+ * basic sim motor system and has all the functionality of a basic sim system.
+ * Use this when you want to simulate an elevator in your robot code.
+ * Its units are meters and cannot be changed.
  */
 public class BasicSimElevator extends BasicSimSystem {
   /** The elevator simulation instance used by this BasicSimElevator. */
@@ -21,11 +21,11 @@ public class BasicSimElevator extends BasicSimSystem {
   private final Measurements defaultMeasurements;
 
   /**
-   * creates a BasicSimElevator instance with the provided elevator simulation and name.
+   * Creates a BasicSimElevator instance with the provided ElevatorSim and name.
    *
-   * @param elevator the elevator simulation to use
-   * @param name the name of the elevator
-   * @param gains the controller gains for the elevator
+   * @param elevator The ElevatorSim instance to use for the elevator simulation
+   * @param name The name of the elevator simulation
+   * @param gains The controller gains to use for the elevator simulation
    */
   public BasicSimElevator(ElevatorSim elevator, String name, ControllerGains gains) {
     super(name, gains);
@@ -35,9 +35,10 @@ public class BasicSimElevator extends BasicSimSystem {
   }
 
   /**
-   * creates a BasicSimElevator instance with the provided configuration.
+   * Creates a BasicSimElevator instance with the provided configuration.
+   * If the kv and ka values are set, it will use those for the simulation.
    *
-   * @param config the configuration for the elevator motor
+   * @param config The configuration for the elevator motor
    */
   public BasicSimElevator(BasicMotorConfig config) {
     super(config);
@@ -54,14 +55,16 @@ public class BasicSimElevator extends BasicSimSystem {
 
   /**
    * Creates an ElevatorSim based on the provided configuration.
+   * The configuration must have the all the parameters in the
+   * {@link BasicMotorConfig.SimulationConfig.ElevatorSimConfig} set.
    *
-   * @param config the configuration for the elevator motor
-   * @return a new ElevatorSim instance
+   * @param config The configuration for the elevator motor
+   * @return A new ElevatorSim instance configured according to the provided BasicMotorConfig
    */
   private static ElevatorSim createElevatorSim(BasicMotorConfig config) {
     double minHeight;
     double maxHeight;
-    if (config.constraintsConfig.constraintType == ControllerConstrains.ConstraintType.LIMITED) {
+    if (config.constraintsConfig.constraintType == ControllerConstraints.ConstraintType.LIMITED) {
       minHeight = config.constraintsConfig.minValue;
       maxHeight = config.constraintsConfig.maxValue;
     } else {

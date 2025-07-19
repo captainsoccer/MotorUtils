@@ -22,9 +22,9 @@ public class BasicSimFlyWheel extends BasicSimSystem {
   /**
    * Creates a BasicSimFlyWheel instance with the provided FlywheelSim and name.
    *
-   * @param flywheelSim the FlywheelSim to use
-   * @param name the name of the flywheel
-   * @param gains the controller gains for the flywheel
+   * @param flywheelSim The FlywheelSim instance to use for the flywheel simulation
+   * @param name The name of the flywheel simulation
+   * @param gains The controller gains to use for the flywheel simulation
    */
   public BasicSimFlyWheel(FlywheelSim flywheelSim, String name, ControllerGains gains) {
     super(name, gains);
@@ -34,10 +34,11 @@ public class BasicSimFlyWheel extends BasicSimSystem {
   }
 
   /**
-   * Creates a BasicSimFlyWheel instance with the provided configuration. to use this consturctor
-   * you need to use either moment of inertia or kv and ka
+   * Creates a BasicSimFlyWheel instance with the provided configuration.
+   * If the kv and ka values are set, it will use those for the simulation.
+   * Otherwise, it will use the moment of inertia and gear ratio from the configuration.
    *
-   * @param config the configuration for the flywheel motor
+   * @param config The configuration for the flywheel motor
    */
   public BasicSimFlyWheel(BasicMotorConfig config) {
     super(config);
@@ -48,10 +49,10 @@ public class BasicSimFlyWheel extends BasicSimSystem {
   }
 
   /**
-   * creates a FlywheelSim based on the provided configuration.
+   * Creates a FlywheelSim based on the provided configuration.
    *
-   * @param config the configuration for the flywheel motor
-   * @return a new FlywheelSim instance
+   * @param config The configuration for the flywheel motor
+   * @return A FlywheelSim instance configured according to the provided BasicMotorConfig
    */
   private static FlywheelSim createFlywheelSim(BasicMotorConfig config) {
     var simConfig = config.simulationConfig;
@@ -94,5 +95,6 @@ public class BasicSimFlyWheel extends BasicSimSystem {
   @Override
   protected void setMotorPosition(double position) {
     // nothing to do here, position doesn't matter for flywheels
+    //flywheel sim does not have a set position method
   }
 }

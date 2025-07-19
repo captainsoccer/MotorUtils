@@ -1,7 +1,7 @@
 package com.basicMotor.motors.simulation;
 
 import com.basicMotor.configuration.BasicMotorConfig;
-import com.basicMotor.gains.ControllerConstrains;
+import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.measurements.Measurements;
 import com.basicMotor.measurements.simulationEncoder.ArmSimEncoder;
@@ -24,9 +24,9 @@ public class BasicSimArm extends BasicSimSystem {
   /**
    * Creates a BasicSimArm instance with the provided SingleJointedArmSim and name.
    *
-   * @param armSim the SingleJointedArmSim to use
-   * @param name the name of the arm
-   * @param gains the controller gains for the arm
+   * @param armSim The SingleJointedArmSim instance to use for the arm simulation
+   * @param name The name of the arm simulation
+   * @param gains The controller gains to use for the arm simulation
    */
   public BasicSimArm(SingleJointedArmSim armSim, String name, ControllerGains gains) {
     super(name, gains);
@@ -36,10 +36,10 @@ public class BasicSimArm extends BasicSimSystem {
   }
 
   /**
-   * Creates a BasicSimArm instance with the provided configuration. to use this arm sim you must
-   * set the following config: * moment of inertia * arm length meters
+   * Creates a BasicSimArm instance with the provided configuration.
+   * the config must have the {@link BasicMotorConfig.SimulationConfig#momentOfInertia} set.
    *
-   * @param config the configuration for the arm motor
+   * @param config The configuration for the arm motor
    */
   public BasicSimArm(BasicMotorConfig config) {
     super(config);
@@ -51,9 +51,10 @@ public class BasicSimArm extends BasicSimSystem {
 
   /**
    * Creates a SingleJointedArmSim based on the provided configuration.
+   * This method initializes the arm simulation
    *
-   * @param config the configuration for the arm motor
-   * @return a new SingleJointedArmSim instance
+   * @param config The configuration for the arm motor
+   * @return A SingleJointedArmSim instance configured according to the provided BasicMotorConfig
    */
   private static SingleJointedArmSim createArmSim(BasicMotorConfig config) {
     var plant =
@@ -64,9 +65,9 @@ public class BasicSimArm extends BasicSimSystem {
 
     double minAngle;
     double maxAngle;
-    if (config.constraintsConfig.constraintType == ControllerConstrains.ConstraintType.LIMITED) {
-      minAngle = Units.rotationsToRadians(config.constraintsConfig.minValue);
-      maxAngle = Units.rotationsToRadians(config.constraintsConfig.maxValue);
+    if (config.constraintsConfig.constraintType == ControllerConstraints.ConstraintType.LIMITED) {
+      minAngle = Units.rotationsToRadians(config.constraintsConfig.minValue / config.motorConfig.unitConversion);
+      maxAngle = Units.rotationsToRadians(config.constraintsConfig.maxValue / config.motorConfig.unitConversion);
     } else {
       minAngle = Double.NEGATIVE_INFINITY;
       maxAngle = Double.POSITIVE_INFINITY;
@@ -77,8 +78,9 @@ public class BasicSimArm extends BasicSimSystem {
     double startingAngle = Units.rotationsToRadians(simConfig.armSimConfig.startingAngle);
 
     double positionSTD = Units.rotationsToRadians(simConfig.positionStandardDeviation);
+
     double velocitySTD =
-        Units.rotationsPerMinuteToRadiansPerSecond(simConfig.velocityStandardDeviation * 60);
+        Units.rotationsPerMinuteToRadiansPerSecond(simConfig.velocityStandardDeviation* 60);
 
     return new SingleJointedArmSim(
         plant,

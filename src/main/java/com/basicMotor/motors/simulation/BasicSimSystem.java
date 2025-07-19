@@ -3,45 +3,46 @@ package com.basicMotor.motors.simulation;
 import com.basicMotor.BasicMotor;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.controllers.Controller;
-import com.basicMotor.gains.ControllerConstrains;
+import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.currentLimits.CurrentLimits;
 import com.basicMotor.gains.PIDGains;
 import com.basicMotor.LogFrame;
-import com.basicMotor.Manager.MotorManager.ControllerLocation;
+import com.basicMotor.MotorManager.MotorManager.ControllerLocation;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 
 /**
- * this is the base class for all simulation systems in the basic motor system.
- * it forwards the functions necessary to run a simulation system.
- * and it ignores the functions that are not necessary for a simulation system.
+ * This is an abstract class that represents a basic simulation system for motors.
+ * This ignores some of the functionality of a basic motor, as it is meant to be used in a simulation.
+ * Use specific mechanisms like {@link BasicSimElevator} or {@link BasicSimArm} when possible.
  */
 public abstract class BasicSimSystem extends BasicMotor {
-  /** The voltage output of the motor simulation. */
+  /** The voltage output of the motor */
   private double voltageOutput = 0.0;
 
   /**
-   * Creates a BasicSimSystem instance with the provided LinearSystemSim and name.
+   * Creates a BasicSimSystem instance with the provided name and controller gains.
    *
-   * @param name the name of the motor
-   * @param gains the controller gains for the motor
+   * @param name The name of the motor simulation
+   * @param gains The controller gains to use for the motor simulation
    */
   public BasicSimSystem(String name, ControllerGains gains) {
     super(gains, name, ControllerLocation.RIO);
   }
 
   /**
-   * Creates a BasicSimSystem instance with the provided LinearSystemSim and configuration.
+   * Creates a BasicSimSystem instance with the provided configuration.
+   * forces controller location to RIO, as simulation systems are always on the RoboRIO.
    *
-   * @param config the configuration for the motor
+   * @param config The configuration for the motor simulation
    */
   public BasicSimSystem(BasicMotorConfig config) {
     super(checkConfig(config));
   }
 
   /**
-   * makes sure the configuration is valid for a simulation system. This sets the location to RIO,
-   * as simulation systems are always on the RoboRIO.
+   * Forces the controller location to RIO in the provided configuration.
    */
   private static BasicMotorConfig checkConfig(BasicMotorConfig config) {
     config.motorConfig.location = ControllerLocation.RIO;
@@ -54,7 +55,7 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   @Override
-  protected void updateConstraints(ControllerConstrains constraints) {
+  protected void updateConstraints(ControllerConstraints constraints) {
     // does nothing, as this is a simulation system
   }
 
@@ -94,13 +95,16 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   @Override
-  protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
-    if (mode.requiresPID())
-      throw new IllegalArgumentException("Simulation system does not support PID mode.");
+  protected void setMotorOutput(double setpoint, double feedForward, Controller.ControlMode mode) {
+    if (mode.requiresPID()){
+      DriverStation.reportError("Simulation systems do not support direct PID control.", true);
+      return;
+    }
 
     double output =
         switch (mode) {
           case STOP -> 0;
+          //converts duty cycle to voltage output
           case PRECENT_OUTPUT -> setpoint * RobotController.getBatteryVoltage();
           default -> setpoint;
         };
@@ -109,9 +113,9 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   /**
-   * sets the output voltage of the motor simulation.
+   * Sets the output voltage of the motor simulation.
    *
-   * @param output the output voltage to set
+   * @param output The output voltage to set, in volts.
    */
   private void setOutput(double output) {
     voltageOutput = output;
@@ -124,10 +128,10 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   /**
-   * sets the input voltage of the motor simulation. this is abstract because different motor
-   * simulations may have different ways of setting input voltage.
+   * Sets the input voltage for the motor simulation.
+   * This directly sets the voltage output of the motor simulation.
    *
-   * @param voltage the input voltage to set
+   * @param voltage The voltage to set, in volts.
    */
   protected abstract void setInputVoltage(double voltage);
 
@@ -160,15 +164,17 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   /**
-   * Gets the current draw of the motor simulation. this is abstract because different motor
-   * simulations may have different ways of calculating current draw.
+   * Gets the current draw of the motor simulation.
+   * This method should be overridden by subclasses to provide the specific current draw logic.
+   * Some simulations calculate current draw based on the input voltage and other factors,
    *
-   * @return the current draw in amps
+   * @return The current draw of the motor simulation in amps.
    */
   protected abstract double getCurrentDraw();
 
   @Override
   protected LogFrame.PIDOutput getPIDLatestOutput() {
+    //this will never be called in a simulation system, as it does not support PID control
     return LogFrame.PIDOutput.EMPTY;
   }
 }
