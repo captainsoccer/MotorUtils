@@ -10,37 +10,44 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * a class to manage the motors in the robot
- * it handles the PID loop, sensor loop, and logging of the motors
- * you can register motors with this class to manage them
- * you need to call the periodic method in the periodic method of your subsystem to log the motors
+ * This class is used to manage the {@link com.basicMotor.BasicMotor} instances.
+ * It handles each motor's threads for the PID loop and sensor loop.
+ * It also periodically logs the data of the motors.
+ * You need to call the {@link #periodic()} method in the periodic method of your robot.java.
+ * If you want to change some of the default values or the frequency of the loops, check {@link MotorManagerConfig}.
  */
 public class MotorManager {
 
     /**
-     * the configuration for the motor manager
-     * it contains the constants used in the motor manager (loop times, idle voltage, etc.)
-     * you can change the values in this class to change the constants used in the motor manager
+     * The configuration for the motor manager.
+     * This stores the default values for some of the parameters of the motor manager.
+     * It Also stores the frequency of the sensor loop and the PID loop.
+     * If you want to change one of the parameters, You must change the value before constructing the motors.
+     * This is static to make simpler calls to the motor manager.
      */
-    public static MotorManagerConfig config = new MotorManagerConfig();
+    public static MotorManagerConfig config = MotorManagerConfig.DEFAULT_CONFIG;
 
     /**
-     * the instance of the motor manager used to manage the motors
+     * The singleton instance of the MotorManager.
      */
     private static MotorManager instance;
 
     /**
-     * the list of motors used to manage the motors
+     * The list of motors that are registered with the motor manager.
      */
     private final ArrayList<MotorHandler> motors = new ArrayList<>();
 
+    /**
+     * Private constructor to enforce singleton pattern.
+     * Use {@link #getInstance()} to get the instance of the MotorManager.
+     */
     private MotorManager() {
     }
 
     /**
-     * get the instance of the motor manager
+     * Gets the singleton instance of the MotorManager.
      *
-     * @return the instance of the motor manager
+     * @return The instance of the MotorManager.
      */
     public static MotorManager getInstance() {
         if (instance == null) {
@@ -50,7 +57,9 @@ public class MotorManager {
     }
 
     /**
-     * you need to call this method in the periodic method of your subsystem to log the
+     * The periodic method that should be called in the periodic method of your robot.java.
+     * This method sends all the motor data to the logger.
+     * This method is called with the codes periodic due to the logger not supporting multithreading.
      */
     public void periodic() {
         for (MotorHandler motor : motors) {
@@ -60,7 +69,8 @@ public class MotorManager {
     }
 
     /**
-     * stop the PID loop for all motors useful for replay simulation
+     * Stops the sensor loop for all motors.
+     * Should only be used if using replay simulation.
      */
     public void stopSensorLoop() {
         for (MotorHandler motor : motors) {
@@ -69,7 +79,8 @@ public class MotorManager {
     }
 
     /**
-     * stop the PID loop for all motors useful for replay simulation
+     * Stops the PID loop for all motors.
+     * Should only be used if using replay simulation.
      */
     public void stopPIDLoop() {
         for (MotorHandler motor : motors) {
@@ -78,7 +89,7 @@ public class MotorManager {
     }
 
     /**
-     * start the sensor loop for all motors if you accidentally do something dumb
+     * Starts the sensor loop for all motors.
      */
     public void startSensorLoop() {
         for (MotorHandler motor : motors) {
@@ -87,7 +98,7 @@ public class MotorManager {
     }
 
     /**
-     * start the PID loop for all motors if you accidentally do something dumb
+     * Starts the PID loop for all motors.
      */
     public void startPIDLoop() {
         for (MotorHandler motor : motors) {
@@ -96,13 +107,14 @@ public class MotorManager {
     }
 
     /**
-     * register a motor with the motor manager
+     * Registers a motor with the motor manager.
+     * Use only once per motor.
      *
-     * @param name               the name of the motor
-     * @param location           the location of the motor (RIO or Motor Controller)
-     * @param run                the function to run for the PID loop
-     * @param sensorLoopFunction the function to run for the sensor loop
-     * @param frameSupplier      the function to get the frame for the motor
+     * @param name               The name of the motor. (will be used in the logs)
+     * @param location           The location of the pid loop. (RIO or Motor Controller).
+     * @param run                The function to run for the main loop.
+     * @param sensorLoopFunction The function to run for the sensor loop.
+     * @param frameSupplier      The function to get the latest frame for the motor.
      */
     public void registerMotor(
             String name,
@@ -110,6 +122,7 @@ public class MotorManager {
             Runnable run,
             Runnable sensorLoopFunction,
             Supplier<LogFrame.LogFrameAutoLogged> frameSupplier) {
+
         var handler = new MotorHandler(name, location, run, sensorLoopFunction, frameSupplier);
 
         motors.add(handler);
@@ -119,30 +132,30 @@ public class MotorManager {
     }
 
     /**
-     * a class to handle the motor
+     * A class that stores the motor and it's threads.
      */
     private static class MotorHandler {
         /**
-         * the name of the motor
+         * The name of the motor.
          */
         private final String motorName;
         /**
-         * the location of the motor (RIO or Motor Controller)
+         * The location of the motor's pid loop.
          */
         private final ControllerLocation location;
 
         /**
-         * the thread to run for the PID loop
+         * The thread to run for the main (PID) loop.
          */
         private final Notifier pidLoop;
 
         /**
-         * the thread to run for the sensor loop
+         * The thread to run for the sensor loop.
          */
         private final Notifier sensorLoop;
 
         /**
-         * the function to get the frame for the motor
+         * The supplier for the frame of the motor.
          */
         private final Supplier<LogFrame.LogFrameAutoLogged> frameSupplier;
 
@@ -163,46 +176,47 @@ public class MotorManager {
     }
 
     /**
-     * an enum to represent the location of the controller.
-     * the location of the controller is where the PID loop is run.
-     * if the loop is running on the rio, it needs to run faster than usual.
-     * if the loop is running on the motor controller, it only handles limits, motion profiles.
-     * so it can run slower.
+     * An enum that represents the location of the pid controller.
+     * This is used to determine how fast the pid loop runs.
+     * Check the specific location for more information.
      */
     public enum ControllerLocation {
         /**
-         * the controller is running on the motor controller
-         * that means that the main loop is running slower, and the pid calculations are done on the motor controller.
-         * use this for most cases as it reduces the load on the rio, canbus load.
+         * The pid controller is running on the motor controller.
+         * This means that the code that is running on the rio is only checking for constraints, feedforwards and motion profiling.
+         * This is the default location for most motors.
+         * For most mechanisms, this is the best location to run the pid controller.
+         * But it lacks control over the measurement source of the pid controller.
+         * Takes the frequency from the {@link MotorManagerConfig#PROFILE_LOOP_HZ} which is the default profile loop frequency.
          */
         MOTOR(() -> config.PROFILE_LOOP_HZ),
         /**
-         * the controller is running on the rio
-         * that means that the main loop is running faster, and the pid calculations are done on the rio.
-         * use this if you are using an external sensor that you want to drive directly (for example, turn motor on swerve using a CANcoder).
-         * or if you want to have more control over the PID loop.
+         * The pid controller is running on the rio.
+         * This means that the code on the rio is calculating everything and sending the output to the motor controller.
+         * This is useful when you want to have more control over the measurement source of the pid controller.
+         * But it can lead to more canbus traffic and robo rio cpu usage.
+         * Takes the frequency from the {@link MotorManagerConfig#PID_LOOP_HZ} which is the default pid loop frequency.
          */
         RIO(() -> config.PID_LOOP_HZ),;
 
         /**
-         * the frequency of the controller loop in Hz
-         * this can change depending on user configuration.
+         * The supplier of the frequency of the controller loop in Hz.
          */
         private final DoubleSupplier hzSupplier;
 
         /**
-         * constructor for the controller location
+         * Constructor for the ControllerLocation enum.
          *
-         * @param hzSupplier the frequency of the controller loop in Hz
+         * @param hzSupplier The supplier of the frequency of the controller loop in Hz.
          */
         ControllerLocation(DoubleSupplier hzSupplier) {
             this.hzSupplier = hzSupplier;
         }
 
         /**
-         * get the frequency of the controller loop in Hz
+         * Gets the frequency of the controller loop in Hz.
          *
-         * @return the frequency of the controller loop in Hz
+         * @return The frequency of the controller loop in Hz.
          */
         public double getHZ() {
             return hzSupplier.getAsDouble();
