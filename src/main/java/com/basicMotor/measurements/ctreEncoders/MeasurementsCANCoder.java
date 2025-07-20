@@ -157,33 +157,6 @@ public class MeasurementsCANCoder extends Measurements {
         this(cancoder, canCoderToMechanismRatio, unitConversion, refreshHZ, false);
     }
 
-    /**
-     * Creates a new measurements object with the given signals.
-     * Use this method when your canCoder is connected directly to the mechanism in a 1:1 ratio,
-     * and you want to use rotations as the units.
-     *
-     * @param positionSignal The position signal of the motor
-     * @param velocitySignal The velocity signal of the motor
-     * @param refreshHZ      The refresh rate of the signals (how often to update the signals)
-     *                       (should be the same Hz as the thread running the measurements)
-     */
-    public MeasurementsCANCoder(StatusSignal<Angle> positionSignal, StatusSignal<AngularVelocity> velocitySignal, double refreshHZ) {
-        this(positionSignal, velocitySignal, refreshHZ, 1, 1, false);
-    }
-
-    /**
-     * Creates a new measurements object with the canCoder.
-     * Use this method when your canCoder is connected directly to the mechanism in a 1:1 ratio,
-     * and you want to use rotations as the units.
-     *
-     * @param canCoder  The CANCoder to use for the measurements.
-     * @param refreshHZ The refresh rate of the signals (how often to update the signals)
-     *                  (should be the same Hz as the thread running the measurements)
-     */
-    public MeasurementsCANCoder(CANcoder canCoder, double refreshHZ) {
-        this(canCoder, refreshHZ, 1, 1, false);
-    }
-
     @Override
     public Measurement update(double dt) {
         if (timeSync) BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity);
