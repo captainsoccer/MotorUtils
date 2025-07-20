@@ -101,9 +101,10 @@ public class BasicSparkMAX extends BasicSparkBase {
 
     @Override
     protected void configExternalEncoder(boolean inverted, double sensorToMotorRatio) {
-        assert getSparkConfig() instanceof SparkMaxConfig;
 
-        var config = (SparkMaxConfig) getSparkConfig();
+        if(!(getSparkConfig() instanceof SparkMaxConfig config)) {
+            throw new RuntimeException("SparkMax motor is not an instance of SparkMaxConfig");
+        }
 
         // sets the absolute encoder configuration
         config.alternateEncoder.setSparkMaxDataPortConfig();
@@ -116,9 +117,9 @@ public class BasicSparkMAX extends BasicSparkBase {
 
     @Override
     protected RelativeEncoder getExternalEncoder() {
-        assert getMotor() instanceof SparkMax;
-
-        var sparkMax = (SparkMax) getMotor();
+        if(!(getMotor() instanceof SparkMax sparkMax)) {
+            throw new RuntimeException("SparkMax motor is not an instance of SparkMax");
+        }
 
         return sparkMax.getAlternateEncoder();
     }

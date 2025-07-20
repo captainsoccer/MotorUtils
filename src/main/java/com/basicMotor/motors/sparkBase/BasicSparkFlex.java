@@ -97,9 +97,9 @@ public class BasicSparkFlex extends BasicSparkBase {
 
     @Override
     protected void configExternalEncoder(boolean inverted, double sensorToMotorRatio) {
-        assert getSparkConfig() instanceof SparkFlexConfig;
-
-        var config = (SparkFlexConfig) getSparkConfig();
+        if(!(getSparkConfig() instanceof SparkFlexConfig config)){
+            throw new RuntimeException("SparkFlex config is not instance of SparkFlexConfig");
+        }
 
         // sets whether the absolute encoder is inverted or not
         config.externalEncoder.inverted(inverted);
@@ -110,11 +110,11 @@ public class BasicSparkFlex extends BasicSparkBase {
 
     @Override
     protected RelativeEncoder getExternalEncoder() {
-        assert getMotor() instanceof SparkFlex;
+        if(!(getMotor() instanceof SparkFlex motor)) {
+            throw new RuntimeException("SparkFlex config is not instance of SparkFlexConfig");
+        }
 
-        var sparkMax = (SparkFlex) getMotor();
-
-        return sparkMax.getExternalEncoder();
+        return motor.getExternalEncoder();
     }
 
     /**
@@ -149,9 +149,9 @@ public class BasicSparkFlex extends BasicSparkBase {
         // also applies the configuration to the motor
         useExternalEncoder(inverted, sensorToMotorRatio);
 
-        assert getMotor() instanceof SparkFlex;
-
-        var sparkFlex = (SparkFlex) getMotor();
+        if(!(getMotor() instanceof SparkFlex sparkFlex)) {
+            throw new RuntimeException("SparkFlex motor is not an instance of SparkFlex");
+        }
 
         sparkFlex.getExternalEncoder().setPosition(sparkFlex.getAbsoluteEncoder().getPosition());
     }

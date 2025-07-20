@@ -387,9 +387,9 @@ public class BasicTalonFX extends BasicMotor {
     public void enableTimeSync(boolean enable) {
         sensors.setWaitForAll(enable);
 
-        assert defaultMeasurements instanceof MeasurementsTalonFX;
-
-        var measurements = (MeasurementsTalonFX) defaultMeasurements;
+        if(!(defaultMeasurements instanceof MeasurementsTalonFX measurements)) {
+            throw new RuntimeException("Default measurements are not instance of MeasurementsTalonFX");
+        }
 
         measurements.setTimeSync(enable);
     }
