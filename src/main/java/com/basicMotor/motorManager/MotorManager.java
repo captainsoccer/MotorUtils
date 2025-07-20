@@ -1,4 +1,4 @@
-package com.basicMotor.MotorManager;
+package com.basicMotor.motorManager;
 
 import com.basicMotor.LogFrame;
 import edu.wpi.first.wpilibj.Notifier;

@@ -1,12 +1,12 @@
 package com.basicMotor.configuration;
 
 import com.basicMotor.BasicMotor;
-import com.basicMotor.MotorManager.MotorManagerConfig;
+import com.basicMotor.motorManager.MotorManagerConfig;
 import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerFeedForwards;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.PIDGains;
-import com.basicMotor.MotorManager.MotorManager;
+import com.basicMotor.motorManager.MotorManager;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import java.util.function.Function;

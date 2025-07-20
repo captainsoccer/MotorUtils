@@ -1,4 +1,4 @@
-package com.basicMotor.MotorManager;
+package com.basicMotor.motorManager;
 
 /**
  * This class holds the configuration for the MotorManager.

@@ -1,6 +1,6 @@
 package com.basicMotor.gains;
 
-import com.basicMotor.MotorManager.MotorManager;
+import com.basicMotor.motorManager.MotorManager;
 import com.basicMotor.controllers.BasicPIDController;
 
 /**

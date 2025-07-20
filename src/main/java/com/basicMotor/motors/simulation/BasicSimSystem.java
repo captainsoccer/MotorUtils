@@ -8,7 +8,7 @@ import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.currentLimits.CurrentLimits;
 import com.basicMotor.gains.PIDGains;
 import com.basicMotor.LogFrame;
-import com.basicMotor.MotorManager.MotorManager.ControllerLocation;
+import com.basicMotor.motorManager.MotorManager.ControllerLocation;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 

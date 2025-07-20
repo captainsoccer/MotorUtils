@@ -3,7 +3,7 @@ package com.basicMotor.motors.sparkBase;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.configuration.BasicSparkBaseConfig;
 import com.basicMotor.gains.ControllerGains;
-import com.basicMotor.MotorManager.MotorManager;
+import com.basicMotor.motorManager.MotorManager;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
