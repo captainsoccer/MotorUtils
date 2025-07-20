@@ -266,7 +266,7 @@ public abstract class BasicSparkBase extends BasicMotor {
         config.closedLoop.iZone(gains.getI_Zone());
         config.closedLoop.iMaxAccum(gains.getI_MaxAccum());
 
-        if (gains.getTolerance() != 0) {
+        if (gains.getTolerance() != 0 && controllerLocation == MotorManager.ControllerLocation.MOTOR) {
             DriverStation.reportWarning(
                     "Spark MAX does not use tolerance in the PID controller (works on rio PID Controller), so it is ignored: "
                             + name,
@@ -299,7 +299,7 @@ public abstract class BasicSparkBase extends BasicMotor {
             config.softLimit.reverseSoftLimitEnabled(false);
         }
 
-        if (constraints.getVoltageDeadband() != 0) {
+        if (constraints.getVoltageDeadband() != 0 && controllerLocation ==  MotorManager.ControllerLocation.MOTOR) {
             DriverStation.reportWarning(
                     "Spark MAX does not use voltage deadband (works on RIO PID controller), so it is ignored: "
                             + name,
