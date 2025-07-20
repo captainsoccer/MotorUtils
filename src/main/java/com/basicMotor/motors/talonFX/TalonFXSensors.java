@@ -166,7 +166,7 @@ public class TalonFXSensors {
      * @return The sensor data.
      */
     public LogFrame.SensorData getSensorData() {
-        if (waitForAll) BaseStatusSignal.waitForAll(timeout);
+        if (waitForAll) BaseStatusSignal.waitForAll(timeout, statusSignals);
         else BaseStatusSignal.refreshAll(statusSignals);
 
         double temperature = temperatureSignal.getValueAsDouble();
