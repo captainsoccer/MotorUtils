@@ -131,6 +131,8 @@ public class CurrentLimitsSparkBase implements CurrentLimits {
     /**
      * Gets the stall current limit of the motor controller.
      * If it is not set, the motor will use only the {@link #getCurrentLimit()} as the current limit at all times.
+     *
+     * @return the current limit of the motor controller while in stall (in amps).
      */
     public int getStallCurrentLimit() {
         return stallCurrentLimit;

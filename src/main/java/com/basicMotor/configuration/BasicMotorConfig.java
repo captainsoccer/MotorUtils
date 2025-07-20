@@ -376,7 +376,7 @@ public class BasicMotorConfig {
    * The simulation configuration of the motor controller.
    * Used when you want to simulate the system the motor is controlling.
    * To learn more about the simulation configuration, refer to the wiki:
-   * <a href="wiki link">wiki</a> //TODO: add wiki link
+   * <a href="https://github.com/captainsoccer/MotorUtils/wiki">wiki</a> //TODO: add wiki link
    */
   public static class SimulationConfig {
     /**
