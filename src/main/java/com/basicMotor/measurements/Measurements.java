@@ -123,7 +123,7 @@ public abstract class Measurements {
     }
 
     /**
-     * Gets the lastest measurement of the motor.
+     * Gets the latest measurement of the motor.
      * This is the latest measurement of the motor since the last update.
      *
      * @return The latest measurement of the motor, which includes position, velocity, and acceleration.
@@ -133,7 +133,7 @@ public abstract class Measurements {
     }
 
     /**
-     * Gets the lastest position of the motor.
+     * Gets the latest position of the motor.
      * Default units are rotations, but can be converted to other units using the unit conversion factor.
      *
      * @return The latest position of the motor in the desired units.
@@ -143,20 +143,20 @@ public abstract class Measurements {
     }
 
     /**
-     * Gets the last velocity of the motor.
+     * Gets the latest velocity of the motor.
      * Default units are rotations per second, but can be converted to other units using the unit conversion factor.
      *
-     * @return The last velocity of the motor in the desired units.
+     * @return The latest velocity of the motor in the desired units.
      */
     public double getVelocity() {
         return latestMeasurement.velocity;
     }
 
     /**
-     * Gets the last acceleration of the motor.
+     * Gets the latest acceleration of the motor.
      * Default units are rotations per second squared, but can be converted to other units using the unit conversion factor.
      *
-     * @return The last acceleration of the motor in the desired units.
+     * @return The latest acceleration of the motor in the desired units.
      */
     public double getAcceleration() {
         return latestMeasurement.acceleration;
