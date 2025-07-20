@@ -3,83 +3,84 @@ package com.basicMotor.measurements.ctreEncoders;
 import com.basicMotor.measurements.Measurements;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.*;
+import com.basicMotor.motors.talonFX.TalonFXSensors;
+import com.basicMotor.configuration.BasicMotorConfig.MotorConfig;
 
 /**
- * This class is used to get the measurements from the CTRE motor controller it handles updating the
- * measurements and getting the latency compensated values
+ * This class is used to store and update the measurements of a TalonFX motor controller.
+ * It handles updating the position, velocity, and acceleration of the motor.
+ * It also provides latency compensation for velocity and position measurements.
  */
 public class MeasurementsTalonFX extends Measurements {
-
     /**
-     * the timeout for the motor controller to wait for the signals to update if it does not update in
-     * this time, it will use the old value
+     * The timeout for waiting for all signals to update.
+     * Used only when Pro features are enabled.
+     * This is the refresh rate divided by {@link TalonFXSensors#TIMEOUT_REFRESH_MULTIPLIER}.
      */
     private final double timeout;
 
     /**
-     * the motor position signal
+     * The motor position signal.
      */
-    StatusSignal<Angle> motorPosition;
+    private final StatusSignal<Angle> motorPosition;
     /**
-     * the motor velocity signal
+     * The motor velocity signal.
      */
-    StatusSignal<AngularVelocity> motorVelocity;
+    private final StatusSignal<AngularVelocity> motorVelocity;
     /**
-     * the motor acceleration signal
+     * The motor acceleration signal.
      */
-    StatusSignal<AngularAcceleration> motorAcceleration;
+    private final StatusSignal<AngularAcceleration> motorAcceleration;
 
     /**
-     * the latency compensated the value of the motor position
+     * The latency compensated value of the motor position.
      */
-    double positionLatencyCompensatedValue = 0;
+    private double positionLatencyCompensatedValue = 0;
     /**
-     * the latency compensated the value of the motor velocity
+     * The latency compensated value of the motor velocity.
      */
-    double velocityLatencyCompensatedValue = 0;
+    private double velocityLatencyCompensatedValue = 0;
 
     /**
-     * Flag to enable Pro features of the measurements, such as latency compensation.
+     * Flag to enable Pro features of the measurements.
      * If true, the measurements will wait for all signals to update before returning values.
+     * Use this only if the motor is connected to a CANivore and is licensed for Pro features.
      */
-    private boolean enablePro = false;
+    private boolean timeSync = false;
 
     /**
-     * Creates a new measurements object with the given signals
+     * Creates a new MeasurementsTalonFX object with the given signals and parameters.
      *
-     * @param positionSignal     the position signal of the motor
-     * @param velocitySignal     the velocity signal of the motor
-     * @param accelerationSignal the acceleration signal of the motor
-     * @param refreshHZ          the refresh rate of the signals (how often to update the signals)
-     * @param gearRatio          the gear ratio of the motor (the measurements are divided by this)
-     * @param unitConversion     the value that will be multiplied by to convert the measurements to the desired units
+     * @param motor          The TalonFX motor controller to get the measurements from
+     * @param gearRatio      The ratio between the motor and the mechanism (the measurements are divided by this).
+     *                       A number larger than 1 means the motor is geared down (e.g., 10:1),
+     * @param unitConversion The value that will be multiplied by to convert the measurements to the desired units.
+     *                       This will be desired units per rotation.
+     *                       More info at {@link MotorConfig#unitConversion}.
+     * @param refreshHZ      The refresh rate of the signals (how often to update the signals)
+     *                       (should be the same Hz as the thread running the measurements)
      */
-    public MeasurementsTalonFX(
-            StatusSignal<Angle> positionSignal,
-            StatusSignal<AngularVelocity> velocitySignal,
-            StatusSignal<AngularAcceleration> accelerationSignal,
-            double refreshHZ,
-            double gearRatio,
-            double unitConversion) {
+    public MeasurementsTalonFX(TalonFX motor, double gearRatio, double unitConversion, double refreshHZ) {
         super(gearRatio, unitConversion);
 
-        motorPosition = positionSignal;
-        motorVelocity = velocitySignal;
-        motorAcceleration = accelerationSignal;
+        motorPosition = motor.getPosition(false);
+        motorVelocity = motor.getVelocity(false);
+        motorAcceleration = motor.getAcceleration(false);
 
-        positionSignal.setUpdateFrequency(refreshHZ);
-        velocitySignal.setUpdateFrequency(refreshHZ);
-        accelerationSignal.setUpdateFrequency(refreshHZ);
+        motorPosition.setUpdateFrequency(refreshHZ);
+        motorVelocity.setUpdateFrequency(refreshHZ);
+        motorAcceleration.setUpdateFrequency(refreshHZ);
 
-        timeout = 1 / (refreshHZ * 4);
+        timeout = 1 / (refreshHZ * TalonFXSensors.TIMEOUT_REFRESH_MULTIPLIER);
     }
 
     /**
-     * sets the update frequency of the signals
+     * Sets the update frequency of the signals.
      *
-     * @param refreshHZ the refresh rate of the signals (how often to update the signals)
+     * @param refreshHZ The refresh rate of the signals (how often to update the signals)
      */
     public void setUpdateFrequency(double refreshHZ) {
         motorPosition.setUpdateFrequency(refreshHZ);
@@ -90,15 +91,15 @@ public class MeasurementsTalonFX extends Measurements {
     /**
      * Sets whether to enable the Pro features of the measurements
      *
-     * @param enablePro true to enable Pro features, false to disable
+     * @param timeSync True to enable waiting for all signals to update before returning values,
      */
-    public void setEnablePro(boolean enablePro) {
-        this.enablePro = enablePro;
+    public void setTimeSync(boolean timeSync) {
+        this.timeSync = timeSync;
     }
 
     @Override
     public Measurement update(double dt) {
-        if (enablePro) BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity, motorAcceleration);
+        if (timeSync) BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity, motorAcceleration);
         else BaseStatusSignal.refreshAll(motorPosition, motorVelocity, motorAcceleration);
 
         var position = BaseStatusSignal.getLatencyCompensatedValue(motorPosition, motorVelocity);

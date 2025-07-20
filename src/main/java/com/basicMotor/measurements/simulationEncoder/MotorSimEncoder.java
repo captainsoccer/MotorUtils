@@ -4,7 +4,7 @@ import com.basicMotor.measurements.Measurements;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
-/** the MotorSimEncoder class is used to simulate an encoder for a DC motor. */
+/** The encoder for a simulated motor. */
 public class MotorSimEncoder extends Measurements {
   /** The DCMotorSim instance used by this MotorSimEncoder. */
   private final DCMotorSim motor;

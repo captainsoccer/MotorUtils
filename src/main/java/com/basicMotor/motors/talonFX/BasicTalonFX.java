@@ -4,15 +4,16 @@ import com.basicMotor.BasicMotor;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.configuration.BasicTalonFXConfig;
 import com.basicMotor.controllers.Controller;
-import com.basicMotor.gains.ControllerConstrains;
+import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.currentLimits.CurrentLimits;
+import com.basicMotor.gains.currentLimits.CurrentLimitsTalonFX;
 import com.basicMotor.gains.PIDGains;
 import com.basicMotor.LogFrame;
 import com.basicMotor.measurements.ctreEncoders.MeasurementsCANCoder;
 import com.basicMotor.measurements.ctreEncoders.MeasurementsTalonFX;
 import com.basicMotor.measurements.Measurements;
-import com.basicMotor.MotorManager;
+import com.basicMotor.MotorManager.MotorManager;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
@@ -24,450 +25,499 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj.DriverStation;
 
 /**
- * this class is the talonFX implementation of the basic motor class it is used to control the
- * talonFX
+ * This class represents a basic TalonFX motor controller.
+ * It extends the BasicMotor class and provides
+ * functionality specific to the TalonFX motor controller.
  */
 public class BasicTalonFX extends BasicMotor {
-  /**
-   * the default can bus name for the talonFX motor controller
-   *
-   * <p>this is used to identify the can bus of the motor controller
-   */
-  public static final String defaultCanBusName = "rio";
+    /**
+     * The name of the default can bus chain.
+     * This is the can bus chain built into the robo rio.
+     */
+    public static final String defaultCanBusName = "rio";
 
-  /**
-   * the talonFX motor controller
-   *
-   * <p>this is the motor controller used to control the motor
-   */
-  private final TalonFX motor;
-  /**
-   * the configuration of the talonFX motor controller
-   *
-   * <p>this is used to configure the motor controller
-   */
-  private final TalonFXConfiguration config;
+    /**
+     * The TalonFX motor controller instance.
+     */
+    private final TalonFX motor;
+    /**
+     * The configuration for the TalonFX motor controller.
+     */
+    private final TalonFXConfiguration config;
 
-  /**
-   * the sensors of the talonFX motor controller
-   *
-   * <p>this is used to get the sensors of the motor controller
-   */
-  private final TalonFXSensors sensors;
+    /**
+     * The object that handles the sensors for the TalonFX motor controller.
+     */
+    private final TalonFXSensors sensors;
 
-  /** used to store the default measurements of the motor controller */
-  private final Measurements defaultMeasurements;
+    /**
+     * The default measurements for the TalonFX motor controller. (built in encoder)
+     */
+    private final Measurements defaultMeasurements;
 
-  /** velocity request for the motor controller */
-  private final VelocityVoltage velocityRequest =
-      new VelocityVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
-  /** position request for the motor controller */
-  private final PositionVoltage positionRequest =
-      new PositionVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
+    /**
+     * The velocity request for the motor controller.
+     * Used when using the built-in pid controller of the TalonFX.
+     */
+    private final VelocityVoltage velocityRequest =
+            new VelocityVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
+    /**
+     * The position request for the motor controller.
+     * Used when using the built-in pid controller of the TalonFX.
+     */
+    private final PositionVoltage positionRequest =
+            new PositionVoltage(0).withEnableFOC(false).withUpdateFreqHz(0);
 
-  /** voltage request for the motor controller */
-  private final VoltageOut voltageRequest = new VoltageOut(0).withUpdateFreqHz(0);
+    /**
+     * The voltage request for the motor controller.
+     */
+    private final VoltageOut voltageRequest = new VoltageOut(0).withUpdateFreqHz(0);
 
-  /** duty cycle request for the motor controller */
-  private final DutyCycleOut dutyCycleRequest = new DutyCycleOut(0).withUpdateFreqHz(0);
+    /**
+     * The duty cycle request for the motor controller.
+     */
+    private final DutyCycleOut dutyCycleRequest = new DutyCycleOut(0).withUpdateFreqHz(0);
 
-  /**
-   * Constructor for the TalonFX motor controller
-   *
-   * @param controllerGains the gains for the motor controller
-   * @param id the id of the motor controller
-   * @param gearRatio the gear ratio of the motor
-   * @param unitConversion the value the rotations of the motor will be multiplied by to convert the
-   *     measurements to the desired units
-   * @param name the name of the motor controller
-   * @param controllerLocation the location of the motor controller (rio, motor controller)
-   */
-  public BasicTalonFX(
-      ControllerGains controllerGains,
-      int id,
-      double gearRatio,
-      double unitConversion,
-      String name,
-      MotorManager.ControllerLocation controllerLocation) {
+    /**
+     * Constructor for the TalonFX motor controller
+     *
+     * @param controllerGains    The gains for the motor controller.
+     * @param id                 The id of the motor controller.
+     * @param gearRatio          The gear ratio of the motor.
+     *                           the gear ratio is how many rotations of the motor are a rotation of the mechanism
+     *                           A value larger than 1 means the motor is geared down,
+     *                           e.g., a 10 gear ratio means the motor turns 10 times for every rotation of the mechanism.
+     * @param unitConversion     The value that will be multiplied by to convert the measurements to the desired units.
+     *                           This will be desired units per rotation.
+     *                           This will be multiplied after the gear ratio is applied.
+     * @param name               The name of the motor controller (used for logging and debugging).
+     * @param controllerLocation The location of the pid controller (RIO or MOTOR).
+     */
+    public BasicTalonFX(
+            ControllerGains controllerGains,
+            int id,
+            double gearRatio,
+            double unitConversion,
+            String name,
+            MotorManager.ControllerLocation controllerLocation) {
 
-    super(controllerGains, name, controllerLocation);
+        super(controllerGains, name, controllerLocation);
 
-    motor = new TalonFX(id);
-    config = new TalonFXConfiguration();
+        motor = new TalonFX(id);
+        config = new TalonFXConfiguration();
 
-    applyConfig();
+        applyConfig();
 
-    defaultMeasurements =
-        new MeasurementsTalonFX(
-            motor.getPosition(),
-            motor.getVelocity(),
-            motor.getAcceleration(),
-            controllerLocation.getHZ(),
-            gearRatio,
-            unitConversion);
+        defaultMeasurements = new MeasurementsTalonFX(motor, controllerLocation.getHZ(), gearRatio, unitConversion);
 
-    sensors = new TalonFXSensors(motor, controllerLocation.getHZ(), controllerLocation);
+        sensors = new TalonFXSensors(motor, controllerLocation.getHZ(), controllerLocation);
 
-    motor.optimizeBusUtilization();
-  }
-
-  /**
-   * Constructor for the TalonFX motor controller
-   *
-   * @param controllerGains the gains for the motor controller
-   * @param id the id of the motor controller
-   * @param gearRatio the gear ratio of the motor
-   * @param name the name of the motor controller
-   * @param controllerLocation the location of the motor controller (rio, motor controller)
-   */
-  public BasicTalonFX(
-      ControllerGains controllerGains,
-      int id,
-      double gearRatio,
-      String name,
-      MotorManager.ControllerLocation controllerLocation) {
-    this(controllerGains, id, gearRatio, 1, name, controllerLocation);
-  }
-
-  /**
-   * Constructor for the TalonFX motor controller with a specif configuration
-   *
-   * @param config the configuration for the motor controller
-   */
-  public BasicTalonFX(BasicMotorConfig config) {
-    super(config);
-
-    boolean isSpecificConfig = config instanceof BasicTalonFXConfig;
-
-    motor =
-        new TalonFX(
-            config.motorConfig.id,
-            isSpecificConfig ? ((BasicTalonFXConfig) config).canBusName : defaultCanBusName);
-    this.config = new TalonFXConfiguration();
-
-    applyConfig();
-
-    defaultMeasurements =
-        new MeasurementsTalonFX(
-            motor.getPosition(),
-            motor.getVelocity(),
-            motor.getAcceleration(),
-            controllerLocation.getHZ(),
-            config.motorConfig.gearRatio,
-            config.motorConfig.unitConversion);
-
-    sensors = new TalonFXSensors(motor, controllerLocation.getHZ(), controllerLocation);
-
-    motor.optimizeBusUtilization();
-
-    if (!isSpecificConfig) return;
-
-    BasicTalonFXConfig specificConfig = (BasicTalonFXConfig) config;
-
-    setCurrentLimits(specificConfig.currentLimitConfig.getCurrentLimits());
-
-    enableFOC(specificConfig.enablePro);
-  }
-
-  @Override
-  protected void updatePIDGainsToMotor(PIDGains pidGains) {
-    config.Slot0.kP = pidGains.getK_P();
-    config.Slot0.kI = pidGains.getK_I();
-    config.Slot0.kD = pidGains.getK_D();
-
-    if (controllerLocation == MotorManager.ControllerLocation.MOTOR) {
-      // changes made in phoenix 6 api
-      // https://v6.docs.ctr-electronics.com/en/latest/docs/migration/migration-guide/feature-replacements-guide.html#integral-zone-and-max-integral-accumulator
-
-      if (pidGains.getI_MaxAccum() != Double.POSITIVE_INFINITY)
-        DriverStation.reportWarning(
-            name
-                + " does not need i max accum when running on motor therefor not used (TalonFX check phoenix 6 docs)",
-            false);
-
-      if (pidGains.getTolerance() != 0)
-        DriverStation.reportWarning(
-            name
-                + " does not need tolerance when running on motor therefor not used (TalonFX check phoenix 6 docs)",
-            false);
-
-      if (pidGains.getI_Zone() != Double.POSITIVE_INFINITY)
-        DriverStation.reportWarning(
-            name
-                + " does not need i zone when running on motor therefor not used (TalonFX check phoenix 6 docs)",
-            false);
+        motor.optimizeBusUtilization();
     }
 
-    applyConfig();
-  }
-
-  @Override
-  protected void updateConstraints(ControllerConstrains constraints) {
-    // sets the max voltage to the max motor output
-    config.Voltage.PeakForwardVoltage = constraints.getMaxMotorOutput();
-    config.Voltage.PeakReverseVoltage = constraints.getMinMotorOutput();
-
-    // sets the max duty cycle to the max motor output (same as voltage)
-    config.MotorOutput.PeakForwardDutyCycle =
-        constraints.getMaxMotorOutput() / MotorManager.config.motorIdealVoltage;
-    config.MotorOutput.PeakReverseDutyCycle =
-        constraints.getMinMotorOutput() / MotorManager.config.motorIdealVoltage;
-
-    // sets the voltage deadband to the voltage deadband
-    config.MotorOutput.DutyCycleNeutralDeadband =
-        constraints.getVoltageDeadband() / MotorManager.config.motorIdealVoltage;
-
-    // sets continuous wrap to false (it is calculated on the rio if needed)
-    config.ClosedLoopGeneral.ContinuousWrap = false;
-
-    // checks if it needs to apply soft limits
-    if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
-      config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-      config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-
-      config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constraints.getMaxValue();
-      config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constraints.getMinValue();
-    } else {
-      config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-      config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+    /**
+     * Constructor for the TalonFX motor controller
+     *
+     * @param controllerGains    The gains for the motor controller.
+     * @param id                 The id of the motor controller.
+     * @param gearRatio          The gear ratio of the motor.
+     *                           the gear ratio is how many rotations of the motor are a rotation of the mechanism
+     *                           A value larger than 1 means the motor is geared down,
+     *                           e.g., a 10 gear ratio means the motor turns 10 times for every rotation of the mechanism.
+     * @param name               The name of the motor controller (used for logging and debugging).
+     * @param controllerLocation The location of the pid controller (RIO or MOTOR).
+     */
+    public BasicTalonFX(
+            ControllerGains controllerGains,
+            int id,
+            double gearRatio,
+            String name,
+            MotorManager.ControllerLocation controllerLocation) {
+        this(controllerGains, id, gearRatio, 1, name, controllerLocation);
     }
 
-    // applies the config to the motor
-    applyConfig();
-  }
+    /**
+     * Constructor for the TalonFX motor controller.
+     * This constructor uses the configuration provided.
+     *
+     * @param config The configuration for the motor controller.
+     */
+    public BasicTalonFX(BasicMotorConfig config) {
+        super(config);
 
-  @Override
-  protected Measurements getDefaultMeasurements() {
-    return defaultMeasurements;
-  }
+        boolean isSpecificConfig = config instanceof BasicTalonFXConfig;
 
-  @Override
-  protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
-    if (mode == Controller.RequestType.STOP) {
-      motor.stopMotor();
-      return;
+        String canbusName = isSpecificConfig ? ((BasicTalonFXConfig) config).canBusName : defaultCanBusName;
+
+        motor = new TalonFX(config.motorConfig.id, canbusName);
+        this.config = new TalonFXConfiguration();
+
+        applyConfig();
+
+        defaultMeasurements =
+                new MeasurementsTalonFX(motor, controllerLocation.getHZ(), config.motorConfig.gearRatio, config.motorConfig.unitConversion);
+
+        sensors = new TalonFXSensors(motor, controllerLocation.getHZ(), controllerLocation);
+
+        motor.optimizeBusUtilization();
+
+        if (!isSpecificConfig) return;
+
+        BasicTalonFXConfig specificConfig = (BasicTalonFXConfig) config;
+
+        setCurrentLimits(specificConfig.currentLimitConfig.getCurrentLimits());
+
+        enableFOC(specificConfig.enableFOC);
+
+        enableTimeSync(specificConfig.waitForAllSignals);
     }
 
-    StatusCode error =
-        switch (mode) {
-          case POSITION, PROFILED_POSITION -> motor.setControl(
-              positionRequest.withPosition(setpoint).withFeedForward(feedForward));
+    @Override
+    protected void updatePIDGainsToMotor(PIDGains pidGains) {
+        config.Slot0.kP = pidGains.getK_P();
+        config.Slot0.kI = pidGains.getK_I();
+        config.Slot0.kD = pidGains.getK_D();
 
-          case VELOCITY -> motor.setControl(
-              velocityRequest.withVelocity(setpoint).withFeedForward(feedForward));
+        if (controllerLocation == MotorManager.ControllerLocation.MOTOR) {
+            // changes made in phoenix 6 api
+            // https://v6.docs.ctr-electronics.com/en/latest/docs/migration/migration-guide/feature-replacements-guide.html#integral-zone-and-max-integral-accumulator
 
-          case VOLTAGE -> motor.setControl(voltageRequest.withOutput(setpoint));
+            if (pidGains.getI_MaxAccum() != Double.POSITIVE_INFINITY)
+                DriverStation.reportWarning(
+                        name
+                                + " does not need i max accum when running on motor therefor not used (TalonFX check phoenix 6 docs)",
+                        false);
 
-          case PRECENT_OUTPUT -> motor.setControl(dutyCycleRequest.withOutput(setpoint));
+            if (pidGains.getTolerance() != 0)
+                DriverStation.reportWarning(
+                        name
+                                + " does not need tolerance when running on motor therefor not used (TalonFX check phoenix 6 docs)",
+                        false);
 
-          default -> StatusCode.OK;
-        };
+            if (pidGains.getI_Zone() != Double.POSITIVE_INFINITY)
+                DriverStation.reportWarning(
+                        name
+                                + " does not need i zone when running on motor therefor not used (TalonFX check phoenix 6 docs)",
+                        false);
+        }
 
-    if (error != StatusCode.OK) {
-      DriverStation.reportError(
-          "Failed to set motor output for motor: " + super.name + " Error: " + error.name(), false);
-    }
-  }
-
-  @Override
-  protected void stopMotorOutput() {
-    motor.stopMotor();
-  }
-
-  @Override
-  protected LogFrame.SensorData getSensorData() {
-    return sensors.getSensorData();
-  }
-
-  @Override
-  protected LogFrame.PIDOutput getPIDLatestOutput() {
-    return sensors.getPIDLatestOutput();
-  }
-
-  @Override
-  public void setCurrentLimits(CurrentLimits currentLimits) {
-    var currentConfig = config.CurrentLimits;
-
-    currentConfig.SupplyCurrentLimit = currentLimits.getSupplyCurrentLimit();
-    currentConfig.StatorCurrentLimit = currentLimits.getStatorCurrentLimit();
-    currentConfig.SupplyCurrentLowerLimit = currentLimits.getSupplyLowerLimit();
-    currentConfig.SupplyCurrentLowerTime = currentLimits.getSupplyLowerTime();
-
-    currentConfig.SupplyCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
-    currentConfig.StatorCurrentLimitEnable = currentLimits.getStatorCurrentLimit() != 0;
-
-    applyConfig();
-  }
-
-  @Override
-  public void setIdleMode(IdleMode mode) {
-    config.MotorOutput.NeutralMode =
-        switch (mode) {
-          case COAST -> NeutralModeValue.Coast;
-          case BRAKE -> NeutralModeValue.Brake;
-        };
-
-    applyConfig();
-  }
-
-  @Override
-  public void setMotorInverted(boolean inverted) {
-    config.MotorOutput.Inverted =
-        inverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
-
-    applyConfig();
-  }
-
-  @Override
-  protected void setMotorPosition(double position) {
-    motor.setPosition(position);
-  }
-
-  @Override
-  protected void stopRecordingMeasurements() {
-    if (getMeasurements() instanceof MeasurementsTalonFX measurements) {
-      measurements.setUpdateFrequency(0);
-    }
-  }
-
-  @Override
-  protected void startRecordingMeasurements(double HZ) {
-    if (getMeasurements() instanceof MeasurementsTalonFX measurements) {
-      measurements.setUpdateFrequency(HZ);
-    }
-  }
-
-  @Override
-  protected void setMotorFollow(BasicMotor master, boolean inverted) {
-    BasicTalonFX motor = (BasicTalonFX) master;
-
-    sensors.setDutyCycleToDefaultRate(true);
-
-    Follower follower = new Follower(motor.motor.getDeviceID(), inverted);
-
-    this.motor.setControl(follower);
-  }
-
-  @Override
-  protected void stopMotorFollow() {
-    sensors.setDutyCycleToDefaultRate(false);
-    motor.stopMotor();
-  }
-
-  /**
-   * this enables or disables the FOC on the motor foc is only supported with phoenix pro (sad) if
-   * true, but no foc is supported, it will be ignored
-   *
-   * @param enable true to enable foc, false to disable
-   */
-  public void enableFOC(boolean enable) {
-    velocityRequest.EnableFOC = enable;
-    positionRequest.EnableFOC = enable;
-    voltageRequest.EnableFOC = enable;
-    dutyCycleRequest.EnableFOC = enable;
-    sensors.setEnablePro(enable);
-    if(defaultMeasurements instanceof MeasurementsTalonFX measurements) {
-      measurements.setEnablePro(enable);
-    }
-  }
-
-  /** applies the configuration to the motor controller */
-  private void applyConfig() {
-    var error = motor.getConfigurator().apply(config);
-
-    if (error != StatusCode.OK) {
-      DriverStation.reportError(
-          "Failed to apply config to motor: " + super.name + " Error: " + error.name(), false);
-    }
-  }
-
-  /**
-   * uses a remote CAN coder as the encoder for the motor controller the user must ensure that the
-   * CAN coder is configured correctly and zeroed before using this method
-   *
-   * @param canCoder the CAN coder to use as the remote encoder
-   * @param sensorToMotorRatio this value multiplies the ratio between the sensor and the motor (the
-   *     value of the can coder to get the motor value)
-   * @param unitConversion the value the rotations of the can coder will be multiplied by to convert
-   *     the measurements to the desired units
-   * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
-   *     (the value of the can coder to get the mechanism value)
-   * @param enablePro if true, it will use the fused CAN coder, if false, it will use the remote CAN
-   *     coder
-   */
-  public void useRemoteCanCoder(
-      CANcoder canCoder,
-      double sensorToMotorRatio,
-      double unitConversion,
-      double mechanismToSensorRatio,
-      boolean enablePro) {
-    if (canCoder == null) {
-      DriverStation.reportError("CAN coder is null, cannot use remote encoder", false);
-      return;
+        applyConfig();
     }
 
-    config.Feedback.FeedbackRemoteSensorID = canCoder.getDeviceID();
-    config.Feedback.RotorToSensorRatio = sensorToMotorRatio;
-    config.Feedback.FeedbackSensorSource =
-        enablePro
-            ? FeedbackSensorSourceValue.FusedCANcoder
-            : FeedbackSensorSourceValue.RemoteCANcoder;
+    @Override
+    public void setCurrentLimits(CurrentLimits currentLimits) {
+        var currentConfig = config.CurrentLimits;
 
-    applyConfig();
+        currentConfig.StatorCurrentLimitEnable = currentLimits.getCurrentLimit() != 0;
+        currentConfig.StatorCurrentLimit = currentLimits.getCurrentLimit();
 
-    setMeasurements(
-        new MeasurementsCANCoder(
-            canCoder.getPosition(),
-            canCoder.getVelocity(),
-            controllerLocation.getHZ(),
-            mechanismToSensorRatio,
-            unitConversion));
-  }
+        if (currentLimits instanceof CurrentLimitsTalonFX limits) {
+            currentConfig.SupplyCurrentLimitEnable = limits.getSupplyCurrentLimit() != 0;
 
-  /**
-   * uses a remote CAN coder as the encoder for the motor controller the user must ensure that the
-   * CAN coder is configured correctly and zeroed before using this method
-   *
-   * @param canCoder the CAN coder to use as the remote encoder
-   * @param sensorToMotorRatio this value multiplies the ratio between the sensor and the motor (the
-   *     value of the can coder to get the motor value)
-   * @param unitConversion the value the rotations of the can coder will be multiplied by to convert
-   *     the measurements to the desired units
-   * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
-   *     (the value of the can coder to get the mechanism value)
-   */
-  public void useRemoteCanCoder(
-      CANcoder canCoder,
-      double sensorToMotorRatio,
-      double unitConversion,
-      double mechanismToSensorRatio) {
-    useRemoteCanCoder(canCoder, sensorToMotorRatio, unitConversion, mechanismToSensorRatio, false);
-  }
+            currentConfig.SupplyCurrentLimit = limits.getSupplyCurrentLimit();
+            currentConfig.SupplyCurrentLowerLimit = limits.getSupplyLowerLimit();
+            currentConfig.SupplyCurrentLowerTime = limits.getSupplyLowerTime();
+        } else {
+            //reports a warning if the current limits are not for a TalonFX motor controller
+            DriverStation.reportWarning("Using non-TalonFX current limits on TalonFX motor controller: " + super.name, false);
 
-  /**
-   * uses a remote CAN coder as the encoder for the motor controller the user must ensure that the
-   * CAN coder is configured correctly and zeroed before using this method
-   *
-   * @param canCoder the CAN coder to use as the remote encoder
-   * @param sensorToMotorRatio this value multiplies the ratio between the sensor and the motor (the
-   *     value of the can coder to get the motor value)
-   * @param unitConversion the value the rotations of the can coder will be multiplied by to convert
-   *     the measurements to the desired units
-   */
-  public void useRemoteCanCoder(
-      CANcoder canCoder, double sensorToMotorRatio, double unitConversion) {
-    useRemoteCanCoder(canCoder, sensorToMotorRatio, unitConversion, 1, false);
-  }
+            currentConfig.SupplyCurrentLimitEnable = false;
+        }
+        // applies the current limits to the motor controller
+        applyConfig();
+    }
 
-  /**
-   * uses a remote CAN coder as the encoder for the motor controller the user must ensure that the
-   * CAN coder is configured correctly and zeroed before using this method
-   *
-   * @param canCoder the CAN coder to use as the remote encoder
-   * @param sensorToMotorRatio this value multiplies the ratio between the sensor and the motor (the
-   *     value of the can coder to get the motor value)
-   */
-  public void useRemoteCanCoder(CANcoder canCoder, double sensorToMotorRatio) {
-    useRemoteCanCoder(canCoder, sensorToMotorRatio, 1.0);
-  }
+    @Override
+    protected void updateConstraints(ControllerConstraints constraints) {
+        // sets the max voltage to the max motor output
+        config.Voltage.PeakForwardVoltage = constraints.getMaxMotorOutput();
+        config.Voltage.PeakReverseVoltage = constraints.getMinMotorOutput();
+
+        // sets the max duty cycle to the max motor output (same as voltage)
+        config.MotorOutput.PeakForwardDutyCycle =
+                constraints.getMaxMotorOutput() / MotorManager.config.motorIdealVoltage;
+        config.MotorOutput.PeakReverseDutyCycle =
+                constraints.getMinMotorOutput() / MotorManager.config.motorIdealVoltage;
+
+        // sets the voltage deadband to the voltage deadband
+        config.MotorOutput.DutyCycleNeutralDeadband =
+                constraints.getVoltageDeadband() / MotorManager.config.motorIdealVoltage;
+
+        // sets continuous wrap to false (it is calculated on the rio if needed)
+        config.ClosedLoopGeneral.ContinuousWrap = false;
+
+        // checks if it needs to apply soft limits
+        if (constraints.getConstraintType() == ControllerConstraints.ConstraintType.LIMITED) {
+            config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+            config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+            config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = constraints.getMaxValue();
+            config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = constraints.getMinValue();
+        } else {
+            config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+            config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
+        }
+
+        // applies the config to the motor
+        applyConfig();
+    }
+
+    @Override
+    protected Measurements getDefaultMeasurements() {
+        return defaultMeasurements;
+    }
+
+    @Override
+    protected void setMotorOutput(double setpoint, double feedForward, Controller.ControlMode mode) {
+        if (mode == Controller.ControlMode.STOP) {
+            motor.stopMotor();
+            return;
+        }
+
+        StatusCode error =
+                switch (mode) {
+                    case POSITION, PROFILED_POSITION -> motor.setControl(
+                            positionRequest.withPosition(setpoint).withFeedForward(feedForward));
+
+                    case VELOCITY, PROFILED_VELOCITY -> motor.setControl(
+                            velocityRequest.withVelocity(setpoint).withFeedForward(feedForward));
+
+                    case VOLTAGE -> motor.setControl(voltageRequest.withOutput(setpoint));
+
+                    case PRECENT_OUTPUT -> motor.setControl(dutyCycleRequest.withOutput(setpoint));
+
+                    default -> StatusCode.OK;
+                };
+
+        if (error != StatusCode.OK) {
+            DriverStation.reportError(
+                    "Failed to set motor output for motor: " + super.name + " Error: " + error.name(), false);
+        }
+    }
+
+    @Override
+    protected void stopMotorOutput() {
+        motor.stopMotor();
+    }
+
+    @Override
+    protected LogFrame.SensorData getSensorData() {
+        return sensors.getSensorData();
+    }
+
+    @Override
+    protected LogFrame.PIDOutput getPIDLatestOutput() {
+        return sensors.getPIDLatestOutput();
+    }
+
+    @Override
+    public void setIdleMode(IdleMode mode) {
+        config.MotorOutput.NeutralMode =
+                switch (mode) {
+                    case COAST -> NeutralModeValue.Coast;
+                    case BRAKE -> NeutralModeValue.Brake;
+                };
+
+        applyConfig();
+    }
+
+    @Override
+    public void setMotorInverted(boolean inverted) {
+        config.MotorOutput.Inverted =
+                inverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+
+        applyConfig();
+    }
+
+    @Override
+    protected void setMotorPosition(double position) {
+        motor.setPosition(position);
+    }
+
+    @Override
+    protected void stopRecordingMeasurements() {
+        if (getMeasurements() instanceof MeasurementsTalonFX measurements) {
+            measurements.setUpdateFrequency(0);
+        }
+    }
+
+    @Override
+    protected void startRecordingMeasurements(double HZ) {
+        if (getMeasurements() instanceof MeasurementsTalonFX measurements) {
+            measurements.setUpdateFrequency(HZ);
+        }
+    }
+
+    @Override
+    protected void setMotorFollow(BasicMotor master, boolean inverted) {
+        BasicTalonFX motor = (BasicTalonFX) master;
+
+        sensors.setDutyCycleToDefaultRate(true);
+
+        Follower follower = new Follower(motor.motor.getDeviceID(), inverted);
+
+        this.motor.setControl(follower);
+    }
+
+    @Override
+    protected void stopMotorFollow() {
+        sensors.setDutyCycleToDefaultRate(false);
+        motor.stopMotor();
+    }
+
+    /**
+     * This enables or disables the Field Oriented Control (FOC) for the TalonFX motor controller.
+     * This works only if the motor controller is licensed with Phoenix Pro.
+     * If the motor controller is not licensed with Phoenix Pro, it will not have any effect.
+     *
+     * @param enable Whether to enable or disable FOC.
+     */
+    public void enableFOC(boolean enable) {
+        velocityRequest.EnableFOC = enable;
+        positionRequest.EnableFOC = enable;
+        voltageRequest.EnableFOC = enable;
+        dutyCycleRequest.EnableFOC = enable;
+    }
+
+    /**
+     * Enables or disables time synchronization for the TalonFX signals.
+     * Use this only when the motor controller is licensed with Phoenix Pro and is connected to a canivore.
+     * @param enable Whether to enable time synchronization.
+     */
+    public void enableTimeSync(boolean enable) {
+        sensors.setWaitForAll(enable);
+
+        if(!(defaultMeasurements instanceof MeasurementsTalonFX measurements)) {
+            throw new RuntimeException("Default measurements are not instance of MeasurementsTalonFX");
+        }
+
+        measurements.setTimeSync(enable);
+    }
+
+    /**
+     * Applies the configuration to the motor controller.
+     * If the configuration fails to apply, it will report an error to the driver station.
+     */
+    private void applyConfig() {
+        var error = motor.getConfigurator().apply(config);
+
+        if (error != StatusCode.OK) {
+            DriverStation.reportError(
+                    "Failed to apply config to motor: " + super.name + " Error: " + error.name(), false);
+        }
+    }
+
+    /**
+     * Configures the motor to use a CANcoder as the feedback sensor.
+     *
+     * @param canCoder               The CANcoder to use as the remote encoder.
+     * @param sensorToMotorRatio     The ratio between the sensor and the motor (the value of the can coder to get the motor value).
+     * @param unitConversion         The value that will be multiplied by to convert the measurements to the desired units.
+     * @param mechanismToSensorRatio The ratio between the mechanism and the sensor (the value of the can coder to get the mechanism value).
+     * @param feedbackSensorSource   The feedback sensor source value (RemoteCANcoder or FusedCANcoder).
+     */
+    private void configureCanCoder(CANcoder canCoder, double sensorToMotorRatio, double unitConversion, double mechanismToSensorRatio, FeedbackSensorSourceValue feedbackSensorSource) {
+        if (canCoder == null) {
+            DriverStation.reportError("CAN coder is null, cannot use remote encoder", false);
+            return;
+        }
+
+        config.Feedback.FeedbackRemoteSensorID = canCoder.getDeviceID();
+        config.Feedback.RotorToSensorRatio = sensorToMotorRatio;
+        config.Feedback.FeedbackSensorSource = feedbackSensorSource;
+        applyConfig();
+
+        setMeasurements(
+                new MeasurementsCANCoder(canCoder, controllerLocation.getHZ(), mechanismToSensorRatio, unitConversion));
+    }
+
+    /**
+     * uses a remote CAN coder as the encoder for the motor controller the user must ensure that the
+     * CAN coder is configured correctly and zeroed before using this method.
+     * If your motor controller and canCoder are connected to a canivore and you have a Phoenix Pro license,
+     * use the {@link #useFusedCanCoder(CANcoder, double, double, double)} method instead.
+     *
+     * @param canCoder               the CAN coder to use as the remote encoder
+     * @param sensorToMotorRatio     this value multiplies the ratio between the sensor and the motor (the
+     *                               value of the can coder to get the motor value)
+     * @param unitConversion         the value the rotations of the can coder will be multiplied by to convert
+     *                               the measurements to the desired units
+     * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
+     *                               (the value of the can coder to get the mechanism value)
+     */
+    public void useRemoteCanCoder(CANcoder canCoder, double sensorToMotorRatio, double unitConversion, double mechanismToSensorRatio) {
+        configureCanCoder(canCoder, sensorToMotorRatio, unitConversion, mechanismToSensorRatio, FeedbackSensorSourceValue.RemoteCANcoder);
+    }
+
+    /**
+     * uses a remote CAN coder as the encoder for the motor controller the user must ensure that the
+     * CAN coder is configured correctly and zeroed before using this method.
+     * If your motor controller and canCoder are connected to a canivore and you have a Phoenix Pro license,
+     * use the {@link #useFusedCanCoder(CANcoder, double, double, double)} method instead.
+     *
+     * @param canCoder               the CAN coder to use as the remote encoder
+     * @param sensorToMotorRatio     this value multiplies the ratio between the sensor and the motor (the
+     *                               value of the can coder to get the motor value)
+     * @param unitConversion         the value the rotations of the can coder will be multiplied by to convert
+     *                               the measurements to the desired units
+     */
+    public void useRemoteCanCoder(CANcoder canCoder, double sensorToMotorRatio, double unitConversion) {
+        useRemoteCanCoder(canCoder, sensorToMotorRatio, unitConversion, 1);
+    }
+
+    /**
+     * uses a remote CAN coder as the encoder for the motor controller the user must ensure that the
+     * CAN coder is configured correctly and zeroed before using this method.
+     * If your motor controller and canCoder are connected to a canivore and you have a Phoenix Pro license,
+     * use the {@link #useFusedCanCoder(CANcoder, double, double, double)} method instead.
+     *
+     * @param canCoder               the CAN coder to use as the remote encoder
+     * @param sensorToMotorRatio     this value multiplies the ratio between the sensor and the motor (the
+     *                               value of the can coder to get the motor value)
+     */
+    public void useRemoteCanCoder(CANcoder canCoder, double sensorToMotorRatio) {
+        useRemoteCanCoder(canCoder, sensorToMotorRatio, 1.0);
+    }
+
+    /**
+     * Uses a fused CAN coder as the encoder for the motor controller.
+     * This method is only available if the motor controller and the CAN coder are connected to a canivore and are pro licensed.
+     * The user must ensure that the CAN coder is configured correctly and zeroed before using this method.
+     * @param canCoder               the CAN coder to use as the remote encoder
+     * @param sensorToMotorRatio     this value multiplies the ratio between the sensor and the motor (the
+     *                               value of the can coder to get the motor value)
+     * @param unitConversion         the value the rotations of the can coder will be multiplied by to convert
+     *                               the measurements to the desired units
+     * @param mechanismToSensorRatio this value divides the ratio between the mechanism and the sensor
+     *                               (the value of the can coder to get the mechanism value)
+     */
+    public void useFusedCanCoder(CANcoder canCoder, double sensorToMotorRatio, double unitConversion, double mechanismToSensorRatio){
+        configureCanCoder(canCoder, sensorToMotorRatio, unitConversion, mechanismToSensorRatio, FeedbackSensorSourceValue.FusedCANcoder);
+    }
+
+    /**
+     * Uses a fused CAN coder as the encoder for the motor controller.
+     * This method is only available if the motor controller and the CAN coder are connected to a canivore and are pro licensed.
+     * The user must ensure that the CAN coder is configured correctly and zeroed before using this method.
+     * @param canCoder               the CAN coder to use as the remote encoder
+     * @param sensorToMotorRatio     this value multiplies the ratio between the sensor and the motor (the
+     *                               value of the can coder to get the motor value)
+     * @param unitConversion         the value the rotations of the can coder will be multiplied by to convert
+     *                               the measurements to the desired units
+     */
+    public void useFusedCanCoder(CANcoder canCoder, double sensorToMotorRatio, double unitConversion){
+        useFusedCanCoder(canCoder, sensorToMotorRatio, unitConversion, 1);
+    }
+
+    /**
+     * Uses a fused CAN coder as the encoder for the motor controller.
+     * This method is only available if the motor controller and the CAN coder are connected to a canivore and are pro licensed.
+     * The user must ensure that the CAN coder is configured correctly and zeroed before using this method.
+     * @param canCoder               the CAN coder to use as the remote encoder
+     * @param sensorToMotorRatio     this value multiplies the ratio between the sensor and the motor (the
+     *                               value of the can coder to get the motor value)
+     */
+    public void useFusedCanCoder(CANcoder canCoder, double sensorToMotorRatio){
+        useFusedCanCoder(canCoder, sensorToMotorRatio, 1);
+    }
 }

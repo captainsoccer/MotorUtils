@@ -3,145 +3,156 @@ package com.basicMotor.motors.sparkBase;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.configuration.BasicSparkBaseConfig;
 import com.basicMotor.gains.ControllerGains;
-import com.basicMotor.MotorManager;
+import com.basicMotor.MotorManager.MotorManager;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel;
+import com.basicMotor.configuration.BasicSparkBaseConfig.AbsoluteEncoderConfig.AbsoluteEncoderRange;
 import com.revrobotics.spark.config.SparkFlexConfig;
 
 /**
- * This class represents a basic Spark Flex motor controller. it extends the BasicSparkBase class
- * and provides specific implementations
+ * This class represents a basic spark flex motor controller.
+ * It extends the BasicSparkBase class and provides
+ * functionality specific to the Spark Flex motor controller.
+ * This class assumes that the motor is brushless.
  */
 public class BasicSparkFlex extends BasicSparkBase {
-  /**
-   * creates a basic spark flex motor controller with the given gains and id
-   *
-   * @param gains the gains of the motor controller
-   * @param id the id of the motor controller
-   * @param name the name of the motor controller
-   * @param gearRatio the gear ratio of the motor controller
-   * @param unitConversion the value that will be multiplied by to convert the measurements to the
-   *     desired units
-   * @param location the location of the motor controller (RIO or MOTOR)
-   */
-  public BasicSparkFlex(
-      ControllerGains gains,
-      int id,
-      String name,
-      double gearRatio,
-      double unitConversion,
-      MotorManager.ControllerLocation location) {
+    /**
+     * Creates a basic spark flex motor controller with the given gains, id, name, gear ratio,
+     *
+     * @param gains          The gains of the motor controller
+     * @param id             The id of the motor controller
+     * @param name           The name of the motor controller (used for logging and debugging)
+     * @param gearRatio      The gear ratio of the motor controller (how many rotations of the motor are a rotation of the mechanism)
+     * @param unitConversion The conversion factor for the motor's position units.
+     *                       This will be multiplied by the motor's rotation to get the position with the desired units.
+     *                       The unit for this value is desired position unit per rotation.
+     * @param location       The location of the pid controller (RIO or MOTOR).
+     */
+    public BasicSparkFlex(
+            ControllerGains gains,
+            int id,
+            String name,
+            double gearRatio,
+            double unitConversion,
+            MotorManager.ControllerLocation location) {
 
-    super(
-        new SparkFlex(id, SparkLowLevel.MotorType.kBrushless),
-        new SparkFlexConfig(),
-        gains,
-        name,
-        gearRatio,
-        unitConversion,
-        location);
-  }
-
-  /**
-   * creates a basic spark flex motor controller with the given gains and id
-   *
-   * @param gains the gains of the motor controller
-   * @param id the id of the motor controller
-   * @param name the name of the motor controller
-   * @param gearRatio the gear ratio of the motor controller
-   * @param location the location of the motor controller (RIO or MOTOR)
-   */
-  public BasicSparkFlex(
-      ControllerGains gains,
-      int id,
-      String name,
-      double gearRatio,
-      MotorManager.ControllerLocation location) {
-
-    this(gains, id, name, gearRatio, 1, location);
-  }
-
-  /**
-   * creates a basic spark flex motor controller with the given configuration
-   *
-   * @param config the configuration of the motor controller
-   */
-  public BasicSparkFlex(BasicMotorConfig config) {
-    super(
-        new SparkFlex(config.motorConfig.id, SparkLowLevel.MotorType.kBrushless),
-        new SparkFlexConfig(),
-        config);
-
-    if (config instanceof BasicSparkBaseConfig sparkBaseConfig) {
-      if (sparkBaseConfig.externalEncoderConfig.useExternalEncoder
-          && sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder) {
-        var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
-
-        useExternalEncoderWithAbsoluteEncoder(
-            absoluteEncoderConfig.inverted,
-            absoluteEncoderConfig.zeroOffset,
-            absoluteEncoderConfig.sensorToMotorRatio,
-            absoluteEncoderConfig.mechanismToSensorRatio,
-            absoluteEncoderConfig.absoluteEncoderRange);
-      }
+        super(
+                //creates a new SparkFlex motor controller with the given id and type
+                new SparkFlex(id, SparkLowLevel.MotorType.kBrushless),
+                new SparkFlexConfig(),
+                gains,
+                name,
+                gearRatio,
+                unitConversion,
+                location);
     }
-  }
 
-  @Override
-  protected void configExternalEncoder(
-      boolean inverted, double sensorToMotorRatio, double mechanismToSensorRatio) {
-    assert config instanceof SparkFlexConfig;
+    /**
+     * Creates a basic spark flex motor controller with the given gains, id, name, gear ratio,
+     *
+     * @param gains     The gains of the motor controller
+     * @param id        The id of the motor controller
+     * @param name      The name of the motor controller (used for logging and debugging)
+     * @param gearRatio The gear ratio of the motor controller (how many rotations of the motor are a rotation of the mechanism)
+     * @param location  The location of the pid controller (RIO or MOTOR).
+     */
+    public BasicSparkFlex(
+            ControllerGains gains,
+            int id,
+            String name,
+            double gearRatio,
+            MotorManager.ControllerLocation location) {
 
-    var config = (SparkFlexConfig) this.config;
+        this(gains, id, name, gearRatio, 1, location);
+    }
 
-    // sets whether the absolute encoder is inverted or not
-    config.externalEncoder.inverted(inverted);
-    // sets the conversion factor for the absolute encoder position and velocity
-    config.externalEncoder.positionConversionFactor(sensorToMotorRatio);
-    config.externalEncoder.velocityConversionFactor(sensorToMotorRatio);
-  }
+    /**
+     * Creates a basic spark flex motor controller with the given configuration.
+     *
+     * @param config The configuration for the motor controller.
+     */
+    public BasicSparkFlex(BasicMotorConfig config) {
+        super(
+                // creates a new SparkFlex motor controller with the given id and type
+                new SparkFlex(config.motorConfig.id, SparkLowLevel.MotorType.kBrushless),
+                new SparkFlexConfig(),
+                config);
 
-  @Override
-  protected RelativeEncoder getExternalEncoder() {
-    assert motor instanceof SparkFlex;
+        if (config instanceof BasicSparkBaseConfig sparkBaseConfig) {
+            //if the user configured to use an external encoder with an absolute encoder,
+            // then we will use the external encoder with the absolute encoder
+            if (sparkBaseConfig.externalEncoderConfig.useExternalEncoder
+                    && sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder) {
+                var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
 
-    var sparkMax = (SparkFlex) motor;
+                useExternalEncoderWithAbsoluteEncoder(
+                        absoluteEncoderConfig.inverted,
+                        absoluteEncoderConfig.sensorToMotorRatio,
+                        absoluteEncoderConfig.zeroOffset,
+                        absoluteEncoderConfig.absoluteEncoderRange);
+            }
+        }
+    }
 
-    return sparkMax.getExternalEncoder();
-  }
+    @Override
+    protected void configExternalEncoder(boolean inverted, double sensorToMotorRatio) {
+        if(!(getSparkConfig() instanceof SparkFlexConfig config)){
+            throw new RuntimeException("SparkFlex config is not instance of SparkFlexConfig");
+        }
 
-  /**
-   * use this when you want to use an external encoder which doubles as an absolute encoder but you
-   * want to use the relative encoder for the pid controller (not bound to a range and more
-   * accurate)
-   *
-   * @param inverted whether the external encoder is inverted (counts in the opposite direction of
-   *     the motor)
-   * @param sensorToMotorRatio the number that the reading of the external encoder should be
-   *     multiplied by to get the motor output
-   * @param mechanismToSensorRatio the number that the reading of the external encoder should be
-   *     divided by to get the mechanism output
-   * @param zeroOffset the zero offset of the absolute encoder (in rotations)
-   * @param absoluteEncoderRange the range of the absolute encoder
-   */
-  public void useExternalEncoderWithAbsoluteEncoder(
-      boolean inverted,
-      double sensorToMotorRatio,
-      double mechanismToSensorRatio,
-      double zeroOffset,
-      AbsoluteEncoderRange absoluteEncoderRange) {
+        // sets whether the absolute encoder is inverted or not
+        config.externalEncoder.inverted(inverted);
+        // sets the conversion factor for the absolute encoder position and velocity
+        config.externalEncoder.positionConversionFactor(sensorToMotorRatio);
+        config.externalEncoder.velocityConversionFactor(sensorToMotorRatio);
+    }
 
-    // configures the absolute encoder
-    setAbsoluteEncoderConfig(inverted, zeroOffset, sensorToMotorRatio, absoluteEncoderRange);
+    @Override
+    protected RelativeEncoder getExternalEncoder() {
+        if(!(getMotor() instanceof SparkFlex motor)) {
+            throw new RuntimeException("SparkFlex config is not instance of SparkFlexConfig");
+        }
 
-    // sets the external encoder configuration
-    useExternalEncoder(inverted, sensorToMotorRatio, mechanismToSensorRatio);
+        return motor.getExternalEncoder();
+    }
 
-    assert motor instanceof SparkFlex;
+    /**
+     * Use this when you have a through-bore encoder connected to the mechanism in a 1:1 ratio with the mechanism.
+     * This will provide better accuracy than using the absolute encoder directly.
+     * This works only if the relative and absolute encoder is connected to the spark flex data port.
+     *
+     * @param inverted             Whether the through-bore encoder is inverted or not.
+     *                             The default positive direction of the encoder is clockwise.
+     *                             This is opposite to the default positive direction of a motor.
+     * @param sensorToMotorRatio   The number of rotations of the sensor for each rotation of the motor.
+     *                             This will be the same as the gear ratio of the mechanism.
+     * @param zeroOffset           The zero offset of the absolute encoder.
+     *                             when the absolute encoder reads this value, it will report a position of 0.
+     *                             This is affected by absoluteEncoderRange.
+     * @param absoluteEncoderRange The range of the absolute encoder.
+     *                             This will determine the values that the absolute encoder can report.
+     *                             (0 to 1, -0.5 to 0.5, etc.)
+     */
+    public void useExternalEncoderWithAbsoluteEncoder(
+            boolean inverted,
+            double sensorToMotorRatio,
+            double zeroOffset,
+            AbsoluteEncoderRange absoluteEncoderRange) {
 
-    var sparkFlex = (SparkFlex) motor;
+        // configures the absolute encoder
+        // but does not set it as the feedback sensor
+        setAbsoluteEncoderConfig(inverted, zeroOffset, sensorToMotorRatio, absoluteEncoderRange);
 
-    sparkFlex.getExternalEncoder().setPosition(sparkFlex.getAbsoluteEncoder().getPosition());
-  }
+        // sets the external encoder configuration
+        // and sets the external encoder as the feedback sensor
+        // also applies the configuration to the motor
+        useExternalEncoder(inverted, sensorToMotorRatio);
+
+        if(!(getMotor() instanceof SparkFlex sparkFlex)) {
+            throw new RuntimeException("SparkFlex motor is not an instance of SparkFlex");
+        }
+
+        sparkFlex.getExternalEncoder().setPosition(sparkFlex.getAbsoluteEncoder().getPosition());
+    }
 }

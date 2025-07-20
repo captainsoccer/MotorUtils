@@ -1,120 +1,191 @@
 package com.basicMotor.measurements.ctreEncoders;
 
 import com.basicMotor.measurements.Measurements;
+import com.basicMotor.motors.talonFX.TalonFXSensors;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.hardware.CANcoder;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import com.basicMotor.motors.talonFX.BasicTalonFX;
+import com.basicMotor.configuration.BasicMotorConfig.MotorConfig;
 
 /**
  * A class that provides measurements for the CANCoder sensor.
- * used when using a CANCoder to measure the position and velocity of a motor.
+ * Used for using the CANCoder as a measurement source in the BasicMotor library.
+ * If you want to use a CANCoder with a TalonFX motor,
+ * please use the {@link BasicTalonFX#useRemoteCanCoder(CANcoder, double, double, double)}
  */
 public class MeasurementsCANCoder extends Measurements {
-  /**
-   * the timeout for the motor controller to wait for the signals to update if it does not update in
-   * this time, it will use the old value
-   */
-  private final double timeout;
-
-  /** the motor position signal */
-  StatusSignal<Angle> motorPosition;
-  /** the motor velocity signal */
-  StatusSignal<AngularVelocity> motorVelocity;
-
-  /** the latency compensated the value of the motor position */
-  double positionLatencyCompensatedValue = 0;
-
-  private double currentVelocity = 0;
-  private double lastVelocity = 0;
-  private double acceleration = 0;
+    /**
+     * The timeout for the signals to update.
+     * This stores how much time to wait for the signals to update before returning the values.
+     */
+    private final double timeout;
 
     /**
-     * Flag to enable Pro features of the measurements, such as latency compensation.
-     * If true, the measurements will wait for all signals to update before returning values.
+     * The position status signal
      */
-  private boolean enablePro = false;
+    private final StatusSignal<Angle> motorPosition;
+    /**
+     * The velocity status signal
+     */
+    private final StatusSignal<AngularVelocity> motorVelocity;
 
-  /**
-   * Creates a new measurements object with the given signals sets the refresh rate of the signals
-   * (but doesn't optimize the canbus usage)
-   *
-   * @param positionSignal the position signal of the motor
-   * @param velocitySignal the velocity signal of the motor
-   * @param refreshHZ the refresh rate of the signals (how often to update the signals)
-   * @param gearRatio the gear ratio of the motor (the measurements are divided by this)
-   * @param unitConversion the value that will be multiplied by to convert the measurements to the
-   *     desired units
-   */
-  public MeasurementsCANCoder(
-      StatusSignal<Angle> positionSignal,
-      StatusSignal<AngularVelocity> velocitySignal,
-      double refreshHZ,
-      double gearRatio,
-      double unitConversion) {
-    super(gearRatio, unitConversion);
+    /**
+     * The latency compensated position.
+     * Phoenix6 provides a method to get the latency compensated value of the position using the velocity signal.
+     */
+    double positionLatencyCompensatedValue = 0;
 
-    motorPosition = positionSignal;
-    motorVelocity = velocitySignal;
+    /**
+     * The current velocity of the motor.
+     * This is updated in the update method.
+     * Used to calculate the acceleration.
+     */
+    private double currentVelocity = 0;
+    /**
+     * The last velocity of the motor.
+     * This is used to calculate the acceleration.
+     */
+    private double lastVelocity = 0;
+    /**
+     * The acceleration of the motor.
+     * This is calculated as the change in velocity over time.
+     */
+    private double acceleration = 0;
 
-    positionSignal.setUpdateFrequency(refreshHZ);
-    velocitySignal.setUpdateFrequency(refreshHZ);
+    /**
+     * This flag is used to enable waiting for all signals to update before returning the values.
+     * This feature works only with a licensed version of Phoenix Pro connected to a canivore.
+     * If this is set to true without a canivore, the robot code will slow down significantly.
+     */
+    private final boolean timeSync;
 
-    timeout = 1 / (refreshHZ * 4);
-  }
+    /**
+     * Creates a new measurements object with the given signals sets the refresh rate of the signals.
+     * This method does not optimize the canbus usage of the canCoder.
+     *
+     * @param positionSignal           The position signal of the canCoder
+     * @param velocitySignal           The velocity signal of the canCoder
+     * @param canCoderToMechanismRatio The ratio of the canCoder rotations to the mechanism rotations.
+     *                                 A number larger than 1 means the canCoder spins more than the mechanism.
+     *                                 In most cases, this will be 1.
+     * @param unitConversion           The value that the mehcnasims rotations will be multiplied by to convert the measurements to the desired units.
+     *                                 See {@link MotorConfig#unitConversion} for more information.
+     * @param refreshHZ                The refresh rate of the signals (how often to update the signals)
+     *                                 (should be the same Hz as the thread running the measurements)
+     * @param timeSync               If true, the measurements will wait for all signals to update before returning the values.
+     *                                 Use this only if you have a licensed version of Phoenix Pro connected to a canivore.
+     *                                 Otherwise, it will slow down the robot code significantly.
+     */
+    public MeasurementsCANCoder(StatusSignal<Angle> positionSignal,
+                                StatusSignal<AngularVelocity> velocitySignal,
+                                double canCoderToMechanismRatio,
+                                double unitConversion,
+                                double refreshHZ,
+                                boolean timeSync) {
 
-  /**
-   * Creates a new measurements object with the given signals
-   *
-   * @param positionSignal the position signal of the motor
-   * @param velocitySignal the velocity signal of the motor
-   * @param refreshHZ the refresh rate of the signals (how often to update the signals)
-   */
-  public MeasurementsCANCoder(
-      StatusSignal<Angle> positionSignal,
-      StatusSignal<AngularVelocity> velocitySignal,
-      double refreshHZ) {
-    this(positionSignal, velocitySignal, refreshHZ, 1, 1);
-  }
+        super(canCoderToMechanismRatio, unitConversion);
 
-  @Override
-  public Measurement update(double dt) {
-    if(enablePro) BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity);
-    else BaseStatusSignal.refreshAll(motorPosition, motorVelocity);
+        this.timeSync = timeSync;
 
-    var position = BaseStatusSignal.getLatencyCompensatedValue(motorPosition, motorVelocity);
-    positionLatencyCompensatedValue = position.in(Units.Rotations);
+        motorPosition = positionSignal;
+        motorVelocity = velocitySignal;
 
-    currentVelocity = motorVelocity.getValueAsDouble();
+        positionSignal.setUpdateFrequency(refreshHZ);
+        velocitySignal.setUpdateFrequency(refreshHZ);
 
-    acceleration = (currentVelocity - lastVelocity) / dt;
+        timeout = 1 / (refreshHZ * TalonFXSensors.TIMEOUT_REFRESH_MULTIPLIER);
+    }
 
-    lastVelocity = currentVelocity;
+    /**
+     * Creates a new measurements object with the given signals sets the refresh rate of the signals.
+     * This method does not optimize the canbus usage of the canCoder.
+     *
+     * @param positionSignal           The position signal of the canCoder
+     * @param velocitySignal           The velocity signal of the canCoder
+     * @param canCoderToMechanismRatio The ratio of the canCoder rotations to the mechanism rotations.
+     *                                 A number larger than 1 means the canCoder spins more than the mechanism.
+     *                                 In most cases, this will be 1.
+     * @param unitConversion           The value that the mehcnasims rotations will be multiplied by to convert the measurements to the desired units.
+     *                                 See {@link MotorConfig#unitConversion} for more information.
+     * @param refreshHZ                The refresh rate of the signals (how often to update the signals)
+     *                                 (should be the same Hz as the thread running the measurements)
+     */
+    public MeasurementsCANCoder(StatusSignal<Angle> positionSignal,
+                                StatusSignal<AngularVelocity> velocitySignal,
+                                double canCoderToMechanismRatio,
+                                double unitConversion,
+                                double refreshHZ) {
+        this(positionSignal, velocitySignal, canCoderToMechanismRatio, unitConversion, refreshHZ, false);
+    }
 
-    return super.update(dt);
-  }
+    /**
+     * Creates a new measurements object with the given CANCoder
+     *
+     * @param cancoder                 The CANCoder to use for the measurements.
+     * @param canCoderToMechanismRatio The ratio of the canCoder rotations to the mechanism rotations.
+     *                                 A number larger than 1 means the canCoder spins more than the mechanism.
+     *                                 In most cases, this will be 1.
+     * @param unitConversion           The value that the mehcnasims rotations will be multiplied by to convert the measurements to the desired units.
+     *                                 See {@link MotorConfig#unitConversion} for more information.
+     * @param refreshHZ                The refresh rate of the signals (how often to update the signals)
+     *                                 (should be the same Hz as the thread running the measurements)
+     * @param timeSync               If true, the measurements will wait for all signals to update before returning the values.
+     *                                 Use this only if you have a licensed version of Phoenix Pro connected to a canivore.
+     *                                 Otherwise, it will slow down the robot code significantly.
+     */
+    public MeasurementsCANCoder(CANcoder cancoder, double canCoderToMechanismRatio, double unitConversion, double refreshHZ, boolean timeSync) {
+        this(cancoder.getPosition(false), cancoder.getVelocity(false), canCoderToMechanismRatio, unitConversion, refreshHZ, timeSync);
+    }
 
-  /**
-   * enable or disable the Pro features of the measurements.
-   * @param enable true to enable Pro features, false to disable
-   */
-  public void setEnablePro(boolean enable) {
-    this.enablePro = enable;
-  }
+    /**
+     * Creates a new measurements object with the given CANCoder.
+     *
+     * @param cancoder                 The CANCoder to use for the measurements.
+     * @param canCoderToMechanismRatio The ratio of the canCoder rotations to the mechanism rotations.
+     *                                 A number larger than 1 means the canCoder spins more than the mechanism.
+     *                                 In most cases, this will be 1.
+     * @param unitConversion           The value that the mehcnasims rotations will be multiplied by to convert the measurements to the desired units.
+     *                                 See {@link MotorConfig#unitConversion} for more information.
+     * @param refreshHZ                The refresh rate of the signals (how often to update the signals)
+     *                                 (should be the same Hz as the thread running the measurements)
+     */
+    public MeasurementsCANCoder(CANcoder cancoder, double canCoderToMechanismRatio, double unitConversion, double refreshHZ) {
+        this(cancoder, canCoderToMechanismRatio, unitConversion, refreshHZ, false);
+    }
 
-  @Override
-  protected double getUpdatedPosition() {
-    return positionLatencyCompensatedValue;
-  }
+    @Override
+    public Measurement update(double dt) {
+        if (timeSync) BaseStatusSignal.waitForAll(timeout, motorPosition, motorVelocity);
+        else BaseStatusSignal.refreshAll(motorPosition, motorVelocity);
 
-  @Override
-  protected double getUpdatedVelocity() {
-    return currentVelocity;
-  }
+        var position = BaseStatusSignal.getLatencyCompensatedValue(motorPosition, motorVelocity);
+        positionLatencyCompensatedValue = position.in(Units.Rotations);
 
-  @Override
-  protected double getUpdatedAcceleration() {
-    return acceleration;
-  }
+        currentVelocity = motorVelocity.getValueAsDouble();
+
+        acceleration = (currentVelocity - lastVelocity) / dt;
+
+        lastVelocity = currentVelocity;
+
+        return super.update(dt);
+    }
+
+    @Override
+    protected double getUpdatedPosition() {
+        return positionLatencyCompensatedValue;
+    }
+
+    @Override
+    protected double getUpdatedVelocity() {
+        return currentVelocity;
+    }
+
+    @Override
+    protected double getUpdatedAcceleration() {
+        return acceleration;
+    }
 }

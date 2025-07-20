@@ -4,35 +4,40 @@ import com.basicMotor.measurements.Measurements;
 import com.revrobotics.RelativeEncoder;
 
 /**
- * This class is used to get the measurements from the REV motor controller it handles updating the
- * measurements and getting the latency compensated values
+ * This class provides measurements from a REV Relative Encoder.
+ * A relative encoder is the one found built-in to rev brushless motors.
+ * Also, it can be the through bore relative encoder.
  */
 public class MeasurementsREVRelative extends Measurements {
     /**
-     * the encoder used to get the measurements from the motor controller
+     * The relative encoder used for taking measurements.
      */
     private final RelativeEncoder encoder;
 
     /**
-     * the last velocity of the motor controller this is used to calculate the acceleration
+     * The previous velocity of the motor controller.
+     * Used to calculate the acceleration.
      */
-    private double lastVelocity = 0;
+    private double previousVelocity = 0;
     /**
-     * the current velocity of the motor controller this is used to calculate the acceleration
+     * The current velocity of the motor controller.
      */
     private double currentVelocity = 0;
     /**
-     * the acceleration of the motor controller this is used to calculate the acceleration
+     * The acceleration of the motor controller.
+     * Calculated as the change in velocity over time.
      */
     private double acceleration = 0;
 
     /**
-     * Creates a new measurements object with the given encoder and gear ratio
+     * Creates a new measurements object with the given relative encoder, gear ratio, and unit conversion factor.
      *
-     * @param encoder        the encoder used to get the measurements from the motor controller
-     * @param gearRatio      the gear ratio of the motor (the measurements are divided by this)
-     * @param unitConversion the value that will be multiplied by to convert the measurements to the
-     *                       desired units
+     * @param encoder        The relative encoder used to get the measurements from the motor controller.
+     * @param gearRatio      The gear ratio of the encoder, this is the ratio of the encoder's output to the mechanism's output.
+     *                       A number larger than 1 indicates a reduction (e.g., 2:1 gear ratio means the encoder turns twice for every rotation of the mechanism).
+     * @param unitConversion The value that will be multiplied by to convert the measurements to the desired units.
+     *                       This will be desired units per rotation.
+     *                       More info at {@link com.basicMotor.configuration.BasicMotorConfig.MotorConfig#unitConversion}.
      */
     public MeasurementsREVRelative(RelativeEncoder encoder, double gearRatio, double unitConversion) {
         super(gearRatio, unitConversion);
@@ -43,9 +48,9 @@ public class MeasurementsREVRelative extends Measurements {
     public Measurement update(double dt) {
         currentVelocity = encoder.getVelocity() / 60; // Convert to rotations per second
 
-        acceleration = (currentVelocity - lastVelocity) / dt;
+        acceleration = (currentVelocity - previousVelocity) / dt;
 
-        lastVelocity = currentVelocity;
+        previousVelocity = currentVelocity;
 
         return super.update(dt);
     }
@@ -67,8 +72,9 @@ public class MeasurementsREVRelative extends Measurements {
 
     /**
      * Sets the position of the encoder. This is useful for resetting the encoder position.
+     * This should be in the encoders native units (encoder rotations).
      *
-     * @param position the new position to set for the encoder
+     * @param position The position to set the encoder to, in rotations.
      */
     public void setEncoderPosition(double position) {
         encoder.setPosition(position);

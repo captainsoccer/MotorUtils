@@ -1,63 +1,62 @@
 package com.basicMotor.configuration;
 
 import com.basicMotor.BasicMotor;
-import com.basicMotor.gains.ControllerConstrains;
+import com.basicMotor.MotorManager.MotorManagerConfig;
+import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerFeedForwards;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.PIDGains;
-import com.basicMotor.MotorManager;
+import com.basicMotor.MotorManager.MotorManager;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import java.util.function.Function;
 
 /**
- * this class stores all the data on the motor controller. it is used to configure the motor it is a
- * way to pack all the data into one class and make it easier to pass around. if you want to control
- * current limits or other advanced features, use the motor controller's specific configuration
- * class
- *
+ * This class is used to store all relevant data to use the Basic Motor class.
+ * Use this class when constructing a BasicMotor instance for a one-liner initialization.
+ * also check out motor specific configurations to take advantage of motor specific features.
+ * Refer to the <a href="https://github.com/captainsoccer/MotorUtils/wiki/Configuration">wiki</a>
+ * for more information and examples.
  */
 public class BasicMotorConfig {
 
-  /** the basic motor configuration (minimum configuration required to run the motor) */
+  /**
+   * The basic parameters of the motor controller
+   * (id, name, gear ratio, unit conversion, pid controller location, inverted, idle mode, motor type)
+   */
   public MotorConfig motorConfig = new MotorConfig();
   /**
-   * the PID configuration of the motor controller
-   *
-   * <p>this is used to set the PID gains of the motor controller
+   * The pid configuration for the motor controller (kP, kI, kD, iZone, iMaxAccum, tolerance)
    */
   public PIDConfig pidConfig = new PIDConfig();
   /**
-   * the feed forward configuration of the motor controller
-   *
-   * <p>this is used to set the feed forward gains of the motor controller
+   * The feed forward configuration for the motor controller
+   * (simple feed forward, friction feed forward, setpoint feed forward, feed forward function)
    */
   public FeedForwardConfig feedForwardConfig = new FeedForwardConfig();
   /**
-   * the constraints configuration of the motor controller
-   *
-   * <p>this is used to set the constraints of the motor controller
+   * The constraints configuration for the motor controller
+   * (type of constraint (none, limited, continuous),
+   * max value of the constraint, min value of the constraint, max output, min output, voltage deadband)
    */
   public ConstraintsConfig constraintsConfig = new ConstraintsConfig();
 
   /**
-   * the profile configuration of the motor controller
-   *
-   * <p>this is used to set the motion profile of the motor controller
+   * The profile configuration for the motor controller, used for motion profiling
+   * (max control velocity, max control acceleration)
    */
   public ProfileConfig profileConfig = new ProfileConfig();
 
   /**
-   * the simulation configuration of the motor controller
-   *
-   * <p>this is used to set the simulation gains of the motor controller
+   * The simulation configuration for the motor controller, used for simulating the motor in different scenarios
+   * (kv, ka, moment of inertia, elevator simulation config, arm simulation config)
    */
   public SimulationConfig simulationConfig = new SimulationConfig();
 
   /**
-   * bunches up all the configurations into one class
+   * Bunches up all the configurations into one class
    *
-   * @return the controller gains which include PID gains, constraints, and feed forwards
+   * @return The controller gains which include PID gains, constraints, and feed forwards
    */
   public ControllerGains getControllerGains() {
     return new ControllerGains(
@@ -68,120 +67,134 @@ public class BasicMotorConfig {
   }
 
   /**
-   * if the motor controller is using an external encoder
-   * used when initializing the motor controller
-   * when creating custom configs, override this method to return true
-   * @return true if the motor controller is using an external encoder, false otherwise
+   * If the motor controller is using an external encoder.
+   * Used when initializing the motor controller.
+   * When creating motor specific configurations, override this method to check if the motor is using an external
+   * encoder connected directly to the motor controller
+   * @return True if the motor controller is using an external encoder, false otherwise
    */
   public boolean usingExternalEncoder() {
     return false;
   }
 
-  /** the basic motor configuration */
+  /**
+   * Handles the basic parameters of the motor controller.
+   */
   public static class MotorConfig {
     /**
-     * the id of the motor controller
+     * The CANBUS id of the motor controller
      *
-     * <p>this is used to identify the motor controller
+     * <p>This is used in the constructor of the motor controller to identify it in the CANBUS chain.
      */
     public int id = 0;
     /**
-     * the name of the motor controller
+     * The name of the motor controller
      *
-     * <p>this is used to identify the motor controller in the logger
+     * <p>This is used to identify the motor controller in the logger, motor logs will be under: Motors/{name}/
      */
     public String name = "motor";
     /**
-     * the gear ratio of the motor controller
+     * The gear ratio of the motor controller
      *
-     * <p>this is used to convert the motor output to the desired output a number greater than 1
-     * means the motor is geared down (a mechanism spins slower than the motor)
+     * <p>This is used to convert the number of rotations the motor does to the number of rotations the mechanism does.
+     * The different measurements (positon, velocity, acceleration) will be divided by this value
+     * do not include unit conversion in this value, it is only the gear ratio (i.e reduction ratio)
+     * if you want to convert the output to a different unit, use {@link #unitConversion}.
+     * If using an external encoder, still set this value to the gear ratio of the motor,
+     * this is important for correct conversions and torque calculations.
      */
     public double gearRatio = 1;
 
     /**
-     * the value that will be multiplied by to convert the measurements to the desired units. the
-     * default units of the motor are rotations. (rotations, rotations per second, rotations per
+     * The value that will be multiplied by to convert the measurements to the desired units.
+     * The default units of the motor are rotations.
+     * (rotations, rotations per second, rotations per
      * second squared)
      *
-     * <p>you can convert to the following units easily:
+     * <p>You can convert to the following units easily:
      *
-     * <p>* - meters: multiply by the circumference of the wheel (2 * pi * radius)
+     * <p>* - meters: unit conversion will be: 2π * radius (radius must be in meters)
      *
-     * <p>* - degrees: multiply by 360 (1 rotation = 360 degrees)
+     * <p>* - degrees: unit conversion will be: 360 (1 rotation = 360 degrees)
      *
-     * <p>* - radians: multiply by 2 * pi (1 rotation = 2 * pi radians)
+     * <p>* - radians: unit conversion will be: 2π (1 rotation = 2 * π radians)
      */
     public double unitConversion = 1;
 
     /**
-     * if the motor controller is inverted, true means clockwise is positive false means
-     * counter-clockwise is positive
+     * If the motor direction is inverted.
+     * <p>If true, positive output will result in clockwise rotation
+     * <p>If false, positive output will result in counter-clockwise rotation
      */
     public boolean inverted = false;
 
     /**
-     * the idle mode of the motor controller COAST means the motor will not try to hold its position
+     * The idle mode of the motor controller COAST means the motor will not try to hold its position
      * when not powered BRAKE means the motor will try to hold its position when not powered
      */
     public BasicMotor.IdleMode idleMode = BasicMotor.IdleMode.COAST;
     /**
-     * the location of the motor controller
+     * The location of the motor controller
      *
-     * <p>this decides if the pid controller is on the motor controller or on the rio if it's on the
-     * motor controller, it will result in lower can bus usage and faster response but if it's on
-     * the rio, all the features will be available and can use any remote sensor directly for
-     * feedback
+     * <p>This is the location of the PID Controller of the motor.
+     * The default is MOTOR, which means the PID Controller is on the motor controller itself.
+     * This is simpler and more efficient.
+     * <p>If you want to use the PID Controller on the RIO, set this to RIO.
+     * This will allow you to set a custom measurement source and have more control over the PID Controller.
+     * But it will cost more cpu and CANBUS usage.
      */
     public MotorManager.ControllerLocation location = MotorManager.ControllerLocation.MOTOR;
 
     /**
-     * the type of motor that the controller is connected to. this is used to calculate the motor
-     * torque. also used for simulation purposes.
+     * The type of motor that the controller is connected to.
+     * This is used to calculate the motor
+     * torque.
+     * Also used for simulation purposes.
+     * If another motor is following this motor, include the total number of motors.
      */
     public DCMotor motorType = DCMotor.getNEO(1);
   }
 
   /**
-   * the PID configuration of the motor controller
-   *
-   * <p>this is used to set the PID gains of the motor controller
+   * Handles the PID configuration of the motor controller
    */
   public static class PIDConfig {
-    /** the kp gain of the PID controller units are: (voltage / unit of measurement) */
+    /** The kp gain of the PID controller units are: (voltage / unit of control) <p>The value must be greater then zero */
     public double kP = 0;
-    /** the ki gain of the PID controller units are: (voltage * second / unit of measurement) */
+    /** The ki gain of the PID controller units are: (voltage * second / unit of control)  <p>The value must be greater then zero*/
     public double kI = 0;
-    /** the kd gain of the PID controller units are: (voltage / unit of measurement * second) */
+    /** The kd gain of the PID controller units are: (voltage / unit of control * second) <p>The value must be greater then zero */
     public double kD = 0;
     /**
-     * the iZone of the PID controller units are: (unit of measurement)
+     * The iZone of the PID controller units are: (unit of control)
      *
-     * <p>this is the zone in which the integral term is applied, outside of this zone the integral
-     * term will be zeroed
+     * <p>The value must be greater than or equal to zero (zero means no integral term)
+     * <p>If the error is within this zone, the integral will accumulate, when the error is outside it will be zeroed
      */
     public double iZone = Double.POSITIVE_INFINITY;
     /**
-     * the maximum accumulation and contribution of the integral term units are: (voltage)
+     * The maximum accumulation and contribution of the integral term units are: (voltage)
      *
-     * <p>this is the maximum value that the integral term can accumulate to, if it exceeds this
-     * value, it will be clamped
+     * <p>The value must be greater than or equal to zero (zero means no integral term)
+     * <p>This is the maximum value that the integral term can accumulate to, if it exceeds this
+     * value, it will be clamped.
+     * The default value is 13, but can be changed to any value.
+     * Also, the default value can be changed in the #{@link MotorManagerConfig}
      */
     public double iMaxAccum = MotorManager.config.defaultMaxMotorOutput;
     /**
-     * the tolerance of the PID controller units are: (unit of measurement)
+     * The tolerance of the PID controller units are: (unit of control)
      *
-     * <p>this is the tolerance of the PID controller, if the error is within this tolerance, the
-     * controller will consider it done and not apply any output (not including feed forward)
+     * <p>The value must be greater than or equal to zero (zero means pid will never consider itself at setpoint)
+     * <p>This is the tolerance of the PID controller, if the error is within this tolerance, the
+     * PID controller will consider itself at setpoint and will not apply any output.
      */
     public double tolerance = 0;
 
     /**
-     * gets the PID gains of the controller
+     * Gets the PID gains of the controller
      *
-     * <p>this is used to get the PID gains of the controller
-     *
-     * @return the PID gains of the controller
+     * @return The PID gains of the controller
      */
     public PIDGains getGains() {
       return new PIDGains(kP, kI, kD, iZone, iMaxAccum, tolerance);
@@ -189,44 +202,46 @@ public class BasicMotorConfig {
   }
 
   /**
-   * the feed forward configuration of the motor controller
-   *
-   * <p>this is used to set the feed forward gains of the motor controller
+   * Handles the feed forward configuration of the motor controller.
+   * Feed forwards are always calculated on the RIO, this is to ensure reliability and repeatability.
    */
   public static class FeedForwardConfig {
     /**
-     * the friction feed forward gain of the motor controller units are: (voltage)
+     * The friction feed forward gain of the motor controller units are: (voltage)
      *
-     * <p>this is used to compensate for the friction in the motor, it will be applied to the output
-     * in the direction of travel
+     * <p>The value must be greater than or equal to zero (zero means no friction feed forward)
+     * <p>This is used to compensate for the friction in the motor, it will be applied to the output
+     * in the direction of travel.
      */
     public double frictionFeedForward = 0;
     /**
-     * the k_V feed forward gain of the motor controller units are: (voltage / unit of measurement)
+     * The setpoint feed forward gain of the motor controller units are: (voltage / unit of control).
      *
-     * <p>this is usually used in velocity control, but it is just a feed forward gain that is
+     * <p>The value must be greater than or equal to zero (zero means no setpoint feed forward)
+     * <p>This is usually used in velocity control, but it is just a feed forward gain that is
      * multiplied by the setpoint
      */
     public double setpointFeedForward = 0;
     /**
-     * the simple feed forward gain of the motor controller units are: (voltage)
+     * The simple feed forward gain of the motor controller units are: (voltage)
      *
-     * <p>it's just a constant voltage applied to the output used, for example, in elevators
+     * <p>The value must be greater than or equal to zero (zero means no simple feed forward)
+     * <p>It's just a constant voltage applied to the output used, for example, in elevators
      */
     public double simpleFeedForward = 0;
     /**
-     * a custom feed forward function that takes the setpoint and returns a value
+     * A custom feed forward function that takes the setpoint and returns a value.
+     * It takes a setpoint in units of control and returns a value in volts.
      *
-     * <p>this can be used for more complex feed forwards, like an arm with gravity compensation
+     * <p>The function must be O(1).
+     * <p>This can be used for more complex feed forwards, like an arm with gravity compensation
      */
     public Function<Double, Double> customFeedForward = (setpoint) -> 0.0;
 
     /**
-     * gets the feed forwards of the controller
+     * Gets the feed forwards of the controller
      *
-     * <p>this is used to get the feed forwards of the controller
-     *
-     * @return the feed forwards of the controller
+     * @return The feed forwards of the controller
      */
     public ControllerFeedForwards getFeedForwards() {
       return new ControllerFeedForwards(
@@ -235,109 +250,121 @@ public class BasicMotorConfig {
   }
 
   /**
-   * the constraints configuration of the motor controller
-   *
-   * <p>this is used to set the constraints of the motor controller
+   * Handles the constraints configuration of the motor controller
    */
   public static class ConstraintsConfig {
     /**
-     * the type of constraint to apply to the controller
+     * The type of constraint to apply to the controller
      *
-     * <p>this can be NONE, LIMITED, or CONTINUOUS
+     * <p>This can be NONE, LIMITED, or CONTINUOUS
      *
      * <p>* NONE means no constraints are applied
      *
-     * <p>* LIMITED means the output is clamped to the max and min values, for example, an arm that
-     * can only move between 0 and 90 degrees
+     * <p>* LIMITED means there are soft limits in the min value and max value.
+     * For example, an arm with a limited range of motion between 0 and 90 degrees.
+     * Or an elevator with a base location of 0 meters and a maximum height of 2 meters.
      *
-     * <p>* CONTINUOUS means the output is continuous and wraps around, for example, a wheel that
-     * can spin indefinitely or a swerve module
+     * <p>* CONTINUOUS means the position is continuous.
+     * Which means the number of rotations doesn't matter.
+     * This effects only position control, where it will find the shortest path to the setpoint.
+     * The most common use case is a swerve module steering motor.
      *
      */
-    public ControllerConstrains.ConstraintType constraintType =
-        ControllerConstrains.ConstraintType.NONE;
+    public ControllerConstraints.ConstraintType constraintType =
+        ControllerConstraints.ConstraintType.NONE;
+
     /**
-     * the maximum value of the constraint units are: (unit of measurement)
+     * The maximum value of the constraint units are: (unit of position (default is rotations))
      *
-     * <p>this represents the maximum value of the constraint:
+     * <p>This represents the maximum value of the constraint:
      *
-     * <p>* for a limited constraint, this is the maximum value the motor position can reach
+     * <p>* For a limited constraint, this is the maximum value the motor position can reach.
      *
-     * <p>* for a continuous constraint, this is the maximum value the position can reach before
-     * wrapping around (for example, 360)
+     * <p>* For a continuous constraint, this is the maximum value the position can reach before
+     * wrapping around (for example, 1 rotation, 0.5 rotations, etc.).
      *
      */
     public double maxValue = 0;
+
     /**
-     * the minimum value of the constraint units are: (unit of measurement)
+     * The minimum value of the constraint units are: (unit of position (default is rotations))
      *
-     * <p>this represents the minimum value of the constraint:
+     * <p>This represents the minimum value of the constraint:
      *
-     * <p>* for a limited constraint, this is the minimum value the motor position can reach
+     * <p>* For a limited constraint, this is the minimum value the motor position can reach.
      *
-     * <p>* for a continuous constraint, this is the minimum value the position can reach before
-     * wrapping around (for example, 0)
+     * <p>* For a continuous constraint, this is the minimum value the position can reach before
+     * wrapping around (for example, 0 rotations, -0.5 rotations, etc.).
      *
      */
     public double minValue = 0;
+
     /**
-     * the maximum output of the constraint units are: (voltage)
+     * The maximum output of the constraint units are: (voltage)
      *
-     * <p>this is the maximum output of the motor controller in the forward direction
+     * <p>This is the maximum output of the motor controller in the forward direction
+     * This is used to save power, relax the mechanism, and prevent damage to the motor.
      */
     public double maxOutput = MotorManager.config.defaultMaxMotorOutput;
+
     /**
-     * the minimum output of the constraint units are: (voltage)
+     * The minimum output of the constraint units are: (voltage)
+     * The value is automatically set to a negative value, so no need to think of it.
+     * This value will usually be the negative of the {@link #maxOutput} value.
      *
-     * <p>this is the minimum output of the motor controller in the reverse direction
+     * <p>This is the minimum output of the motor controller in the reverse direction.
+     * This is used to save power, relax the mechanism, and prevent damage to the motor.
      */
     public double minOutput = -MotorManager.config.defaultMaxMotorOutput;
     /**
-     * the voltage deadband of the constraint units are: (voltage)
+     * The voltage deadband of the constraint units are: (voltage)
      *
-     * <p>this is the deadband of the motor controller, if the output is within this range, the
-     * motor will not apply any output to prevent jittering and damage to the motor
+     * <p>This is the minimum voltage that the motor controller will apply to the motor,
+     * any absolute value below this will be ignored.
+     * And the motor will not apply any output.
      */
     public double voltageDeadband = 0;
 
     /**
-     * gets the constraints of the controller
+     * Gets the constraints of the controller
      *
-     * <p>this is used to get the constraints of the controller
-     *
-     * @return the constraints of the controller
+     * @return The constraints of the controller
      */
-    public ControllerConstrains getConstraints() {
-      return new ControllerConstrains(
+    public ControllerConstraints getConstraints() {
+      return new ControllerConstraints(
           constraintType, minValue, maxValue, maxOutput, minOutput, voltageDeadband);
     }
   }
 
   /**
-   * the profile configuration of the motor controller used for motion profiling and trajectory
-   * generation
+   * The profile configuration of the motor controller used for motion profiling and trajectory
+   * generation.
+   * For motion profiling to work, both of the maximum velocity and maximum acceleration must be set to a finite value.
+   * Default values are set to {@link Double#POSITIVE_INFINITY} which means no motion profiling will be applied.
    */
   public static class ProfileConfig {
     /**
-     * the maximum velocity of the motor controller units are: (unit of control per second) this is
-     * used to create a motion profile for the motor controller if using a profiled position
-     * control, this is the maximum velocity if using a profiled velocity control, this is the
-     * maximum acceleration
+     * The maximum velocity of the motor controller units are: (unit of control per second).
+     * This is used to create a motion profile for the motor controller.
+     * This setting applies only if using a profiled control mode.
+     * <p>If using a profiled position control, this is the maximum velocity of the motor.
+     * <p>If using a profiled velocity control, this is the maximum acceleration of the motor.
      */
     public double maximumMeasurementVelocity = Double.POSITIVE_INFINITY;
 
     /**
-     * the maximum acceleration of the motor controller units are: (unit of control per second
-     * squared) this is used to create a motion profile for the motor controller if using a profiled
-     * position control, this is the maximum acceleration if using a profiled velocity control, this
-     * is the maximum jerk
+     * The maximum acceleration of the motor controller units are: (unit of control per second squared).
+     * This is used to create a motion profile for the motor controller.
+     * This setting applies only if using a profiled control mode.
+     * <p>If using a profiled position control, this is the maximum acceleration of the motor.
+     * <p>If using a profiled velocity control, this is the maximum jerk of the motor.
      */
     public double maximumMeasurementAcceleration = Double.POSITIVE_INFINITY;
 
     /**
-     * gets the profile constraints of the controller
+     * Gets the profile constraints of the controller
      *
-     * @return the profile constraints of the controller
+     * @return The profile constraints of the controller
      */
     public TrapezoidProfile.Constraints getProfileConstraints() {
       return new TrapezoidProfile.Constraints(
@@ -346,108 +373,114 @@ public class BasicMotorConfig {
   }
 
   /**
-   * the simulation configuration of the motor controller
-   * used when you want to simulate the motor
+   * The simulation configuration of the motor controller.
+   * Used when you want to simulate the system the motor is controlling.
+   * To learn more about the simulation configuration, refer to the wiki:
+   * <a href="wiki link">wiki</a> //TODO: add wiki link
    */
   public static class SimulationConfig {
     /**
-     * the kV gain of the motor controller units are: (voltage / unit of measurement per second) you
-     * can use this and {@link #kA} to simulate the motor controller or use {@link #momentOfInertia}
-     * the kv must be in SI units. for general use (angular mechanisms), it is in (voltage / radians
-     * per second). for elevators, telescopic arms, and other linear mechanisms, it is in (voltage /
-     * meters per second). but it is after gear ratio. for an arm it will be in (voltage / radians
-     * per second). and the radians are the mechanisms, not the motor.
+     * The kV gain of the motor controller units are: (voltage / unit of velocity).
+     * Use this and {@link #kA} to simulate the motor controller or use {@link #momentOfInertia}.
+     * The kv must be in the mechanism rotations, not the motor rotations.
+     * (i.e. after gear ratio).
+     * The kv must be in SI units.
+     * <p>For general use (angular mechanisms), it will be in (voltage / radians per second).
+     * <p>For elevators, telescopic arms, and other linear mechanisms, it is in (voltage / meters per second).
      */
     public double kV = 0;
 
     /**
-     * the kA gain of the motor controller units are: (voltage / unit of measurement * per second
-     * squared) the ka must be in SI units. for general use (angular mechanisms), it is in (voltage
-     * / radians per second squared). for elevators, telescopic arms, and other linear mechanisms,
-     * it is in (voltage / meters per second squared). but it is after gear ratio. for an arm it
-     * will be in (voltage / radians per second squared). and the radians are the mechanisms, not
-     * the motor.
+     * The kA gain of the motor controller units are: (voltage / unit of acceleration).
+     * use this and {@link #kV} to simulate the motor controller or use {@link #momentOfInertia}.
+     * The ka must be in the mechanism rotations, not the motor rotations.
+     * (i.e. after gear ratio).
+     * The ka must be in SI units.
+     * For general use (angular mechanisms), it will be in (voltage / radians per second squared).
+     * For elevators, telescopic arms, and other linear mechanisms, it will be in (voltage / meters per second squared).
      */
     public double kA = 0;
 
     /**
-     * the moment of inertia of the motor controller units are: (kilogram * meter squared) this is
-     * used to simulate the motor inertia in the simulation if this is 0, the kV and kA must be
-     * provided
+     * The moment of inertia of the motor controller units are: (kilogram * meter squared).
+     * This is used to simulate the motor inertia in the simulation.
+     * To simulate a mechanism, you must either use the kV and kA values or set the moment of inertia.
+     * For a linear mechanism, the moment of inertia is the moment of inertia of the pulley or pinion.
+     * See more about the moment of inertia on wikipedia: <a href="https://en.wikipedia.org/wiki/Moment_of_inertia">Moment of inertia</a>
      */
     public double momentOfInertia = 0.0;
 
     /**
-     * the standard deviation of the position measurement in the simulation this is used to simulate
-     * the noise in the position measurement units are: (unit of measurement)
+     * The standard deviation of the position measurement in the simulation this is used to simulate
+     * the noise in the position measurement units are: (unit of position)
      */
     public double positionStandardDeviation = 0.0;
 
     /**
-     * the standard deviation of the velocity measurement in the simulation this is used to simulate
-     * the noise in the velocity measurement units are: (unit of measurement per second)
+     * The standard deviation of the velocity measurement in the simulation this is used to simulate
+     * the noise in the velocity measurement units are: (unit of velocity)
      */
     public double velocityStandardDeviation = 0.0;
 
     /**
-     * the elevator simulation configuration used if the motor is an elevator or a similar
-     * mechanism, and you want to simulate it when using the elevator, units are meters, other units
-     * will break the simulation
+     * The elevator simulation configuration used if the motor is an elevator or a similar mechanism.
+     * This has specific parameters for simulating an elevator system.
      */
     public final ElevatorSimConfig elevatorSimConfig = new ElevatorSimConfig();
 
     /**
-     * the arm simulation configuration used if the motor is an arm or a similar mechanism, and you
-     * want to simulate it
+     * The arm simulation configuration used if the motor is an arm or a similar mechanism.
+     * The arm simulation is for a single jointed arm where the 0 angle is parallel to the ground.
+     * This has specific parameters for simulating an arm system.
      */
     public final ArmSimConfig armSimConfig = new ArmSimConfig();
 
-    /** the elevator simulation configuration */
+    /** Handles elevator simulation parameters, used only when simulating an elevator system */
     public static class ElevatorSimConfig {
       /**
-       * if the elevator simulation should enable gravity simulation if true, there will be a force
+       * If the elevator simulation should enable gravity simulation if true, there will be a force
        * acting on the elevator due to gravity if false, the elevator will not be affected by
        * gravity
        */
       public boolean enableGravitySimulation = true;
 
       /**
-       * the mass of the elevator in kilograms
-       *
-       * <p>this is used to simulate the elevator's mass in the simulation if the kv and ka are
-       * provided, this will be ignored
+       * The mass of the elevator in kilograms.
+       * This includes all the stages of the elevator and the load it carries.
+       * The mass is used only if the kV and kA are not provided.
+       * If using a cascade elevator, the carriage mass (the part which is not connected to the motor directly) should be doubled.
+       * This is due to the marriage moving twice the distance of the motor.
+       * (includes both the portion directly driven by the motor and any parts moved as a result of the mechanism)
        */
       public double massKG = 0;
 
       /**
-       * the radius of the pulley in meters
-       *
-       * <p>this is used to simulate the pulley radius in the simulation if the kv and ka are
-       * provided, this will be ignored
+       * The radius of the pulley in meters.
+       * This is used to calculate the distance the elevator moves based on the motor rotations.
+       * The pully radius is not used if the kV and kA are provided.
        */
       public double pulleyRadiusMeters = 0;
     }
 
     /**
-     * the arm simulation configuration used if the motor is an arm or a similar mechanism, and you
-     * want to simulate it
+     * Handles the arm simulation parameters, used only when simulating an arm system.
      */
     public static class ArmSimConfig {
-      /** the length of the arm in meters taken from the pivot point to the end of the arm */
+      /** The length of the arm in meters taken from the pivot point to the end of the arm */
       public double armlengthMeters = 0.0;
 
       /**
-       * should the arm simulate gravity?
+       * Should the arm simulate gravity?
        *
-       * <p>if true, there will be a force acting on the arm due to gravity
+       * <p>If true, there will be a force acting on the arm due to gravity
        *
-       * <p>if false, the arm will not be affected by gravity
+       * <p>If false, the arm will not be affected by gravity
        */
       public boolean simulateGravity = true;
 
       /**
-       * the starting angle of the arm in rotations in simulation, the 0 angle is parralel to the
-       * ground (full force of gravity is applied in 0 angle)
+       * The starting angle of the arm in rotations in simulation.
+       * The 0 angle is parallel to the ground (full force of gravity is applied in 0 angle).
        */
       public double startingAngle = 0.0;
     }
