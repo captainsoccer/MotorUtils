@@ -1,7 +1,6 @@
 package com.basicMotor.configuration;
 
 import com.basicMotor.gains.currentLimits.CurrentLimitsSparkBase;
-import com.basicMotor.configuration.BasicMotorConfig.MotorConfig;
 
 /**
  * This class represents the configuration for a basic spark base motor controller.
@@ -79,7 +78,9 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
     /**
      * Should the motor use an external encoder (connected directly to the motor controller)?
      * Change this to true if you want to use an external encoder.
-     * If you want the encoder to be initialized with an absolute encoder, use also {@link BasicSparkBaseConfig.AbsoluteEncoderConfig}.
+     * If the encoder is a through-bore encoder and is connected to a spark flex motor controller,
+     * you can use the absolute encoder to reset the relative encoder then use the higher quality relative encoder.
+     * To do that, set this flag to true and configure the absolute encoder in {@link BasicSparkBaseConfig#absoluteEncoderConfig}.
      */
     public boolean useExternalEncoder = false;
 

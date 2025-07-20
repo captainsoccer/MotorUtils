@@ -4,59 +4,67 @@ import com.basicMotor.BasicMotor;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.configuration.BasicSparkBaseConfig;
 import com.basicMotor.controllers.Controller;
-import com.basicMotor.gains.ControllerConstrains;
+import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerGains;
 import com.basicMotor.gains.currentLimits.CurrentLimits;
-import com.basicMotor.gains.currentLimits.CurrentLimitsREV;
+import com.basicMotor.gains.currentLimits.CurrentLimitsSparkBase;
 import com.basicMotor.gains.PIDGains;
 import com.basicMotor.LogFrame;
 import com.basicMotor.measurements.Measurements;
 import com.basicMotor.measurements.revEncoders.MeasurementsREVAbsolute;
 import com.basicMotor.measurements.revEncoders.MeasurementsREVRelative;
-import com.basicMotor.Manager.MotorManager;
+import com.basicMotor.MotorManager.MotorManager;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.*;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
+import com.basicMotor.configuration.BasicSparkBaseConfig.AbsoluteEncoderConfig.AbsoluteEncoderRange;
 import edu.wpi.first.wpilibj.DriverStation;
 
 /**
- * a base class for Spark Base motor controllers (SparkFlex, SparkMax, etc.)
- * provides common functionality for all Spark Base motor controllers
- * extends the BasicMotor class
- * this class assumes you are using a brushless motor controller
+ * A class that includes common functionality for Spark Base motor controllers
+ * (e.g., SparkFlex, SparkMax, etc.).
+ * This class assumes that the motor is brushless.
  */
 public abstract class BasicSparkBase extends BasicMotor {
     /**
-     * the Spark Base motor controller (SparkFlex, SparkMax, etc.)
+     * The spark base motor instance (SparkFlex, SparkMax, etc.)
+     * This is provided by the derived class.
      */
-    protected final SparkBase motor;
+    private final SparkBase motor;
     /**
-     * the configuration of the Spark Base motor controller (SparkFlexConfig, SparkMaxConfig, etc.)
+     * The configuration of the Spark Base motor controller.
+     * Stores all the configuration parameters for the motor controller.
      */
-    protected final SparkBaseConfig config;
+    private final SparkBaseConfig config;
 
     /**
-     * the default measurements for the Spark Base motor controller
-     * this is used to get the measurements of the motor when no external encoder is used
+     * The default measurements for the Spark Base motor controller.
+     * This is the built-in encoder of any brushless motor connected to the Spark Base motor controller.
      */
     private final Measurements defaultMeasurements;
 
-    /** the idle power draw of the Spark MAX in watts (according to ChatGPT) */
-    private static final double sparkMaxIdlePowerDraw = 0.72;
+    /**
+     * The idle power draw of the motor controller.
+     * This value is used to estimate the power draw of the motor.
+     * This value is based on chatGPT's answer to the question about the idle power draw of the Spark MAX motor controller.
+     */
+    private static final double SPARK_MAX_IDLE_POWER_DRAW = 0.72;
 
     /**
-     * creates a new spark base motor controller
+     * Creates a new Spark Base motor controller with the provided parameters.
      *
-     * @param motor          the Spark base motor controller (SparkFlex, SparkMax, etc.)
-     * @param config         the config of the Spark base motor controller (SparkFlexConfig, SparkMaxConfig,
-     *                       etc.)
-     * @param gains          the gains of the controller (PID, FF, etc.)
-     * @param name           the name of the motor (used for logging and debugging)
-     * @param gearRatio      the gear ratio of the motor (used for measurements and calculations)
-     * @param unitConversion the value that will be multiplied by to convert the measurements to the desired units
-     * @param location       the location of the motor controller (used for logging and debugging)
+     * @param motor          The new instance of the spark base motor controller (SparkFlex, SparkMax, etc.).
+     *                       This needs to be a brand-new instance of the motor controller without any configuration.
+     * @param config         The empty configuration of the Spark Base motor controller (SparkFlexConfig, SparkMaxConfig, etc.).
+     *                       This should be an empty configuration that will be applied to the motor controller.
+     * @param gains          The controller gains for the motor controller.
+     * @param name           The name of the motor controller (used for logging and debugging).
+     * @param gearRatio      The gear ratio of the motor controller.
+     * @param unitConversion The conversion factor for the motor's position units.
+     *                       This will be multiplied by the motor's rotation to get the position with the desired units.
+     * @param location       The location of the pid controller (RIO or motor).
      */
     public BasicSparkBase(
             SparkBase motor,
@@ -70,10 +78,7 @@ public abstract class BasicSparkBase extends BasicMotor {
         super(gains, name, location);
 
         this.motor = motor;
-
-        this.config = config;
-        config.voltageCompensation(
-                MotorManager.config.motorIdealVoltage); // set the voltage compensation to the idle voltage
+        this.config = config.voltageCompensation(MotorManager.config.motorIdealVoltage); // set the voltage compensation to the idle voltage
         // all configs should be stored in code and not on motor
         applyConfig();
 
@@ -84,32 +89,29 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * creates a new spark base motor controller
+     * Creates a new Spark Base motor controller with the config and motor.
      *
-     * @param motor       the Spark base motor controller (SparkFlex, SparkMax, etc.)
-     * @param config      the config of the Spark base motor controller (SparkFlexConfig, SparkMaxConfig,
-     *                    etc.)
-     * @param motorConfig the basic motor configuration (used for logging and debugging)
+     * @param motor       The new instance of the spark base motor controller (SparkFlex, SparkMax, etc.).
+     *                    This needs to be a brand-new instance of the motor controller without any configuration.
+     * @param config      The empty configuration of the Spark Base motor controller (SparkFlexConfig, SparkMaxConfig, etc.).
+     *                    This should be an empty configuration that will be applied to the motor controller.
+     * @param motorConfig The configuration of the motor controller.
      */
     public BasicSparkBase(SparkBase motor, SparkBaseConfig config, BasicMotorConfig motorConfig) {
-
         super(motorConfig);
 
         this.motor = motor;
 
-        this.config = config;
-        config.voltageCompensation(
-                MotorManager.config.motorIdealVoltage); // set the voltage compensation to the idle voltage
+        this.config = config.voltageCompensation(MotorManager.config.motorIdealVoltage); // set the voltage compensation to the idle voltage
         // all configs should be stored in code and not on motor
         applyConfig();
 
         configurePeriodicFrames(motorConfig.motorConfig.location.getHZ());
 
-        defaultMeasurements =
-                new MeasurementsREVRelative(
-                        motor.getEncoder(),
-                        motorConfig.motorConfig.gearRatio,
-                        motorConfig.motorConfig.unitConversion);
+        defaultMeasurements = new MeasurementsREVRelative(
+                motor.getEncoder(),
+                motorConfig.motorConfig.gearRatio,
+                motorConfig.motorConfig.unitConversion);
 
         if (!(motorConfig instanceof BasicSparkBaseConfig sparkBaseConfig)) {
             DriverStation.reportWarning("not using specific Spark Base config for motor: " + name, false);
@@ -120,10 +122,13 @@ public abstract class BasicSparkBase extends BasicMotor {
 
         if (sparkBaseConfig.externalEncoderConfig.useExternalEncoder
                 && sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder) {
-            return; // let the derived class handle this
+            //spark max (and maybe other future Spark Base motors)
+            // cannot use both an absolute encoder and an external encoder at the same time
+            // so we will not configure the encoders and let the derived class handle this
+            return;
         }
 
-        // if the motor uses an absolute encoder, configure it
+        // if the motor is using only an absolute encoder, configure it
         if (sparkBaseConfig.absoluteEncoderConfig.useAbsoluteEncoder) {
             var absoluteEncoderConfig = sparkBaseConfig.absoluteEncoderConfig;
 
@@ -131,11 +136,10 @@ public abstract class BasicSparkBase extends BasicMotor {
                     absoluteEncoderConfig.inverted,
                     absoluteEncoderConfig.zeroOffset,
                     absoluteEncoderConfig.sensorToMotorRatio,
-                    absoluteEncoderConfig.mechanismToSensorRatio,
                     absoluteEncoderConfig.absoluteEncoderRange);
         }
 
-        // if the motor uses an external encoder, configure it
+        // if the motor is using only an external encoder, configure it
         if (sparkBaseConfig.externalEncoderConfig.useExternalEncoder) {
             var externalEncoderConfig = sparkBaseConfig.externalEncoderConfig;
 
@@ -147,12 +151,21 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * gets the Spark MAX motor controller (useful if needed direct access to the motor controller)
+     * Gets the spark base motor controller instance.
      *
-     * @return the Spark MAX motor controller
+     * @return The SparkBase motor controller instance (SparkFlex, SparkMax, etc.).
      */
     public SparkBase getMotor() {
         return motor;
+    }
+
+    /**
+     * Gets the configuration of the Spark Base motor controller.
+     *
+     * @return The SparkBaseConfig of the motor controller.
+     */
+    public SparkBaseConfig getSparkConfig() {
+        return config;
     }
 
     @Override
@@ -170,7 +183,7 @@ public abstract class BasicSparkBase extends BasicMotor {
         double outputVoltage = motor.getAppliedOutput() * MotorManager.config.motorIdealVoltage;
         double powerOutput = outputVoltage * current;
 
-        double powerDraw = sparkMaxIdlePowerDraw + powerOutput; // idle power draw + output power
+        double powerDraw = SPARK_MAX_IDLE_POWER_DRAW + powerOutput; // idle power draw + output power
         double currentDraw = powerDraw / voltage; // current draw is power draw / voltage
 
         return new LogFrame.SensorData(
@@ -185,7 +198,7 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     @Override
-    protected void setMotorOutput(double setpoint, double feedForward, Controller.RequestType mode) {
+    protected void setMotorOutput(double setpoint, double feedForward, Controller.ControlMode mode) {
         switch (mode) {
             // stop the motor output
             case STOP -> stopMotorOutput();
@@ -203,25 +216,25 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * sets the closed loop output of the motor
+     * Sets the closed loop output for the Spark Base motor controller.
+     * This is used only when there is a request that needs pid control and
+     * the pid controller is running on the Spark Base motor controller.
      *
-     * @param setpoint    the setpoint of the closed loop output
-     * @param feedForward the feed forward of the closed loop output
-     * @param mode        the control type of the closed loop output
+     * @param setpoint    The setpoint for the closed loop output.
+     * @param feedForward The feed forward value for the closed loop output. (in volts)
+     * @param mode        The control type for the closed loop output.
      */
-    private void setClosedLoopOutput(
-            double setpoint, double feedForward, SparkBase.ControlType mode) {
-        var okSignal =
-                motor
-                        .getClosedLoopController()
-                        .setReference(setpoint, mode, ClosedLoopSlot.kSlot0, feedForward);
+    private void setClosedLoopOutput(double setpoint, double feedForward, SparkBase.ControlType mode) {
+        //sets the closed loop output for the Spark MAX motor controller
+        var errorSignal = motor.getClosedLoopController().setReference(setpoint, mode, ClosedLoopSlot.kSlot0, feedForward);
 
-        if (okSignal != REVLibError.kOk) {
+        //if there was an error setting the closed loop output, report it
+        if (errorSignal != REVLibError.kOk) {
             DriverStation.reportError(
                     "Failed to set closed loop output for Spark MAX motor: "
                             + name
                             + ". Error: "
-                            + okSignal.name(),
+                            + errorSignal.name(),
                     false);
         }
     }
@@ -264,14 +277,16 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     @Override
-    protected void updateConstraints(ControllerConstrains constraints) {
-        double idleVoltage = MotorManager.config.motorIdealVoltage;
+    protected void updateConstraints(ControllerConstraints constraints) {
+        double idealVoltage = MotorManager.config.motorIdealVoltage;
 
         // sets the max voltage to the max motor output
-        config.closedLoop.maxOutput(constraints.getMaxMotorOutput() / idleVoltage);
-        config.closedLoop.minOutput(constraints.getMinMotorOutput() / idleVoltage);
+        config.closedLoop.maxOutput(constraints.getMaxMotorOutput() / idealVoltage);
+        config.closedLoop.minOutput(constraints.getMinMotorOutput() / idealVoltage);
 
-        if (constraints.getConstraintType() == ControllerConstrains.ConstraintType.LIMITED) {
+        //if the constraints are continuous, ignores them.
+        //the rio code handles the continuous constraints.
+        if (constraints.getConstraintType() == ControllerConstraints.ConstraintType.LIMITED) {
             // sets the soft limits to the max and min values
             config.softLimit.forwardSoftLimit(constraints.getMaxValue());
             config.softLimit.reverseSoftLimit(constraints.getMinValue());
@@ -297,20 +312,32 @@ public abstract class BasicSparkBase extends BasicMotor {
     @Override
     public void setCurrentLimits(CurrentLimits currentLimits) {
 
-        if (currentLimits instanceof CurrentLimitsREV limits) {
-            int rpm =
-                    (int)
-                            ((limits.getFreeSpeedRPS() * 60)
-                                    * getMeasurements().getGearRatio()); // convert RPS to RPM
-            config.smartCurrentLimit(limits.getStallCurrentLimit(), limits.getStatorCurrentLimit(), rpm);
+        if (currentLimits instanceof CurrentLimitsSparkBase limits) {
+            //if both the normal and secondary current limits are 0, do not set any current limits
+            if (limits.getCurrentLimit() == 0 && limits.getSecondaryCurrentLimit() == 0) return;
 
-            config.secondaryCurrentLimit(limits.getSecondaryCurrentLimit());
-        } else {
-            // if the current limits are not REV specific, use the normal current limits
-            config.smartCurrentLimit(currentLimits.getStatorCurrentLimit());
+            //if there is a secondary current limit, set it
+            if (limits.getSecondaryCurrentLimit() != 0) config.secondaryCurrentLimit(limits.getSecondaryCurrentLimit());
+
+            //if there is a free speed current limit and a stall current limit, set both
+            if (limits.getCurrentLimit() != 0 && limits.getStallCurrentLimit() != 0) {
+                config.smartCurrentLimit(limits.getStallCurrentLimit(), limits.getCurrentLimit(), limits.getFreeSpeedRPM());
+            }
+            //if there is only free set it.
+            else if (limits.getCurrentLimit() != 0) {
+                config.smartCurrentLimit(limits.getCurrentLimit());
+            }
+
+        }
+        // if the current limits are not REV specific, use the normal current limits
+        else {
+            //if there are no current limits, do not set any current limits
+            if (currentLimits.getCurrentLimit() == 0) return;
+
+            config.smartCurrentLimit(currentLimits.getCurrentLimit());
 
             DriverStation.reportWarning(
-                    "using default current limits for Spark MAX motor: " + name, false);
+                    "using non Spark Base current limits for motor: " + name, false);
         }
 
         applyConfig();
@@ -352,12 +379,13 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * configures the periodic frames for the Spark MAX motor controller This is used to set the
-     * frequency of the periodic frames some might not affect the Spark MAX, but are included for
-     * completeness check the chart at <a
-     * href="https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames">...</a>
+     * Configures the periodic frames according to the main loop frequency.
+     * Also applies the sensor loop frequency.
+     * Note that not all periodic frames will be changed due to the limitations of the Spark base motor controllers.
+     * For more information about periodic frames, see the
+     * <a href="https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames">rev website</a>
      *
-     * @param mainLoopHZ the frequency of the main loop in Hz
+     * @param mainLoopHZ The frequency of the main loop in Hz.
      */
     private void configurePeriodicFrames(double mainLoopHZ) {
         var signals = config.signals;
@@ -371,8 +399,8 @@ public abstract class BasicSparkBase extends BasicMotor {
         signals.outputCurrentPeriodMs(sensorLoopPeriodMs); // currently does nothing
 
         signals.appliedOutputPeriodMs(mainLoopPeriodMs); // currently does something
-        signals.primaryEncoderPositionAlwaysOn(true);
-        signals.primaryEncoderVelocityAlwaysOn(true);
+        signals.primaryEncoderPositionAlwaysOn(false);
+        signals.primaryEncoderVelocityAlwaysOn(false);
         signals.primaryEncoderPositionPeriodMs(mainLoopPeriodMs); // currently does something
         signals.primaryEncoderVelocityPeriodMs(mainLoopPeriodMs); // currently does something
 
@@ -388,8 +416,6 @@ public abstract class BasicSparkBase extends BasicMotor {
         // check the docs at
         // https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames
 
-        signals.primaryEncoderPositionAlwaysOn(false);
-        signals.primaryEncoderVelocityAlwaysOn(false);
         signals.primaryEncoderPositionPeriodMs(maxPeriodMs);
         signals.primaryEncoderVelocityPeriodMs(maxPeriodMs);
 
@@ -402,9 +428,6 @@ public abstract class BasicSparkBase extends BasicMotor {
 
         int periodMs = (int) ((1 / HZ) * 1000); // convert to milliseconds
 
-        // set the encoder position and velocity to be always on
-        signals.primaryEncoderPositionAlwaysOn(true);
-        signals.primaryEncoderVelocityAlwaysOn(true);
         signals.primaryEncoderPositionPeriodMs(periodMs);
         signals.primaryEncoderVelocityPeriodMs(periodMs);
 
@@ -418,7 +441,6 @@ public abstract class BasicSparkBase extends BasicMotor {
         config.follow(motor.motor, inverted);
         applyConfig();
 
-        this.motor.resumeFollowerMode();
     }
 
     @Override
@@ -427,7 +449,9 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * applies the current configuration to the motor
+     * This applies the config file to the spark base motor controller.
+     * If there is an error applying the configuration,
+     * it will report the error to the driver station.
      */
     private void applyConfig() {
         var okSignal =
@@ -446,63 +470,49 @@ public abstract class BasicSparkBase extends BasicMotor {
         }
     }
 
-    /**
-     * an enum that represents the range of the absolute encoder it can be either 0 to 1 or -0.5 to
-     * 0.5
-     */
-    public enum AbsoluteEncoderRange {
-        /**
-         * 0 to 1 of range
-         */
-        ZERO_TO_ONE,
-        /**
-         * -0.5 to 0.5 of range
-         */
-        HALF_REVOLUTION;
 
-        /**
-         * checks if the range is zero centered (i.e. -0.5 to 0.5)
-         *
-         * @return true if the range is zero centered, false otherwise
-         */
-        public boolean zeroCentered() {
-            return this == HALF_REVOLUTION;
-        }
-    }
-
-    /**
-     * restores the Spark MAX to use the default encoder (the primary encoder)
-     */
-    public void useDefaultEncoder() {
+    @Override
+    public void setDefaultMeasurements() {
         config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder);
 
-        // sets the primary encoder as the feedback sensor for the closed loop controller (also apply
-        // the config)
-        setDefaultMeasurements();
+        int maxPeriodMs =
+                32767; // maximum period in milliseconds for the Spark MAX according to the documentation
+        // check the docs at
+        // https://docs.revrobotics.com/brushless/spark-max/control-interfaces#periodic-status-frames
+
+        config.signals.externalOrAltEncoderVelocity(maxPeriodMs);
+        config.signals.externalOrAltEncoderPosition(maxPeriodMs);
+
+        config.signals.absoluteEncoderPositionPeriodMs(maxPeriodMs);
+        config.signals.absoluteEncoderVelocityPeriodMs(maxPeriodMs);
+
+        super.setDefaultMeasurements();
     }
 
     /**
-     * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark
-     * MAX) it uses the absolute encoder connected to the Spark MAX data port
+     * Configures the spark base motor controller to use an absolute encoder connected directly to the motor controller.
      *
-     * @param inverted               if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset             the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio     the number which the reading of the external encoder should be
-     *                               multiplied by to get the motor output a value bigger than 1.0 is a reduction in the motor
-     *                               output. (the motor spins more than the sensor)
-     * @param unitConversion         the value that will be multiplied by to convert the measurements to the
-     *                               desired units
-     * @param mechanismToSensorRatio the number which the reading of the external encoder should be
-     *                               divided by to get the mechanism output a value bigger than 1.0 is a reduction in the
-     *                               mechanism output. (the sensor spins more than the mechanism)
-     * @param absoluteEncoderRange   if the encoder should report a range of 0 to 1 or -0.5 to 0.5
+     * @param inverted             If the absolute encoder is inverted.
+     *                             The default positive direction of the encoder is clockwise.
+     *                             This is opposite to the default positive direction of a motor.
+     * @param zeroOffset           The position the encoder reports that should be considered zero.
+     *                             This is affected by the absoluteEncoderRange.
+     * @param sensorToMotorRatio   The number which the reading of the absolute encoder should be
+     *                             multiplied by to get the motor output.
+     *                             This does not include unit conversion.
+     *                             This will be larger than 1.0 if the sensor is in a reduction to the motor.
+     * @param unitConversion       The value that will be multiplied by to convert the measurements to the
+     *                             desired units.
+     *                             This is not affected by sensorToMotorRatio.
+     * @param absoluteEncoderRange The range that the absolute encoder should report.
+     *                             This will be in the encoders rotations.
+     *                             (0 to 1, -0.5 to 0.5, etc.)
      */
     public void useAbsoluteEncoder(
             boolean inverted,
             double zeroOffset,
             double sensorToMotorRatio,
             double unitConversion,
-            double mechanismToSensorRatio,
             AbsoluteEncoderRange absoluteEncoderRange) {
         // sets the absolute encoder configuration
         setAbsoluteEncoderConfig(inverted, zeroOffset, sensorToMotorRatio, absoluteEncoderRange);
@@ -521,17 +531,65 @@ public abstract class BasicSparkBase extends BasicMotor {
         // set the measurements to the absolute encoder measurements
         setMeasurements(
                 new MeasurementsREVAbsolute(
-                        motor.getAbsoluteEncoder(), mechanismToSensorRatio, unitConversion));
+                        motor.getAbsoluteEncoder(), unitConversion));
     }
 
     /**
-     * sets the configuration for the absolute encoder
+     * Configures the motor controller to use an absolute encoder connected directly to the motor controller.
      *
-     * @param inverted             if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset           the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio   the number which the reading of the external encoder should be
-     *                             multiplied by to get the motor output
-     * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
+     * @param inverted             If the absolute encoder is inverted.
+     *                             The default positive direction of the encoder is clockwise.
+     *                             This is opposite to the default positive direction of a motor.
+     * @param zeroOffset           The position the encoder reports that should be considered zero.
+     *                             This is affected by the absoluteEncoderRange.
+     * @param sensorToMotorRatio   The number which the reading of the absolute encoder should be
+     *                             multiplied by to get the motor output.
+     *                             This does not include unit conversion.
+     *                             This will be larger than 1.0 if the sensor is in a reduction to the motor.
+     * @param absoluteEncoderRange The range that the absolute encoder should report.
+     *                             This will be in the encoders rotations.
+     *                             (0 to 1, -0.5 to 0.5, etc.)
+     */
+    public void useAbsoluteEncoder(
+            boolean inverted,
+            double zeroOffset,
+            double sensorToMotorRatio,
+            AbsoluteEncoderRange absoluteEncoderRange) {
+        useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, 1, absoluteEncoderRange);
+    }
+
+    /**
+     * Configures the motor controller to use an absolute encoder connected directly to the motor controller.
+     *
+     * @param inverted           If the absolute encoder is inverted.
+     *                           The default positive direction of the encoder is clockwise.
+     *                           This is opposite to the default positive direction of a motor.
+     * @param zeroOffset         The position the encoder reports that should be considered zero.
+     * @param sensorToMotorRatio The number which the reading of the absolute encoder should be
+     *                           multiplied by to get the motor output.
+     *                           This does not include unit conversion.
+     *                           This will be larger than 1.0 if the sensor is in a reduction to the motor.
+     */
+    public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio) {
+        useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, AbsoluteEncoderRange.ZERO_TO_ONE);
+    }
+
+    /**
+     * Sets the configuration for an absolute encoder connected directly to the motor controller.
+     * This method does not set the absolute encoder as the feedback sensor.
+     * It does not apply the configuration to the motor.
+     *
+     * @param inverted             If the absolute encoder is inverted.
+     *                             The default positive direction of the encoder is clockwise.
+     *                             This is opposite to the default positive direction of a motor.
+     * @param zeroOffset           The position the encoder reports that should be considered zero.
+     *                             This is affected by the absoluteEncoderRange.
+     *                             This is the position in rotations.
+     * @param sensorToMotorRatio   The number which the reading of the absolute encoder should be
+     *                             multiplied by to get the motor output.
+     *                             This does not include unit conversion.
+     *                             This will be larger than 1.0 if the sensor is in a reduction to the motor.
+     * @param absoluteEncoderRange If the encoder should report a range of 0 to 1 or -0.5 to 0.5.
      */
     protected void setAbsoluteEncoderConfig(
             boolean inverted,
@@ -550,74 +608,24 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark
-     * MAX) it uses the absolute encoder connected to the Spark MAX data port
+     * Configures the motor controller to use an external encoder for the pid loop.
      *
-     * @param inverted             if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset           the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio   the number which the reading of the external encoder should be
-     *                             multiplied by to get the motor output a value bigger than 1.0 is a reduction in the motor
-     *                             output. (the motor spins more than the sensor)
-     * @param unitConversion       the value that will be multiplied by to convert the measurements to the
-     *                             desired units
-     * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
-     */
-    public void useAbsoluteEncoder(
-            boolean inverted,
-            double zeroOffset,
-            double sensorToMotorRatio,
-            double unitConversion,
-            AbsoluteEncoderRange absoluteEncoderRange) {
-        useAbsoluteEncoder(
-                inverted, zeroOffset, sensorToMotorRatio, unitConversion, 1, absoluteEncoderRange);
-    }
-
-    /**
-     * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark
-     * MAX) it uses the absolute encoder connected to the Spark MAX data port
-     *
-     * @param inverted             if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset           the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio   the number which the reading of the external encoder should be
-     *                             multiplied by to get the motor output a value bigger than 1.0 is a reduction in the motor
-     *                             output. (the motor spins more than the sensor)
-     * @param absoluteEncoderRange if the encoder should report a range of 0 to 1 or -0.5 to 0.5
-     */
-    public void useAbsoluteEncoder(
-            boolean inverted,
-            double zeroOffset,
-            double sensorToMotorRatio,
-            AbsoluteEncoderRange absoluteEncoderRange) {
-        useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, 1, absoluteEncoderRange);
-    }
-
-    /**
-     * configures the Spark MAX to use an absolute encoder for the pid loop (if it runs on the Spark
-     * MAX) it uses the absolute encoder connected to the Spark MAX data port
-     *
-     * @param inverted           if the absolute encoder is inverted (the position is reversed)
-     * @param zeroOffset         the position the encoder reports that should be considered zero
-     * @param sensorToMotorRatio the number which the reading of the external encoder should be
-     *                           multiplied by to get the motor output a value bigger than 1.0 is a reduction in the motor
-     *                           output. (the motor spins more than the sensor)
-     */
-    public void useAbsoluteEncoder(boolean inverted, double zeroOffset, double sensorToMotorRatio) {
-        useAbsoluteEncoder(inverted, zeroOffset, sensorToMotorRatio, AbsoluteEncoderRange.ZERO_TO_ONE);
-    }
-
-    /**
-     * configures the Spark MAX to use an external encoder for the pid loop (if it runs on the Spark
-     * MAX) it uses the external encoder connected to the Spark MAX data port
-     *
-     * @param inverted               if the external encoder is inverted (the position is reversed)
-     * @param sensorToMotorRatio     the number which the reading of the external encoder should be
-     *                               multiplied by to get the motor output a value bigger than 1.0 is a reduction in the motor
-     *                               output. (the motor spins more than the sensor)
-     * @param unitConversion         the value that will be multiplied by to convert the measurements to the
-     *                               desired units
-     * @param mechanismToSensorRatio the number which the reading of the external encoder should be
-     *                               divided by to get the mechanism output a value bigger than 1.0 is a reduction in the
-     *                               mechanism output. (the sensor spins more than the mechanism)
+     * @param inverted               If the external encoder is inverted (the position is reversed).
+     *                               The default positive direction of the encoder is clockwise.
+     *                               This is opposite to the default positive direction of a motor.
+     * @param sensorToMotorRatio     The number which the reading of the external encoder should be
+     *                               multiplied by to get the motor output.
+     *                               A value bigger than 1.0 is a reduction in the motor output.
+     *                               (the motor spins more than the sensor)
+     * @param unitConversion         The value that will be multiplied by to convert the measurements to the
+     *                               desired units.
+     *                               This is not affected by sensorToMotorRatio.
+     *                               This will be multiplied by the encoders rotations to get the position with the desired units.
+     *                               (after mechanismToSensorRatio)
+     * @param mechanismToSensorRatio The number that the reading of the external encoder should be
+     *                               divided by to get the mechanism output.
+     *                               A value bigger than 1.0 is a reduction in the mechanism output.
+     *                               Usually this will be 1.0, but if the sensor is mounted not directly on the mechanism.
      */
     public void useExternalEncoder(
             boolean inverted,
@@ -627,7 +635,7 @@ public abstract class BasicSparkBase extends BasicMotor {
         // sets the feedback sensor for the closed loop controller
         config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAlternateOrExternalEncoder);
 
-        configExternalEncoder(inverted, sensorToMotorRatio, mechanismToSensorRatio);
+        configExternalEncoder(inverted, sensorToMotorRatio);
 
         int periodMs = (int) ((1 / controllerLocation.getHZ()) * 1000); // convert to milliseconds
         // sets the period for the absolute encoder position and velocity
@@ -644,15 +652,20 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * configures the Spark MAX to use an external encoder for the pid loop (if it runs on the Spark
-     * MAX) it uses the external encoder connected to the Spark MAX data port
+     * Configures the motor controller to use an external encoder for the pid loop.
      *
-     * @param inverted           if the external encoder is inverted (the position is reversed)
-     * @param sensorToMotorRatio the number which the reading of the external encoder should be
-     *                           multiplied by to get the motor output a value bigger than 1.0 is a reduction in the motor
-     *                           output. (the motor spins more than the sensor)
-     * @param unitConversion     the value that will be multiplied by to convert the measurements to the
-     *                           desired units
+     * @param inverted           If the external encoder is inverted (the position is reversed).
+     *                           The default positive direction of the encoder is clockwise.
+     *                           This is opposite to the default positive direction of a motor.
+     * @param sensorToMotorRatio The number which the reading of the external encoder should be
+     *                           multiplied by to get the motor output.
+     *                           A value bigger than 1.0 is a reduction in the motor output.
+     *                           (the motor spins more than the sensor)
+     * @param unitConversion     The value that will be multiplied by to convert the measurements to the
+     *                           desired units.
+     *                           This is not affected by sensorToMotorRatio.
+     *                           This will be multiplied by the encoders rotations to get the position with the desired units.
+     *                           (after mechanismToSensorRatio)
      */
     public void useExternalEncoder(
             boolean inverted, double sensorToMotorRatio, double unitConversion) {
@@ -660,32 +673,38 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     /**
-     * configures the Spark MAX to use an external encoder for the pid loop (if it runs on the Spark
-     * MAX) it uses the external encoder connected to the Spark MAX data port
+     * Configures the motor controller to use an external encoder for the pid loop.
      *
-     * @param inverted           if the external encoder is inverted (the position is reversed)
-     * @param sensorToMotorRatio the number which the reading of the external encoder should be
-     *                           multiplied by to get the motor output a value bigger than 1.0 is a reduction in the motor
-     *                           output. (the motor spins more than the sensor)
+     * @param inverted           If the external encoder is inverted (the position is reversed).
+     *                           The default positive direction of the encoder is clockwise.
+     *                           This is opposite to the default positive direction of a motor.
+     * @param sensorToMotorRatio The number which the reading of the external encoder should be
+     *                           multiplied by to get the motor output.
+     *                           A value bigger than 1.0 is a reduction in the motor output.
+     *                           (the motor spins more than the sensor)
      */
     public void useExternalEncoder(boolean inverted, double sensorToMotorRatio) {
         useExternalEncoder(inverted, sensorToMotorRatio, 1);
     }
 
     /**
-     * configures the spark base motor controller to use an external encoder
-     * it is abstract due to the fact that different Spark Base motor controllers implement external encoders differently.
-     * @param inverted whether the external encoder is inverted (counts in the opposite direction of the motor)
-     * @param sensorToMotorRatio the number that the reading of the external encoder should be multiplied by to get the motor output
-     * @param mechanismToSensorRatio the number that the reading of the external encoder should be divided by to get the mechanism output
+     * Configures the motor controller to use an external encoder for the pid loop.
+     * This is abstract due to the fact that different Spark Base motor controllers handle external encoders differently.
+     *
+     * @param inverted              Whether the external encoder is inverted (the position is reversed).
+     *                              The default positive direction of the encoder is clockwise.
+     *                              This is opposite to the default positive direction of a motor.
+     * @param sensorToMotorRatio    The number that the reading of the external encoder should be multiplied by to get the motor output.
+     *                              A value bigger than 1.0 is a reduction in the motor output.
      */
-    protected abstract void configExternalEncoder(
-            boolean inverted, double sensorToMotorRatio, double mechanismToSensorRatio);
+    protected abstract void configExternalEncoder(boolean inverted, double sensorToMotorRatio);
 
     /**
-     * gets the external encoder of the Spark Base motor controller
-     * abstract due to the fact that different Spark Base motor controllers implement external encoders differently.
-     * @return the external encoder of the Spark Base motor controller
+     * Gets the external encoder of the Spark Base motor controller.
+     * This will be the relative encoder connected directly to the motor controller.
+     * This is abstract due to the fact that different Spark Base motor controllers handle external encoders differently.
+     *
+     * @return The external encoder of the Spark Base motor controller.
      */
     protected abstract RelativeEncoder getExternalEncoder();
 }
