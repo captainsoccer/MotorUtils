@@ -95,7 +95,7 @@ public class Controller implements Sendable {
      *
      * @param request The new request for the controller
      */
-    public void setReference(ControllerRequest request) {
+    public void setControl(ControllerRequest request) {
         Objects.requireNonNull(request);
         Objects.requireNonNull(request.controlMode);
         Objects.requireNonNull(request.goal);
@@ -113,8 +113,8 @@ public class Controller implements Sendable {
      * @param setpoint    The new setpoint (the goal if using a profiled control).
      * @param controlMode The mode of control.
      */
-    public void setReference(double setpoint, ControlMode controlMode) {
-        setReference(new ControllerRequest(setpoint, controlMode));
+    public void setControl(double setpoint, ControlMode controlMode) {
+        setControl(new ControllerRequest(setpoint, controlMode));
     }
 
     /**
@@ -127,12 +127,12 @@ public class Controller implements Sendable {
      *                     velocity)
      * @param controlMode  The control mode of the controller. (must be a profiled control mode)
      */
-    public void setReference(double goal, double goalVelocity, ControlMode controlMode) {
+    public void setControl(double goal, double goalVelocity, ControlMode controlMode) {
         if (!controlMode.isProfiled()) {
             DriverStation.reportWarning("Using a function made for profiled control for a non profiled control mode", true);
         }
 
-        setReference(new ControllerRequest(goal, goalVelocity, controlMode));
+        setControl(new ControllerRequest(goal, goalVelocity, controlMode));
     }
 
     /**
@@ -142,12 +142,12 @@ public class Controller implements Sendable {
      * @param goal        The new goal for the controller.
      * @param controlMode The control mode of the controller. (must be a profiled control mode)
      */
-    public void setReference(TrapezoidProfile.State goal, ControlMode controlMode) {
+    public void setControl(TrapezoidProfile.State goal, ControlMode controlMode) {
         if (!controlMode.isProfiled()) {
             DriverStation.reportWarning("Using a function made for profiled control for a non profiled control mode", true);
         }
 
-        setReference(new ControllerRequest(goal, controlMode));
+        setControl(new ControllerRequest(goal, controlMode));
     }
 
     /**
@@ -317,7 +317,7 @@ public class Controller implements Sendable {
 
         //this acts both as the setpoint and the goal of the controller
         builder.addDoubleProperty(
-                "setpoint", () -> setpoint.position, (value) -> setReference(value, request.controlMode));
+                "setpoint", () -> setpoint.position, (value) -> setControl(value, request.controlMode));
     }
 
     /**
