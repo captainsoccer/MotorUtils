@@ -35,7 +35,21 @@ public abstract class SwerveModuleIO {
         updateLogs(inputs);
     };
 
+    /**
+     * Sets a new target for the swerve module.
+     * The target should be limited to the max speed and optimized for the shortest angle
+     * @param targetState The target state of the module
+     */
     public abstract void setTarget(SwerveModuleState targetState);
+
+    /**
+     * Sets a new target for the swerve module.
+     * The target should be limited to the max speed and optimized for the shortest angle
+     * @param targetState The target state of the module
+     * @param acceleration The accelration the module should be in (Used by pathPlanner),
+     * also should be already in the correct direction according to the optimaztion.
+     */
+    public abstract void setTarget(SwerveModuleState targetState, double acceleration);
 
     protected abstract void updateStateAndPosition(SwerveModuleState state, SwerveModulePosition position);
 
