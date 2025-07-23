@@ -71,6 +71,18 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
       return new CurrentLimitsSparkBase(
           freeSpeedCurrentLimit, stallCurrentLimit, freeSpeedRPM, secondaryCurrentLimit);
     }
+
+    /**
+     * Sets the current limits of the motor controller from the given current limits.
+     *
+     * @param currentLimits The current limits to set
+     */
+    public void fromCurrentLimits(CurrentLimitsSparkBase currentLimits) {
+      this.freeSpeedCurrentLimit = currentLimits.getCurrentLimit();
+      this.stallCurrentLimit = currentLimits.getStallCurrentLimit();
+      this.freeSpeedRPM = currentLimits.getFreeSpeedRPM();
+      this.secondaryCurrentLimit = currentLimits.getSecondaryCurrentLimit();
+    }
   }
 
   /** Handles the configuration parameters for the external encoder */
