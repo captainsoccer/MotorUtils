@@ -199,6 +199,19 @@ public class BasicMotorConfig {
     public PIDGains getGains() {
       return new PIDGains(kP, kI, kD, iZone, iMaxAccum, tolerance);
     }
+
+    /**
+     * Sets the PID configuration from the given PIDGains object.
+     * @param gains The PIDGains object to set the configuration from.
+     */
+    public void fromGains(PIDGains gains) {
+      this.kP = gains.getK_P();
+      this.kI = gains.getK_I();
+      this.kD = gains.getK_D();
+      this.iZone = gains.getI_Zone();
+      this.iMaxAccum = gains.getI_MaxAccum();
+      this.tolerance = gains.getTolerance();
+    }
   }
 
   /**
@@ -246,6 +259,17 @@ public class BasicMotorConfig {
     public ControllerFeedForwards getFeedForwards() {
       return new ControllerFeedForwards(
           simpleFeedForward, frictionFeedForward, setpointFeedForward, customFeedForward);
+    }
+
+    /**
+     * Sets the feed forward configuration from the given ControllerFeedForwards object.
+     * @param feedForwards The ControllerFeedForwards object to set the configuration from.
+     */
+    public void fromFeedForwards(ControllerFeedForwards feedForwards) {
+      this.simpleFeedForward = feedForwards.getSimpleFeedForward();
+      this.frictionFeedForward = feedForwards.getFrictionFeedForward();
+      this.setpointFeedForward = feedForwards.getSetpointFeedForward();
+      this.customFeedForward = feedForwards.getFeedForwardFunction();
     }
   }
 
@@ -334,6 +358,19 @@ public class BasicMotorConfig {
       return new ControllerConstraints(
           constraintType, minValue, maxValue, maxOutput, minOutput, voltageDeadband);
     }
+
+    /**
+     * Sets the constraints configuration from the given ControllerConstraints object.
+     * @param constraints The ControllerConstraints object to set the configuration from.
+     */
+    public void fromConstraints(ControllerConstraints constraints) {
+      this.constraintType = constraints.getConstraintType();
+      this.minValue = constraints.getMinValue();
+      this.maxValue = constraints.getMaxValue();
+      this.maxOutput = constraints.getMaxMotorOutput();
+      this.minOutput = constraints.getMinMotorOutput();
+      this.voltageDeadband = constraints.getVoltageDeadband();
+    }
   }
 
   /**
@@ -369,6 +406,15 @@ public class BasicMotorConfig {
     public TrapezoidProfile.Constraints getProfileConstraints() {
       return new TrapezoidProfile.Constraints(
           maximumMeasurementVelocity, maximumMeasurementAcceleration);
+    }
+
+    /**
+     * Sets the profile configuration from the given TrapezoidProfile.Constraints object.
+     * @param constraints The TrapezoidProfile.Constraints object to set the configuration from.
+     */
+    public void fromProfileConstraints(TrapezoidProfile.Constraints constraints) {
+      this.maximumMeasurementVelocity = constraints.maxVelocity;
+      this.maximumMeasurementAcceleration = constraints.maxAcceleration;
     }
   }
 

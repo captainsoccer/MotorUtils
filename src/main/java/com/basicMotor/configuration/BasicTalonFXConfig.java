@@ -78,5 +78,17 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
       return new CurrentLimitsTalonFX(
           statorCurrentLimit, supplyCurrentLimit, lowerLimitTime, lowerCurrentLimit);
     }
+
+    /**
+     * Sets the current limits of the motor controller from the given current limits.
+     *
+     * @param currentLimits The current limits to set
+     */
+    public void fromCurrentLimits(CurrentLimitsTalonFX currentLimits) {
+      this.statorCurrentLimit = currentLimits.getCurrentLimit();
+      this.supplyCurrentLimit = currentLimits.getSupplyCurrentLimit();
+      this.lowerLimitTime = currentLimits.getSupplyLowerTime();
+      this.lowerCurrentLimit = currentLimits.getSupplyLowerLimit();
+    }
   }
 }
