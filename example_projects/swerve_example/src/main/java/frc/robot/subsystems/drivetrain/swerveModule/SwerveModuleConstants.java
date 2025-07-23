@@ -10,13 +10,12 @@ import com.basicMotor.configuration.BasicSparkBaseConfig;
 import com.basicMotor.configuration.BasicTalonFXConfig;
 
 import edu.wpi.first.math.geometry.Translation2d;
-
 /** Add your docs here. */
 public enum SwerveModuleConstants {
-    FRONT_LEFT(1, 0),
-    FRONT_RIGHT(2, 0),
-    BACK_LEFT(3, 0),
-    BACK_RIGHT(4, 0);
+    FRONT_LEFT(1, 0, new Translation2d(), 0),
+    FRONT_RIGHT(2, 0, new Translation2d(), 0),
+    BACK_LEFT(3, 0, new Translation2d(), 0),
+    BACK_RIGHT(4, 0, new Translation2d(), 0);
 
     public final String NAME;
 
@@ -31,11 +30,17 @@ public enum SwerveModuleConstants {
 
     public final Translation2d location;
 
-    SwerveModuleConstants(int canCoderID, double zeroOffset){
+    public final double kA;
+
+    SwerveModuleConstants(int canCoderID, double zeroOffset, Translation2d location, double kA){
         this.NAME = this.name();
 
         this.CAN_CODER_ID = canCoderID;
         this.ZERO_OFFSET = zeroOffset;
+
+        this.location = location;
+
+        this.kA = kA;
     }
 
     // the max speed of the drive wheel in meters per second
