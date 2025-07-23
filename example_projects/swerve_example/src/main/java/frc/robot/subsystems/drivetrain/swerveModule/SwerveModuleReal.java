@@ -33,14 +33,14 @@ public class SwerveModuleReal extends SwerveModuleIO{
 
         canCoder = configureCanCoder(constants);
 
-        var canCoderMeasrurements = new MeasurementsCANCoder(canCoder, 1, 1,
+        var canCoderMeasurements = new MeasurementsCANCoder(canCoder, 1, 1,
             constants.STEER_MOTOR_CONFIG.motorConfig.location.getHZ());
 
         canCoder.getMagnetHealth(false).setUpdateFrequency(4);
 
         canCoder.optimizeBusUtilization();
 
-        steerMotor.setMeasurements(canCoderMeasrurements);
+        steerMotor.setMeasurements(canCoderMeasurements);
     }
 
     private CANcoder configureCanCoder(SwerveModuleConstants constants){
@@ -84,14 +84,4 @@ public class SwerveModuleReal extends SwerveModuleIO{
 
         steerMotor.setControl(targetState.angle.getRotations(), ControlMode.POSITION);
     }
-
-    @Override
-    public void setTarget(SwerveModuleState targetState, double acceleration) {
-        double accelerationVoltage = acceleration * constants.kA;
-
-        driveMotor.setControl(targetState.speedMetersPerSecond, ControlMode.VELOCITY, accelerationVoltage);
-
-        steerMotor.setControl(targetState.angle.getRotations(), ControlMode.POSITION);
-    }
-
 }
