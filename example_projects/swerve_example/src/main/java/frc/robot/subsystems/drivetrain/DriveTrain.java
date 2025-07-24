@@ -7,8 +7,12 @@ package frc.robot.subsystems.drivetrain;
 import java.io.IOException;
 import java.util.function.BiConsumer;
 
+import edu.wpi.first.wpilibj.RobotBase;
+import frc.Util.SimGyroIO;
+import frc.robot.subsystems.drivetrain.swerveModule.*;
 import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -27,12 +31,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.drivetrain.swerveModule.SwerveModuleReal;
 import frc.Util.GyroIO;
 import frc.Util.Pigeon2IO;
-import frc.robot.subsystems.drivetrain.swerveModule.SwerveModuleConstants;
-import frc.robot.subsystems.drivetrain.swerveModule.SwerveModuleIO;
-import frc.robot.subsystems.drivetrain.swerveModule.SwerveModuleInputsAutoLogged;
 
 public class DriveTrain extends SubsystemBase {
     @AutoLog
@@ -88,12 +88,23 @@ public class DriveTrain extends SubsystemBase {
      */
     public DriveTrain() {
         for (int i = 0; i < 4; i++) {
-            io[i] = new SwerveModuleReal(SwerveModuleConstants.values()[i]);
+            if(RobotBase.isReal()){
+                io[i] = new SwerveModuleReal(SwerveModuleConstants.values()[i]);
+            }
+            else{
+                io[i] = new SwerveModuleSim(SwerveModuleConstants.values()[i]);
+            }
+
+            modulePositions[i] = new SwerveModulePosition();
 
             moduleInputs[i] = new SwerveModuleInputsAutoLogged();
         }
 
-        gyro = new Pigeon2IO(1);
+        if(RobotBase.isReal()){
+            gyro = new Pigeon2IO(DriveTrainConstants.pigeonID);
+        } else {
+            gyro = new SimGyroIO(this::getChassisSpeeds); // Use a simulated gyro in simulation
+        }
 
         kinematics = new SwerveDriveKinematics(SwerveModuleConstants.getTranslations());
 
@@ -105,7 +116,7 @@ public class DriveTrain extends SubsystemBase {
     /**
      * Configures the Pathplanner Auto builder.
      * This takes the configuration set by the GUI.
-     * If no configuration is available, uses the backup configuration stored in {@link PathplannerConstants#DEFAULT_CONFIG}.
+     * If no configuration is available, uses the backup configuration stored in {@link DriveTrainConstants#FALLBACK_CONFIG}.
      */
     private void configureAutoBuilder() {
 
@@ -115,7 +126,7 @@ public class DriveTrain extends SubsystemBase {
         } catch (IOException | ParseException e) {
             DriverStation.reportError("could not use pathplanner GUI config, using fallback config", true);
 
-            config = PathplannerConstants.DEFAULT_CONFIG;
+            config = DriveTrainConstants.FALLBACK_CONFIG;
         }
 
         BiConsumer<ChassisSpeeds, DriveFeedforwards> output = (speeds, feedForwards) -> this.runVelocity(speeds);
@@ -125,9 +136,9 @@ public class DriveTrain extends SubsystemBase {
                 this::reset,
                 this::getChassisSpeeds,
                 output,
-                PathplannerConstants.PATH_PLANNER_PID,
+                DriveTrainConstants.PATH_PLANNER_PID,
                 config,
-                PathplannerConstants::shouldFlipPath,
+                DriveTrainConstants::shouldFlipPath,
                 this);
     }
 
@@ -174,6 +185,7 @@ public class DriveTrain extends SubsystemBase {
             io[i].setTarget(targetStates[i]);
         }
 
+        Logger.recordOutput("Drive train/Target speeds", targetSpeed);
         Logger.recordOutput("Drive train/targetStates", targetStates);
     }
 
@@ -246,6 +258,7 @@ public class DriveTrain extends SubsystemBase {
      *
      * @return The chassis speeds
      */
+    @AutoLogOutput
     public ChassisSpeeds getChassisSpeeds() {
         return kinematics.toChassisSpeeds(inputs.currentStates);
     }
