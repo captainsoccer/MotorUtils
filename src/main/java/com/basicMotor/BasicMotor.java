@@ -669,6 +669,7 @@ public abstract class BasicMotor {
                 // if the motor is already disabled, then we don't need to do anything
                 return false;
             }
+            stopMotorOutput();
             motorState = MotorState.DISABLED;
             return false;
         }
