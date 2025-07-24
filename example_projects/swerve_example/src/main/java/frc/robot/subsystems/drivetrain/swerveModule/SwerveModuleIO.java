@@ -16,11 +16,11 @@ public abstract class SwerveModuleIO {
         /**
          * The current state of the swerve module.
          */
-        public SwerveModuleState state;
+        public SwerveModuleState state = new SwerveModuleState();
         /**
          * The current position of the swerve module.
          */
-        public SwerveModulePosition position;
+        public SwerveModulePosition position = new SwerveModulePosition();
 
         /**
          * The color of the CAN coder.

@@ -18,11 +18,17 @@ import frc.robot.subsystems.drivetrain.swerveModule.SwerveModuleConstants;
  * The fallback robot configuration,
  * and a method to determine if the PathPlanner path should be flipped based on the current alliance.
  */
-public class PathplannerConstants {
+public class DriveTrainConstants {
+
+    /**
+     * The CAN ID of the pigeon IMU.
+     */
+    public static final int pigeonID = 0; // The ID of the pigeon IMU
+
     public static final PPHolonomicDriveController PATH_PLANNER_PID =
             new PPHolonomicDriveController(
-                    new PIDConstants(0), //PID constants for the translation PID controller
-                    new PIDConstants(0)); //PID constants for the rotation PID controller
+                    new PIDConstants(1), //PID constants for the translation PID controller
+                    new PIDConstants(1)); //PID constants for the rotation PID controller
 
     /**
      * Change this function according to your needs per season.
@@ -49,7 +55,7 @@ public class PathplannerConstants {
     public static final RobotConfig FALLBACK_CONFIG =
             new RobotConfig(
                     20, //The total mass of the robot in kg. (this includes the bumpers, battery, etc.)
-                    0, /*
+                    0.012, /*
                         * The robots moment of inertia.
                         * Calculate this using the method in the pathplanner documentation.
                         * https://pathplanner.dev/robot-config.html#robot-config-options

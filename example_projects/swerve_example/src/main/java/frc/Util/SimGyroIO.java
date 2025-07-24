@@ -23,7 +23,7 @@ public class SimGyroIO implements GyroIO{
     public void update() {
         double theta = speedSupplier.get().omegaRadiansPerSecond;
 
-        angle = angle.plus(Rotation2d.fromRadians(theta));
+        angle = Rotation2d.fromRadians(angle.getRadians() + theta * 0.02);
     }
 
     @Override
