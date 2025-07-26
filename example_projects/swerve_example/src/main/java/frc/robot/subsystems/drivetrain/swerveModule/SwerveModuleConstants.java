@@ -57,7 +57,7 @@ public enum SwerveModuleConstants {
     public static final double WHEEL_RADIUS_METERS = 0.0508; // 2 inches in meters
     public static final double DRIVE_GEAR_RATIO = 6.75; // Adjust based on your gear ratio
     public static final DCMotor DRIVE_MOTOR_TYPE = DCMotor.getKrakenX60(1); // Adjust based on your motor type
-    public static final int DRIVE_CURRENT_LIMIT = 80; // Adjust based on your motor's current limit
+    public static final int DRIVE_CURRENT_LIMIT = 101; // Adjust based on your motor's current limit
 
     // Common configurations for the drive motor
     private static BasicMotorConfig getDriveMotorCommonConfig() {
