@@ -9,6 +9,8 @@ import edu.wpi.first.units.measure.*;
 import com.basicMotor.motors.talonFX.TalonFXSensors;
 import com.basicMotor.configuration.BasicMotorConfig.MotorConfig;
 
+import java.util.function.DoubleConsumer;
+
 /**
  * This class is used to store and update the measurements of a TalonFX motor controller.
  * It handles updating the position, velocity, and acceleration of the motor.
@@ -34,6 +36,12 @@ public class MeasurementsTalonFX extends Measurements {
      * The motor acceleration signal.
      */
     private final StatusSignal<AngularAcceleration> motorAcceleration;
+
+    /**
+     * This is the setter for the motor position.
+     * This sets the position of the motor.
+     */
+    private final DoubleConsumer motorPositionSetter;
 
     /**
      * The latency compensated value of the motor position.
@@ -73,6 +81,8 @@ public class MeasurementsTalonFX extends Measurements {
         motorPosition.setUpdateFrequency(refreshHZ);
         motorVelocity.setUpdateFrequency(refreshHZ);
         motorAcceleration.setUpdateFrequency(refreshHZ);
+
+        motorPositionSetter = motor::setPosition;
 
         timeout = 1 / (refreshHZ * TalonFXSensors.TIMEOUT_REFRESH_MULTIPLIER);
     }
@@ -124,5 +134,10 @@ public class MeasurementsTalonFX extends Measurements {
     @Override
     protected double getUpdatedAcceleration() {
         return motorAcceleration.getValueAsDouble();
+    }
+
+    @Override
+    public void setPosition(double position) {
+        motorPositionSetter.accept(position);
     }
 }

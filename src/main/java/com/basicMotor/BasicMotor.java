@@ -1,5 +1,6 @@
 package com.basicMotor;
 
+import com.basicMotor.measurements.EmptyMeasurements;
 import com.basicMotor.motorManager.MotorManager;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.controllers.Controller;
@@ -9,6 +10,7 @@ import com.basicMotor.gains.currentLimits.CurrentLimits;
 import com.basicMotor.gains.PIDGains;
 import com.basicMotor.measurements.Measurements;
 import com.basicMotor.motorManager.MotorManager.ControllerLocation;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 
 import java.util.Objects;
@@ -346,7 +348,12 @@ public abstract class BasicMotor {
      *
      * @param position The new position of the motor (in motor rotations).
      */
-    protected abstract void setMotorPosition(double position);
+    private void setMotorPosition(double position){
+        if (measurements == null) {
+            throw new IllegalStateException("Motor measurements are not initialized. Call setMeasurements() first.");
+        }
+        measurements.setPosition(position);
+    };
 
     /**
      * Used when there is no need to record the motors built in measurements.
@@ -670,6 +677,15 @@ public abstract class BasicMotor {
                 return false;
             }
             motorState = MotorState.DISABLED;
+            return false;
+        }
+
+        // If the measurements are empty and the control mode requires PID control,
+        // then we cannot run the controller.
+        if(controlMode.requiresPID() && measurements instanceof EmptyMeasurements){
+            DriverStation.reportError("Using empty measurements with a controller that requires PID control. " +
+                    "Please set the measurements to a valid source.", false);
+
             return false;
         }
 
