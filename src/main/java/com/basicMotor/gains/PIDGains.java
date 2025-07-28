@@ -88,10 +88,10 @@ public class PIDGains {
         this.k_P = k_P;
 
         if (k_I < 0) throw new IllegalArgumentException("k_I must be greater than zero");
-        this.k_I = k_I / loopTimeSeconds; // convert to volt loop time seconds per unit of control
+        this.k_I = k_I / loopTimeSeconds; // convert to volt times loop time seconds per unit of control
 
         if (k_D < 0) throw new IllegalArgumentException("k_D must be greater than zero");
-        this.K_D = k_D * loopTimeSeconds; // convert to volts per unit of control per loop time seconds
+        this.K_D = k_D * loopTimeSeconds; // convert to volts per unit of control times loop time seconds
 
         if (i_Zone < 0) throw new IllegalArgumentException("i_Zone must be greater than zero");
         this.i_Zone = i_Zone;
@@ -242,7 +242,7 @@ public class PIDGains {
 
         return new PIDGains(
                 (k_P / gearRatio) * unitConversion,
-                ((k_I / gearRatio) * unitConversion) * this.loopTimeSeconds, //converts //to volt seconds per unit of control
+                ((k_I / gearRatio) * unitConversion) * this.loopTimeSeconds, //converts to volt seconds per unit of control
                 ((K_D / gearRatio) * unitConversion) / this.loopTimeSeconds, //converts to volts per unit of control per second
                 (i_Zone / unitConversion) * gearRatio,
                 i_maxAccum, //stays at volts

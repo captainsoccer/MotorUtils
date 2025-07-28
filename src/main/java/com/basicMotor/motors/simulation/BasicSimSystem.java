@@ -95,7 +95,7 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   @Override
-  public double getInternalPIDLoopTime(){
+  protected double getInternalPIDLoopTime(){
     return ControllerLocation.RIO.getSeconds();
     // All sim motors run their PID loop on the RoboRIO, so this is always the RIO loop time.
   }
