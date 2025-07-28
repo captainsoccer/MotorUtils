@@ -242,11 +242,12 @@ public class PIDGains {
 
         return new PIDGains(
                 (k_P / gearRatio) * unitConversion,
-                (k_I / gearRatio) * unitConversion * (this.loopTimeSeconds / loopTimeSeconds),
-                (K_D / gearRatio) * unitConversion * (loopTimeSeconds / this.loopTimeSeconds),
+                ((k_I / gearRatio) * unitConversion) / this.loopTimeSeconds, //converts //to volt seconds per unit of control
+                ((K_D / gearRatio) * unitConversion) * this.loopTimeSeconds, //converts to volts per unit of control per second
                 (i_Zone / unitConversion) * gearRatio,
                 i_maxAccum, //stays at volts
-                (tolerance / unitConversion) * gearRatio);
+                (tolerance / unitConversion) * gearRatio,
+                loopTimeSeconds);
     }
 
     /**
