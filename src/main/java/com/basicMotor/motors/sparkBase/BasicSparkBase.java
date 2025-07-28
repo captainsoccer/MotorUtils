@@ -489,6 +489,13 @@ public abstract class BasicSparkBase extends BasicMotor {
         super.setDefaultMeasurements();
     }
 
+    @Override
+    protected double getInternalPIDLoopTime(){
+        return 0.001; // Spark max and spark flex have a fixed internal PID loop time of 1ms
+        // This is according to the documentation:
+        // https://docs.revrobotics.com/revlib/spark/closed-loop
+    }
+
     /**
      * Configures the spark base motor controller to use an absolute encoder connected directly to the motor controller.
      *

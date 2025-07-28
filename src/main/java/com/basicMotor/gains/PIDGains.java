@@ -40,6 +40,8 @@ public class PIDGains {
         TOLERANCE
     }
 
+    private final double loopTimeSeconds;
+
     /**
      * The PID elements of the PID controller.
      */
@@ -61,6 +63,50 @@ public class PIDGains {
 
     /**
      * Creates a PID gains object with the given values.
+     * Use this constructor only if you know what you are doing.
+     *
+     * @param k_P        The proportional gain (>= 0) (units are volts per unit of control)
+     * @param k_I        The integral gain (>= 0) (units are volt seconds per unit of control)
+     * @param k_D        The derivative gain (>= 0) (units are volts per unit of control per second)
+     * @param i_Zone     The integrator zone (>= 0) (units are unit of control).
+     *                   If this is zero, I accumulation is disabled.
+     *                   The Default value is infinity, meaning the integrator is always active.
+     * @param i_maxAccum The maximum accumulation of the integrator (>= 0) (units are volts)
+     *                   If this is zero, I accumulation is disabled.
+     *                   The Default value is the maximum motor output of the motor controller.
+     * @param tolerance  The tolerance of the PID controller (>= 0) (units are unit of control)
+     * @param loopTimeSeconds The loop time of the PID controller in seconds.
+     *                        This is used to convert the integral and derivative gains to the correct units.
+     */
+    public PIDGains(double k_P, double k_I, double k_D, double i_Zone, double i_maxAccum, double tolerance, double loopTimeSeconds) {
+        if(loopTimeSeconds <= 0) {
+            throw new IllegalArgumentException("loopTimeSeconds must be greater than zero");
+        }
+        this.loopTimeSeconds = loopTimeSeconds;
+
+        if (k_P < 0) throw new IllegalArgumentException("k_P must be greater than zero");
+        this.k_P = k_P;
+
+        if (k_I < 0) throw new IllegalArgumentException("k_I must be greater than zero");
+        this.k_I = k_I / loopTimeSeconds; // convert to volt times loop time seconds per unit of control
+
+        if (k_D < 0) throw new IllegalArgumentException("k_D must be greater than zero");
+        this.K_D = k_D * loopTimeSeconds; // convert to volts per unit of control times loop time seconds
+
+        if (i_Zone < 0) throw new IllegalArgumentException("i_Zone must be greater than zero");
+        this.i_Zone = i_Zone;
+
+        if (i_maxAccum < 0) throw new IllegalArgumentException("i_maxAccum must be greater than zero");
+        this.i_maxAccum = i_maxAccum;
+
+        if (tolerance < 0) throw new IllegalArgumentException("tolerance must be greater than zero");
+        this.tolerance = tolerance;
+    }
+
+    /**
+     * Creates a PID gains object with the given values.
+     * This will use the default loop time of the RIO pid controller.
+     * (Will convert units automatically to the correct units for the RIO controller)
      *
      * @param k_P        The proportional gain (>= 0) (units are volts per unit of control)
      * @param k_I        The integral gain (>= 0) (units are volt seconds per unit of control)
@@ -74,23 +120,7 @@ public class PIDGains {
      * @param tolerance  The tolerance of the PID controller (>= 0) (units are unit of control)
      */
     public PIDGains(double k_P, double k_I, double k_D, double i_Zone, double i_maxAccum, double tolerance) {
-        if (k_P < 0) throw new IllegalArgumentException("k_P must be greater than zero");
-        this.k_P = k_P;
-
-        if (k_I < 0) throw new IllegalArgumentException("k_I must be greater than zero");
-        this.k_I = k_I;
-
-        if (k_D < 0) throw new IllegalArgumentException("k_D must be greater than zero");
-        this.K_D = k_D;
-
-        if (i_Zone < 0) throw new IllegalArgumentException("i_Zone must be greater than zero");
-        this.i_Zone = i_Zone;
-
-        if (i_maxAccum < 0) throw new IllegalArgumentException("i_maxAccum must be greater than zero");
-        this.i_maxAccum = i_maxAccum;
-
-        if (tolerance < 0) throw new IllegalArgumentException("tolerance must be greater than zero");
-        this.tolerance = tolerance;
+        this(k_P, k_I, k_D, i_Zone, i_maxAccum, tolerance, MotorManager.ControllerLocation.RIO.getSeconds());
     }
 
     /**
@@ -188,24 +218,36 @@ public class PIDGains {
     }
 
     /**
+     * Gets the loop time of the PID controller.
+     * This is used to convert the integral and derivative gains to the correct units.
+     * @return The loop time of the PID controller in seconds.
+     */
+    public double getLoopTimeSeconds() {
+        return loopTimeSeconds;
+    }
+
+    /**
      * Converts the PID gains to motor gains.
      * Needed because the motor unit of control is different from the mechanisms unit of control.
      *
      * @param gearRatio      The gear ratio of the motor (unitless)
      * @param unitConversion the value that will be divided to get rotations.
+     * @param loopTimeSeconds The loop time of the new pid controller in seconds.
+     *                       This is used to convert the integral and derivative gains to the correct units.
      * @return The motor gains with the same PID structure but adjusted for the motor's unit of control.
      */
-    public PIDGains convertToMotorGains(double gearRatio, double unitConversion) {
+    public PIDGains convertToMotorGains(double gearRatio, double unitConversion, double loopTimeSeconds) {
         //motors don't support infinite i_Zone, so we set it to 0
         double i_Zone = this.i_Zone == Double.POSITIVE_INFINITY ? 0 : this.i_Zone;
 
         return new PIDGains(
                 (k_P / gearRatio) * unitConversion,
-                (k_I / gearRatio) * unitConversion,
-                (K_D / gearRatio) * unitConversion,
+                ((k_I / gearRatio) * unitConversion) * this.loopTimeSeconds, //converts to volt seconds per unit of control
+                ((K_D / gearRatio) * unitConversion) / this.loopTimeSeconds, //converts to volts per unit of control per second
                 (i_Zone / unitConversion) * gearRatio,
                 i_maxAccum, //stays at volts
-                (tolerance / unitConversion) * gearRatio);
+                (tolerance / unitConversion) * gearRatio,
+                loopTimeSeconds);
     }
 
     /**

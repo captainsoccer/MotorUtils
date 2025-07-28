@@ -205,6 +205,12 @@ public class BasicTalonFX extends BasicMotor {
     }
 
     @Override
+    protected double getInternalPIDLoopTime() {
+        return 0.001; // TalonFX has a fixed internal PID loop time of 1ms
+        // This is according to https://www.chiefdelphi.com/t/control-loop-timing-of-various-motor-controllers/370356/4
+    }
+
+    @Override
     public void setCurrentLimits(CurrentLimits currentLimits) {
         var currentConfig = config.CurrentLimits;
 

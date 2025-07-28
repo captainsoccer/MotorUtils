@@ -105,6 +105,13 @@ public abstract class BasicMotor {
     protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
 
     /**
+     * Gets the loop time of the internal PID loop.
+     * This is used to convert the pid gains to the motor controller's loop time.
+     * @return The loop time of the internal PID loop in seconds.
+     */
+    protected abstract double getInternalPIDLoopTime();
+
+    /**
      * If the constraints have changed (then it updates the motor controller on the slower thread).
      * The controller updates this value when the constraints change.
      */
@@ -208,7 +215,7 @@ public abstract class BasicMotor {
 
         var controllerGains = controller.getControllerGains();
 
-        updatePIDGainsToMotor(controllerGains.getPidGains().convertToMotorGains(gearRatio, unitConversion));
+        updatePIDGainsToMotor(controllerGains.getPidGains().convertToMotorGains(gearRatio, unitConversion, getInternalPIDLoopTime()));
 
         updateConstraints(controllerGains.getControllerConstrains().convertToMotorConstraints(gearRatio, unitConversion));
 
@@ -781,7 +788,7 @@ public abstract class BasicMotor {
                     controller
                             .getControllerGains()
                             .getPidGains()
-                            .convertToMotorGains(measurements.getGearRatio(), measurements.getUnitConversion());
+                            .convertToMotorGains(measurements.getGearRatio(), measurements.getUnitConversion(), getInternalPIDLoopTime());
 
             updatePIDGainsToMotor(convertedGains);
         }

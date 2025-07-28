@@ -222,5 +222,13 @@ public class MotorManager {
             return hzSupplier.getAsDouble();
         }
 
+        /**
+         * Gets the time in seconds for one iteration of the controller loop.
+         * @return The time in seconds for one iteration of the controller loop.
+         */
+        public double getSeconds() {
+            return 1 / hzSupplier.getAsDouble();
+        }
+
     }
 }
