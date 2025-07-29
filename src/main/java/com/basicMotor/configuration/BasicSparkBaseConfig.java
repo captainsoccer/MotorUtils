@@ -13,19 +13,19 @@ import com.basicMotor.gains.currentLimits.CurrentLimitsSparkBase;
 public class BasicSparkBaseConfig extends BasicMotorConfig {
 
   /** The current limit configuration for the spark base motor controller. */
-  public final CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
+  public CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
 
   /**
    * The external encoder configuration for the spark base motor controller.
    * If you want to use an external encoder (connected directly to the motor controller), you can use this to simplify the process.
    */
-  public final ExternalEncoderConfig externalEncoderConfig = new ExternalEncoderConfig();
+  public ExternalEncoderConfig externalEncoderConfig = new ExternalEncoderConfig();
 
   /**
    * The absolute encoder configuration for the spark base motor controller.
    * If you want to use an Absolute encoder (connected directly to the motor controller), you can use this to simplify the process.
    */
-  public final AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
+  public AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
 
   //check if using either external or absolute encoder
   @Override

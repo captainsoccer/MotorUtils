@@ -15,7 +15,7 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
    * The current limits configuration for the TalonFX motor controller.
    * Use this to protect the motor from overheating and drawing too much current.
    */
-  public final CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
+  public CurrentLimitConfig currentLimitConfig = new CurrentLimitConfig();
 
   /**
    * The name of the CAN bus that the TalonFX motor controller is connected to.
