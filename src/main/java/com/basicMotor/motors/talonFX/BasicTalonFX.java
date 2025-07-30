@@ -214,11 +214,11 @@ public class BasicTalonFX extends BasicMotor {
     protected void updateMainLoopTiming(MotorManager.ControllerLocation location) {
         sensors.updateControllerLocation();
 
-        if(getMeasurements() instanceof MeasurementsTalonFX measurements) {
+        if (getMeasurements() instanceof MeasurementsTalonFX measurements) {
             measurements.setUpdateFrequency(location.getHZ());
         }
 
-        if(getMeasurements() instanceof MeasurementsCANCoder measurements) {
+        if (getMeasurements() instanceof MeasurementsCANCoder measurements) {
             measurements.setUpdateFrequency(location.getHZ());
         }
     }
@@ -359,7 +359,7 @@ public class BasicTalonFX extends BasicMotor {
             measurements.setUpdateFrequency(0);
         }
 
-        if(getMeasurements() instanceof MeasurementsCANCoder measurements) {
+        if (getMeasurements() instanceof MeasurementsCANCoder measurements) {
             measurements.setUpdateFrequency(0);
         }
     }
@@ -370,7 +370,7 @@ public class BasicTalonFX extends BasicMotor {
             measurements.setUpdateFrequency(HZ);
         }
 
-        if(getMeasurements() instanceof MeasurementsCANCoder measurements) {
+        if (getMeasurements() instanceof MeasurementsCANCoder measurements) {
             measurements.setUpdateFrequency(HZ);
         }
     }
