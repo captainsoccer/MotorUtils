@@ -609,7 +609,7 @@ public abstract class BasicMotor {
 
         //calculates the motor output
         var motorOutput =
-                runController(measurement, 1 / controllerLocation.getHZ(), controller.getRequest());
+                runController(measurement, controllerLocation.getSeconds(), controller.getRequest());
 
         double tolerance = controller.getControllerGains().getPidGains().getTolerance();
 
@@ -652,7 +652,7 @@ public abstract class BasicMotor {
             return Measurements.Measurement.EMPTY;
         }
 
-        return measurements.update(1 / controllerLocation.getHZ());
+        return measurements.update(controllerLocation.getSeconds());
     }
 
     /**
