@@ -154,16 +154,7 @@ public class TalonFXSensors {
                 kdOutput
         };
 
-        if (location.get() == MotorManager.ControllerLocation.MOTOR) {
-            allSignals = Stream.concat(Arrays.stream(sensorsSignals), Arrays.stream(pidSignals))
-                    .toArray(BaseStatusSignal[]::new);
-        } else {
-            allSignals = sensorsSignals;
-        }
-
-        for (BaseStatusSignal signal : allSignals) {
-            signal.setUpdateFrequency(refreshHZ);
-        }
+        updateControllerLocation();
     }
 
     /**
@@ -227,16 +218,16 @@ public class TalonFXSensors {
         if (location.get() == MotorManager.ControllerLocation.MOTOR) {
             allSignals = Stream.concat(Arrays.stream(sensorsSignals), Arrays.stream(pidSignals))
                     .toArray(BaseStatusSignal[]::new);
-
-            for (BaseStatusSignal signal : pidSignals) {
-                signal.setUpdateFrequency(MotorManager.config.SENSOR_LOOP_HZ);
-            }
         } else {
             allSignals = sensorsSignals;
 
             for (BaseStatusSignal signal : pidSignals) {
                 signal.setUpdateFrequency(0);
             }
+        }
+
+        for(BaseStatusSignal signal : allSignals) {
+            signal.setUpdateFrequency(MotorManager.config.SENSOR_LOOP_HZ);
         }
     }
 
