@@ -141,7 +141,7 @@ public class MotorManager {
         motorMap.put(name, functions);
 
         functions.sensorLoop.startPeriodic(1 / config.SENSOR_LOOP_HZ);
-        functions.mainLoop.startPeriodic(location.getHZ());
+        functions.mainLoop.startPeriodic(location.getSeconds());
     }
 
     /**
