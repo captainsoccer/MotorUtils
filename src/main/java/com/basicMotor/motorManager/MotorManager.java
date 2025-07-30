@@ -233,7 +233,7 @@ public class MotorManager {
          * @return The time in seconds for one iteration of the controller loop.
          */
         public double getSeconds() {
-            return 1 / hzSupplier.getAsDouble();
+            return 1.0 / hzSupplier.getAsDouble();
         }
     }
 }
