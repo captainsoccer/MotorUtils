@@ -82,7 +82,7 @@ public abstract class BasicMotor {
      * The location of the pid controller.
      * This is used to determine if the pid controller is on the motor or on the RIO.
      */
-    protected final ControllerLocation controllerLocation;
+    private ControllerLocation controllerLocation;
 
     /**
      * The state of the motor.
@@ -361,6 +361,41 @@ public abstract class BasicMotor {
      * @param HZ The frequency of the measurements in Hz. (should be the main thread frequency)
      */
     protected abstract void startRecordingMeasurements(double HZ);
+
+    /**
+     * Gets the location of the PID controller.
+     * This is used to determine if the PID controller is on the motor or on the RIO.
+     * @return The location of the PID controller.
+     */
+    public ControllerLocation getControllerLocation(){
+        return controllerLocation;
+    }
+
+    /**
+     * Sets the location of the PID controller.
+     * This will change the location of the PID controller and update the motor manager.
+     * This will change the main loop frequency of the motor.
+     *
+     * @param controllerLocation The new location of the PID controller (RIO or motor controller).
+     */
+    public void setControllerLocation(ControllerLocation controllerLocation){
+        if (controllerLocation == null) {
+            throw new IllegalArgumentException("Controller location cannot be null");
+        }
+
+        this.controllerLocation = controllerLocation;
+        MotorManager.getInstance().setControllerLocation(name, controllerLocation);
+
+        updateMainLoopTiming(controllerLocation);
+    }
+
+    /**
+     * Updates the main loop timing of the motor.
+     * This is used so each motor implementation can update its main loop timing.
+     * This is called when the controller location is updated
+     * @param location The new location of the PID controller (RIO or motor controller).
+     */
+    protected abstract void updateMainLoopTiming(ControllerLocation location);
 
     /**
      * Starts following another motor.

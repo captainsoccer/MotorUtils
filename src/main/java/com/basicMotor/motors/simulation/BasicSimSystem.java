@@ -95,6 +95,17 @@ public abstract class BasicSimSystem extends BasicMotor {
   }
 
   @Override
+  protected void updateMainLoopTiming(ControllerLocation location){
+    // does nothing, as this is a simulation system
+    // the main loop timing is always on the RIO for simulation systems
+  }
+
+  @Override
+  public void setControllerLocation(ControllerLocation location){
+    throw new UnsupportedOperationException("Can't change controller location for simulation systems.");
+  }
+
+  @Override
   protected double getInternalPIDLoopTime(){
     return ControllerLocation.RIO.getSeconds();
     // All sim motors run their PID loop on the RoboRIO, so this is always the RIO loop time.

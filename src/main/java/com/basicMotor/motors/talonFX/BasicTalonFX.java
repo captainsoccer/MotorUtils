@@ -110,7 +110,7 @@ public class BasicTalonFX extends BasicMotor {
 
         defaultMeasurements = new MeasurementsTalonFX(motor, controllerLocation.getHZ(), gearRatio, unitConversion);
 
-        sensors = new TalonFXSensors(motor, controllerLocation.getHZ(), controllerLocation);
+        sensors = new TalonFXSensors(motor, super::getControllerLocation);
 
         motor.optimizeBusUtilization();
     }
@@ -155,9 +155,9 @@ public class BasicTalonFX extends BasicMotor {
         applyConfig();
 
         defaultMeasurements =
-                new MeasurementsTalonFX(motor, controllerLocation.getHZ(), config.motorConfig.gearRatio, config.motorConfig.unitConversion);
+                new MeasurementsTalonFX(motor, getControllerLocation().getHZ(), config.motorConfig.gearRatio, config.motorConfig.unitConversion);
 
-        sensors = new TalonFXSensors(motor, controllerLocation.getHZ(), controllerLocation);
+        sensors = new TalonFXSensors(motor, super::getControllerLocation);
 
         motor.optimizeBusUtilization();
 
@@ -178,7 +178,7 @@ public class BasicTalonFX extends BasicMotor {
         config.Slot0.kI = pidGains.getK_I();
         config.Slot0.kD = pidGains.getK_D();
 
-        if (controllerLocation == MotorManager.ControllerLocation.MOTOR) {
+        if (getControllerLocation() == MotorManager.ControllerLocation.MOTOR) {
             // changes made in phoenix 6 api
             // https://v6.docs.ctr-electronics.com/en/latest/docs/migration/migration-guide/feature-replacements-guide.html#integral-zone-and-max-integral-accumulator
 
@@ -208,6 +208,19 @@ public class BasicTalonFX extends BasicMotor {
     protected double getInternalPIDLoopTime() {
         return 0.001; // TalonFX has a fixed internal PID loop time of 1ms
         // This is according to https://www.chiefdelphi.com/t/control-loop-timing-of-various-motor-controllers/370356/4
+    }
+
+    @Override
+    protected void updateMainLoopTiming(MotorManager.ControllerLocation location) {
+        sensors.updateControllerLocation(location);
+
+        if(getMeasurements() instanceof MeasurementsTalonFX measurements) {
+            measurements.setUpdateFrequency(location.getHZ());
+        }
+
+        if(getMeasurements() instanceof MeasurementsCANCoder measurements) {
+            measurements.setUpdateFrequency(location.getHZ());
+        }
     }
 
     @Override
@@ -345,11 +358,19 @@ public class BasicTalonFX extends BasicMotor {
         if (getMeasurements() instanceof MeasurementsTalonFX measurements) {
             measurements.setUpdateFrequency(0);
         }
+
+        if(getMeasurements() instanceof MeasurementsCANCoder measurements) {
+            measurements.setUpdateFrequency(0);
+        }
     }
 
     @Override
     protected void startRecordingMeasurements(double HZ) {
         if (getMeasurements() instanceof MeasurementsTalonFX measurements) {
+            measurements.setUpdateFrequency(HZ);
+        }
+
+        if(getMeasurements() instanceof MeasurementsCANCoder measurements) {
             measurements.setUpdateFrequency(HZ);
         }
     }
@@ -434,7 +455,7 @@ public class BasicTalonFX extends BasicMotor {
         applyConfig();
 
         setMeasurements(
-                new MeasurementsCANCoder(canCoder, controllerLocation.getHZ(), mechanismToSensorRatio, unitConversion));
+                new MeasurementsCANCoder(canCoder, getControllerLocation().getHZ(), mechanismToSensorRatio, unitConversion));
     }
 
     /**
