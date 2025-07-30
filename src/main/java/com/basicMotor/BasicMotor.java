@@ -70,7 +70,7 @@ public abstract class BasicMotor {
      * This is the source of the motor's position, velocity, and acceleration.
      * Used for control loops and logging.
      */
-    private Measurements measurements;
+    private volatile Measurements measurements;
 
     /**
      * The log frame of the motor.
@@ -82,7 +82,7 @@ public abstract class BasicMotor {
      * The location of the pid controller.
      * This is used to determine if the pid controller is on the motor or on the RIO.
      */
-    private ControllerLocation controllerLocation;
+    private volatile ControllerLocation controllerLocation;
 
     /**
      * The state of the motor.
@@ -93,7 +93,7 @@ public abstract class BasicMotor {
      * If the PID gains have changed (then it updates the motor controller on the slower thread).
      * The controller updates this value when the PID gains change.
      */
-    private boolean hasPIDGainsChanged = false;
+    private volatile boolean hasPIDGainsChanged = false;
 
     /**
      * Sends the PID gains to the motor controller.
@@ -105,17 +105,10 @@ public abstract class BasicMotor {
     protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
 
     /**
-     * Gets the loop time of the internal PID loop.
-     * This is used to convert the pid gains to the motor controller's loop time.
-     * @return The loop time of the internal PID loop in seconds.
-     */
-    protected abstract double getInternalPIDLoopTime();
-
-    /**
      * If the constraints have changed (then it updates the motor controller on the slower thread).
      * The controller updates this value when the constraints change.
      */
-    private boolean hasConstraintsChanged = false;
+    private volatile boolean hasConstraintsChanged = false;
 
     /**
      * Sets the constraints of the motor controller.
@@ -145,7 +138,7 @@ public abstract class BasicMotor {
      * This will be set true after the motor is initialized.
      * Set by {@link #initializeMotor()}
      */
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
 
     /**
      * Creates the motor.
@@ -296,6 +289,13 @@ public abstract class BasicMotor {
     public Controller getController() {
         return controller;
     }
+
+    /**
+     * Gets the loop time of the internal PID loop.
+     * This is used to convert the pid gains to the motor controller's loop time.
+     * @return The loop time of the internal PID loop in seconds.
+     */
+    protected abstract double getInternalPIDLoopTime();
 
     /**
      * Gets the latest log frame of the motor.
