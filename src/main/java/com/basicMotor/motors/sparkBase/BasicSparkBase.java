@@ -266,7 +266,7 @@ public abstract class BasicSparkBase extends BasicMotor {
         config.closedLoop.iZone(gains.getI_Zone());
         config.closedLoop.iMaxAccum(gains.getI_MaxAccum());
 
-        if (gains.getTolerance() != 0 && controllerLocation == MotorManager.ControllerLocation.MOTOR) {
+        if (gains.getTolerance() != 0 && getControllerLocation() == MotorManager.ControllerLocation.MOTOR) {
             DriverStation.reportWarning(
                     "Spark MAX does not use tolerance in the PID controller (works on rio PID Controller), so it is ignored: "
                             + name,
@@ -299,7 +299,7 @@ public abstract class BasicSparkBase extends BasicMotor {
             config.softLimit.reverseSoftLimitEnabled(false);
         }
 
-        if (constraints.getVoltageDeadband() != 0 && controllerLocation ==  MotorManager.ControllerLocation.MOTOR) {
+        if (constraints.getVoltageDeadband() != 0 && getControllerLocation() ==  MotorManager.ControllerLocation.MOTOR) {
             DriverStation.reportWarning(
                     "Spark MAX does not use voltage deadband (works on RIO PID controller), so it is ignored: "
                             + name,
@@ -376,6 +376,11 @@ public abstract class BasicSparkBase extends BasicMotor {
         encoder.setEncoderPosition(position);
 
         motor.getClosedLoopController().setIAccum(0);
+    }
+
+    @Override
+    protected void updateMainLoopTiming(MotorManager.ControllerLocation location) {
+        configurePeriodicFrames(location.getHZ());
     }
 
     /**
@@ -526,7 +531,7 @@ public abstract class BasicSparkBase extends BasicMotor {
         // sets the feedback sensor for the closed loop controller
         config.closedLoop.feedbackSensor(ClosedLoopConfig.FeedbackSensor.kAbsoluteEncoder);
 
-        int periodMs = (int) ((1 / controllerLocation.getHZ()) * 1000); // convert to milliseconds
+        int periodMs = (int) ((1 / getControllerLocation().getHZ()) * 1000); // convert to milliseconds
         // sets the period for the absolute encoder position and velocity
         // (the default encoder period is automatically disabled)
         config.signals.absoluteEncoderPositionPeriodMs(periodMs);
@@ -644,7 +649,7 @@ public abstract class BasicSparkBase extends BasicMotor {
 
         configExternalEncoder(inverted, sensorToMotorRatio);
 
-        int periodMs = (int) ((1 / controllerLocation.getHZ()) * 1000); // convert to milliseconds
+        int periodMs = (int) ((1 / getControllerLocation().getHZ()) * 1000); // convert to milliseconds
         // sets the period for the absolute encoder position and velocity
         // (the default encoder period is automatically disabled)
         config.signals.externalOrAltEncoderPosition(periodMs);

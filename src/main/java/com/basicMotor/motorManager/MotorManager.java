@@ -1,9 +1,11 @@
 package com.basicMotor.motorManager;
 
 import com.basicMotor.LogFrame;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Notifier;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -33,9 +35,11 @@ public class MotorManager {
     private static MotorManager instance;
 
     /**
-     * The list of motors that are registered with the motor manager.
+     * The map that stores the motors and their functions.
+     * This map uses motor names (as strings) as keys and MotorFunctions objects as values.
      */
-    private final ArrayList<MotorHandler> motors = new ArrayList<>();
+    private final Map<String, MotorFunctions> motorMap = new HashMap<>(20);
+    //The current max number of motors in an FRC robot is 20, so we set the initial capacity to 20.
 
     /**
      * Private constructor to enforce singleton pattern.
@@ -62,9 +66,13 @@ public class MotorManager {
      * This method is called with the codes periodic due to the logger not supporting multithreading.
      */
     public void periodic() {
-        for (MotorHandler motor : motors) {
-            var frame = motor.frameSupplier.get();
-            Logger.processInputs("Motors/" + motor.motorName, frame);
+        // goes through all the motors and logs their data.
+        for (Map.Entry<String, MotorFunctions> entry : motorMap.entrySet()) {
+            var name = entry.getKey();
+
+            var frame = entry.getValue().frameSupplier.get();
+
+            Logger.processInputs("Motors/" + name, frame);
         }
     }
 
@@ -73,7 +81,7 @@ public class MotorManager {
      * Should only be used if using replay simulation.
      */
     public void stopSensorLoop() {
-        for (MotorHandler motor : motors) {
+        for (MotorFunctions motor : motorMap.values()) {
             motor.sensorLoop.stop();
         }
     }
@@ -82,27 +90,27 @@ public class MotorManager {
      * Stops the PID loop for all motors.
      * Should only be used if using replay simulation.
      */
-    public void stopPIDLoop() {
-        for (MotorHandler motor : motors) {
-            motor.pidLoop.stop();
+    public void stopMainLoop() {
+        for (MotorFunctions motor : motorMap.values()) {
+            motor.mainLoop.stop();
         }
     }
 
     /**
-     * Starts the sensor loop for all motors.
+     * Sets the location of the controller for a specific motor.
+     * This updates the motor's main loop to run at the specified frequency.
+     * This should not be used in the user code!,
+     * only by the {@link com.basicMotor.BasicMotor#setControllerLocation(ControllerLocation)} function.
+     * @param name The name of the motor to set the location for.
+     * @param location The location of the pid loop.
      */
-    public void startSensorLoop() {
-        for (MotorHandler motor : motors) {
-            motor.sensorLoop.startPeriodic(1 / config.SENSOR_LOOP_HZ);
-        }
-    }
-
-    /**
-     * Starts the PID loop for all motors.
-     */
-    public void startPIDLoop() {
-        for (MotorHandler motor : motors) {
-            motor.pidLoop.startPeriodic(1 / motor.location.getHZ());
+    public void setControllerLocation(String name, ControllerLocation location) {
+        var functions = motorMap.get(name);
+        if (functions != null) {
+            functions.mainLoop.stop();
+            functions.mainLoop.startPeriodic(location.getSeconds());
+        } else {
+            DriverStation.reportError("Motor with name " + name + " not found in MotorManager.", false);
         }
     }
 
@@ -123,31 +131,28 @@ public class MotorManager {
             Runnable sensorLoopFunction,
             Supplier<LogFrame.LogFrameAutoLogged> frameSupplier) {
 
-        var handler = new MotorHandler(name, location, run, sensorLoopFunction, frameSupplier);
+        var functions = new MotorFunctions(run, sensorLoopFunction, frameSupplier);
 
-        motors.add(handler);
+        // since this function only happens in the start of the robot code and is on the main thread, throws the exception if the motor name already exists.
+        if (motorMap.containsKey(name)){
+            throw new IllegalArgumentException("Motor with name " + name + " already exists.");
+        }
 
-        handler.sensorLoop.startPeriodic(1 / config.SENSOR_LOOP_HZ);
-        handler.pidLoop.startPeriodic(1 / location.getHZ());
+        motorMap.put(name, functions);
+
+        functions.sensorLoop.startPeriodic(1 / config.SENSOR_LOOP_HZ);
+        functions.mainLoop.startPeriodic(location.getSeconds());
     }
 
     /**
-     * A class that stores the motor and it's threads.
+     * This class stores the threads for the main loop and the sensor loop for a motor.
+     * It also stores the frame supplier and the name of the motor.
      */
-    private static class MotorHandler {
-        /**
-         * The name of the motor.
-         */
-        private final String motorName;
-        /**
-         * The location of the motor's pid loop.
-         */
-        private final ControllerLocation location;
-
+    public static class MotorFunctions{
         /**
          * The thread to run for the main (PID) loop.
          */
-        private final Notifier pidLoop;
+        private final Notifier mainLoop;
 
         /**
          * The thread to run for the sensor loop.
@@ -159,16 +164,17 @@ public class MotorManager {
          */
         private final Supplier<LogFrame.LogFrameAutoLogged> frameSupplier;
 
-        public MotorHandler(
-                String motorName,
-                ControllerLocation location,
-                Runnable run,
-                Runnable sensorLoopFunction,
-                Supplier<LogFrame.LogFrameAutoLogged> frameSupplier) {
-            this.motorName = motorName;
-            this.location = location;
+        /**
+         * Constructor for the MotorFunctions class.
+         * This creates the threads for the main loop and the sensor loop.
+         * But does not start them.
+         * @param run The function to run for the main loop.
+         * @param sensorLoopFunction The function to run for the sensor loop.
+         * @param frameSupplier The function to get the latest frame for the motor.
+         */
+        public MotorFunctions(Runnable run, Runnable sensorLoopFunction, Supplier<LogFrame.LogFrameAutoLogged> frameSupplier) {
 
-            pidLoop = new Notifier(run);
+            mainLoop = new Notifier(run);
             sensorLoop = new Notifier(sensorLoopFunction);
 
             this.frameSupplier = frameSupplier;
@@ -227,8 +233,7 @@ public class MotorManager {
          * @return The time in seconds for one iteration of the controller loop.
          */
         public double getSeconds() {
-            return 1 / hzSupplier.getAsDouble();
+            return 1.0 / hzSupplier.getAsDouble();
         }
-
     }
 }

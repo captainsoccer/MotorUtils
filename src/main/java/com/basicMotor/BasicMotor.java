@@ -70,7 +70,7 @@ public abstract class BasicMotor {
      * This is the source of the motor's position, velocity, and acceleration.
      * Used for control loops and logging.
      */
-    private Measurements measurements;
+    private volatile Measurements measurements;
 
     /**
      * The log frame of the motor.
@@ -82,7 +82,7 @@ public abstract class BasicMotor {
      * The location of the pid controller.
      * This is used to determine if the pid controller is on the motor or on the RIO.
      */
-    protected final ControllerLocation controllerLocation;
+    private volatile ControllerLocation controllerLocation;
 
     /**
      * The state of the motor.
@@ -93,7 +93,7 @@ public abstract class BasicMotor {
      * If the PID gains have changed (then it updates the motor controller on the slower thread).
      * The controller updates this value when the PID gains change.
      */
-    private boolean hasPIDGainsChanged = false;
+    private volatile boolean hasPIDGainsChanged = false;
 
     /**
      * Sends the PID gains to the motor controller.
@@ -105,17 +105,10 @@ public abstract class BasicMotor {
     protected abstract void updatePIDGainsToMotor(PIDGains pidGains);
 
     /**
-     * Gets the loop time of the internal PID loop.
-     * This is used to convert the pid gains to the motor controller's loop time.
-     * @return The loop time of the internal PID loop in seconds.
-     */
-    protected abstract double getInternalPIDLoopTime();
-
-    /**
      * If the constraints have changed (then it updates the motor controller on the slower thread).
      * The controller updates this value when the constraints change.
      */
-    private boolean hasConstraintsChanged = false;
+    private volatile boolean hasConstraintsChanged = false;
 
     /**
      * Sets the constraints of the motor controller.
@@ -145,7 +138,7 @@ public abstract class BasicMotor {
      * This will be set true after the motor is initialized.
      * Set by {@link #initializeMotor()}
      */
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
 
     /**
      * Creates the motor.
@@ -298,6 +291,13 @@ public abstract class BasicMotor {
     }
 
     /**
+     * Gets the loop time of the internal PID loop.
+     * This is used to convert the pid gains to the motor controller's loop time.
+     * @return The loop time of the internal PID loop in seconds.
+     */
+    protected abstract double getInternalPIDLoopTime();
+
+    /**
      * Gets the latest log frame of the motor.
      * The frame is updated on multiple threads, so some of the data might be desynchronized.
      *
@@ -361,6 +361,41 @@ public abstract class BasicMotor {
      * @param HZ The frequency of the measurements in Hz. (should be the main thread frequency)
      */
     protected abstract void startRecordingMeasurements(double HZ);
+
+    /**
+     * Gets the location of the PID controller.
+     * This is used to determine if the PID controller is on the motor or on the RIO.
+     * @return The location of the PID controller.
+     */
+    public ControllerLocation getControllerLocation(){
+        return controllerLocation;
+    }
+
+    /**
+     * Sets the location of the PID controller.
+     * This will change the location of the PID controller and update the motor manager.
+     * This will change the main loop frequency of the motor.
+     *
+     * @param controllerLocation The new location of the PID controller (RIO or motor controller).
+     */
+    public void setControllerLocation(ControllerLocation controllerLocation){
+        if (controllerLocation == null) {
+            throw new IllegalArgumentException("Controller location cannot be null");
+        }
+
+        this.controllerLocation = controllerLocation;
+        MotorManager.getInstance().setControllerLocation(name, controllerLocation);
+
+        updateMainLoopTiming(controllerLocation);
+    }
+
+    /**
+     * Updates the main loop timing of the motor.
+     * This is used so each motor implementation can update its main loop timing.
+     * This is called when the controller location is updated
+     * @param location The new location of the PID controller (RIO or motor controller).
+     */
+    protected abstract void updateMainLoopTiming(ControllerLocation location);
 
     /**
      * Starts following another motor.
@@ -574,7 +609,7 @@ public abstract class BasicMotor {
 
         //calculates the motor output
         var motorOutput =
-                runController(measurement, 1 / controllerLocation.getHZ(), controller.getRequest());
+                runController(measurement, controllerLocation.getSeconds(), controller.getRequest());
 
         double tolerance = controller.getControllerGains().getPidGains().getTolerance();
 
@@ -617,7 +652,7 @@ public abstract class BasicMotor {
             return Measurements.Measurement.EMPTY;
         }
 
-        return measurements.update(1 / controllerLocation.getHZ());
+        return measurements.update(controllerLocation.getSeconds());
     }
 
     /**

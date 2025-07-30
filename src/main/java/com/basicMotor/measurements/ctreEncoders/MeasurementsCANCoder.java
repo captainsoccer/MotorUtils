@@ -174,6 +174,16 @@ public class MeasurementsCANCoder extends Measurements {
         return super.update(dt);
     }
 
+    /**
+     * Sets the update frequency of the signals.
+     * This will update the frequency of the position and velocity signals.
+     * @param refreshHZ The refresh rate of the signals (how often to update the signals)
+     */
+    public void setUpdateFrequency(double refreshHZ) {
+        motorPosition.setUpdateFrequency(refreshHZ);
+        motorVelocity.setUpdateFrequency(refreshHZ);
+    }
+
     @Override
     protected double getUpdatedPosition() {
         return positionLatencyCompensatedValue;

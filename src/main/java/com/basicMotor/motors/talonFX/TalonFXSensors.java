@@ -9,6 +9,10 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 
+import java.util.Arrays;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
 /**
  * This class is used to manage the sensors of a TalonFX motor controller.
  * It handles updating the sensor data at a specified refresh rate
@@ -24,13 +28,6 @@ public class TalonFXSensors {
     public static int TIMEOUT_REFRESH_MULTIPLIER = 4;
 
     /**
-     * The refresh rate of the sensors in Hz.
-     * This is how often the sensors will be updated.
-     * This should be the same as the speed of the sensor thread.
-     */
-    private final double refreshHZ;
-
-    /**
      * The timeout for waiting for all signals to update.
      * Used only when Pro features are enabled.
      * This is the refresh rate divided by {@link #TIMEOUT_REFRESH_MULTIPLIER}.
@@ -38,11 +35,11 @@ public class TalonFXSensors {
     private final double timeout;
 
     /**
-     * The location of the motor controller.
-     * This is used to determine if there is need to log the motor's built-in PID output.
-     * Useful for logging and debugging purposes.
+     * A supplier that provides the location of the controller.
+     * This is used to determine if the controller is on the motor controller or on the RIO.
+     * It is used to determine which signals to update and log.
      */
-    private final MotorManager.ControllerLocation location;
+    private final Supplier<MotorManager.ControllerLocation> location;
 
     /**
      * The status signal containing the temperature
@@ -87,9 +84,22 @@ public class TalonFXSensors {
     private final StatusSignal<Double> kdOutput;
 
     /**
+     * The collection of the sensor status signals.
+     * These signals are always used and updated regardless of the controller location.
+     */
+    private final BaseStatusSignal[] sensorsSignals;
+
+    /**
+     * The collection of the PID status signals.
+     * These signals are only used if the controller is on the motor controller.
+     * Otherwise, they are not used and will not be updated.
+     */
+    private final BaseStatusSignal[] pidSignals;
+
+    /**
      * The collection of status signals that will be updated at the refresh rate.
      */
-    private final BaseStatusSignal[] statusSignals;
+    private BaseStatusSignal[] allSignals;
 
     /**
      * The latest PID output from the motor controller.
@@ -106,13 +116,12 @@ public class TalonFXSensors {
     /**
      * Constructs a TalonFXSensors object with the given motor and refresh rate.
      *
-     * @param motor     The TalonFX motor controller to get the sensors from.
-     * @param refreshHZ The refresh rate of the sensors in Hz.
-     * @param location  The location of the pid controller (RIO or MOTOR).
-     *                  This is used to determine if there is need to log the motor's built-in PID output.
+     * @param motor    The TalonFX motor controller to get the sensors from.
+     * @param location The location of the pid controller (RIO or MOTOR).
+     *                 This is used to determine if there is need to log the motor's built-in PID output.
      */
-    public TalonFXSensors(TalonFX motor, double refreshHZ, MotorManager.ControllerLocation location) {
-        this.refreshHZ = refreshHZ;
+    public TalonFXSensors(TalonFX motor, Supplier<MotorManager.ControllerLocation> location) {
+        double refreshHZ = MotorManager.config.SENSOR_LOOP_HZ;
         this.location = location;
 
         timeout = 1 / (refreshHZ * TIMEOUT_REFRESH_MULTIPLIER);
@@ -124,39 +133,28 @@ public class TalonFXSensors {
         supplyVoltageSignal = motor.getSupplyVoltage(false);
         dutyCycleSignal = motor.getDutyCycle(false);
 
+        sensorsSignals = new BaseStatusSignal[]{
+                temperatureSignal,
+                supplyCurrentSignal,
+                statorCurrentSignal,
+                motorVoltageSignal,
+                supplyVoltageSignal,
+                dutyCycleSignal
+        };
+
         kpOutput = motor.getClosedLoopProportionalOutput(false);
         kiOutput = motor.getClosedLoopIntegratedOutput(false);
         kdOutput = motor.getClosedLoopDerivativeOutput(false);
         totalOutput = motor.getClosedLoopOutput(false);
 
-        // if the controller is on the rio
-        if (location == MotorManager.ControllerLocation.RIO) {
-            statusSignals = new BaseStatusSignal[]{
-                    temperatureSignal,
-                    supplyCurrentSignal,
-                    statorCurrentSignal,
-                    motorVoltageSignal,
-                    supplyVoltageSignal,
-                    dutyCycleSignal
-            };
-        } else {
-            statusSignals = new BaseStatusSignal[]{
-                    temperatureSignal,
-                    supplyCurrentSignal,
-                    statorCurrentSignal,
-                    motorVoltageSignal,
-                    supplyVoltageSignal,
-                    dutyCycleSignal,
-                    totalOutput,
-                    kpOutput,
-                    kiOutput,
-                    kdOutput
-            };
-        }
+        pidSignals = new BaseStatusSignal[]{
+                totalOutput,
+                kpOutput,
+                kiOutput,
+                kdOutput
+        };
 
-        for (BaseStatusSignal signal : statusSignals) {
-            signal.setUpdateFrequency(refreshHZ);
-        }
+        updateControllerLocation();
     }
 
     /**
@@ -166,8 +164,8 @@ public class TalonFXSensors {
      * @return The sensor data.
      */
     public LogFrame.SensorData getSensorData() {
-        if (waitForAll) BaseStatusSignal.waitForAll(timeout, statusSignals);
-        else BaseStatusSignal.refreshAll(statusSignals);
+        if (waitForAll) BaseStatusSignal.waitForAll(timeout, allSignals);
+        else BaseStatusSignal.refreshAll(allSignals);
 
         double temperature = temperatureSignal.getValueAsDouble();
         double currentDraw = supplyCurrentSignal.getValueAsDouble();
@@ -180,7 +178,7 @@ public class TalonFXSensors {
 
         // updates the latest pid output if the controller is on the motor controller
         // used for logging
-        if (location == MotorManager.ControllerLocation.MOTOR) {
+        if (location.get() == MotorManager.ControllerLocation.MOTOR) {
             double pOutput = kpOutput.getValueAsDouble();
             double iOutput = kiOutput.getValueAsDouble();
             double dOutput = kdOutput.getValueAsDouble();
@@ -207,7 +205,30 @@ public class TalonFXSensors {
      * @param defaultRate Whether to set the duty cycle to the default rate (100 Hz) or to the refresh rate.
      */
     public void setDutyCycleToDefaultRate(boolean defaultRate) {
-        dutyCycleSignal.setUpdateFrequency(defaultRate ? 100 : refreshHZ);
+        dutyCycleSignal.setUpdateFrequency(defaultRate ? 100 : MotorManager.config.SENSOR_LOOP_HZ);
+    }
+
+    /**
+     * Updates the controller location for the sensors.
+     * If the controller is on the motor controller, it updates all signals.
+     * If the controller is on the RIO, it only updates the sensor signals
+     *
+     */
+    public void updateControllerLocation() {
+        if (location.get() == MotorManager.ControllerLocation.MOTOR) {
+            allSignals = Stream.concat(Arrays.stream(sensorsSignals), Arrays.stream(pidSignals))
+                    .toArray(BaseStatusSignal[]::new);
+        } else {
+            allSignals = sensorsSignals;
+
+            for (BaseStatusSignal signal : pidSignals) {
+                signal.setUpdateFrequency(0);
+            }
+        }
+
+        for(BaseStatusSignal signal : allSignals) {
+            signal.setUpdateFrequency(MotorManager.config.SENSOR_LOOP_HZ);
+        }
     }
 
     /**
