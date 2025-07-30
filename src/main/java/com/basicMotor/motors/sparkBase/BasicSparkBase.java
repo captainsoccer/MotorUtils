@@ -379,7 +379,7 @@ public abstract class BasicSparkBase extends BasicMotor {
     }
 
     @Override
-    protected void updateMainLoopTiming(MotorManager.ControllerLocation location){
+    protected void updateMainLoopTiming(MotorManager.ControllerLocation location) {
         configurePeriodicFrames(location.getHZ());
     }
 
