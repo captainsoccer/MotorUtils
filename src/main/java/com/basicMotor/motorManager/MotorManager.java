@@ -36,7 +36,7 @@ public class MotorManager {
 
     /**
      * The map that stores the motors and their functions.
-     * This map
+     * This map uses motor names (as strings) as keys and MotorFunctions objects as values.
      */
     private final Map<String, MotorFunctions> motorMap = new HashMap<>(20);
     //The current max number of motors in an FRC robot is 20, so we set the initial capacity to 20.
@@ -134,7 +134,7 @@ public class MotorManager {
         var functions = new MotorFunctions(run, sensorLoopFunction, frameSupplier);
 
         // since this function only happens in the start of the robot code and is on the main thread, throws the exception if the motor name already exists.
-        if(motorMap.containsKey(name)){
+        if (motorMap.containsKey(name)){
             throw new IllegalArgumentException("Motor with name " + name + " already exists.");
         }
 

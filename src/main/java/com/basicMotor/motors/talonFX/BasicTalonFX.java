@@ -212,7 +212,7 @@ public class BasicTalonFX extends BasicMotor {
 
     @Override
     protected void updateMainLoopTiming(MotorManager.ControllerLocation location) {
-        sensors.updateControllerLocation(location);
+        sensors.updateControllerLocation();
 
         if(getMeasurements() instanceof MeasurementsTalonFX measurements) {
             measurements.setUpdateFrequency(location.getHZ());

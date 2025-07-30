@@ -222,10 +222,9 @@ public class TalonFXSensors {
      * If the controller is on the motor controller, it updates all signals.
      * If the controller is on the RIO, it only updates the sensor signals
      *
-     * @param location The location of the controller (MOTOR or RIO).
      */
-    public void updateControllerLocation(MotorManager.ControllerLocation location) {
-        if (location == MotorManager.ControllerLocation.MOTOR) {
+    public void updateControllerLocation() {
+        if (location.get() == MotorManager.ControllerLocation.MOTOR) {
             allSignals = Stream.concat(Arrays.stream(sensorsSignals), Arrays.stream(pidSignals))
                     .toArray(BaseStatusSignal[]::new);
 
