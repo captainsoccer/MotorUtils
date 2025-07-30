@@ -34,6 +34,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.Util.GyroIO;
 import frc.Util.Pigeon2IO;
 
+/**
+ * This is the subsystem for the drive train of the robot.
+ * It handles the swerve modules and the pose estimation.
+ * Includes pathplanner auto support.
+ */
 public class DriveTrain extends SubsystemBase {
     @AutoLog
     public static class DriveTrainInputs {
@@ -129,7 +134,8 @@ public class DriveTrain extends SubsystemBase {
             config = DriveTrainConstants.FALLBACK_CONFIG;
         }
 
-        BiConsumer<ChassisSpeeds, DriveFeedforwards> output = (speeds, feedForwards) -> this.runVelocity(speeds);
+        BiConsumer<ChassisSpeeds, DriveFeedforwards> output =
+                (speeds, feedForwards) -> this.runVelocity(speeds);
 
         AutoBuilder.configure(
                 this::getEstimatedPose,
@@ -286,12 +292,12 @@ public class DriveTrain extends SubsystemBase {
         }
 
         // Updates the gyro angle to the latest angle
-        gyro.update();
-        inputs.angle = gyro.getAngle();
+        inputs.angle = gyro.update();
         Logger.processInputs("DriveTrain", inputs);
 
         poseEstimator.update(getGyroRotation2d(), modulePositions);
 
+        // Records the estimated pose and rotation
         Logger.recordOutput("Drive train/Rotation", getRotation2d());
         Logger.recordOutput("Drive train/Estimated pose", poseEstimator.getEstimatedPosition());
     }

@@ -10,8 +10,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 public interface GyroIO {
     /**
      * Updates the angle of the gyro, should be called periodically.
+     * @return The latest angle of the gyro.
      */
-    void update();
+    Rotation2d update();
 
     /**
      * Sets the angle fo the gyro, use this when resting the robot's heading.

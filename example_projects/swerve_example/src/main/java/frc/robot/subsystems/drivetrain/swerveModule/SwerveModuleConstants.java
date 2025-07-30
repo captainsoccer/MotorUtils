@@ -18,38 +18,69 @@ import com.basicMotor.motorManager.MotorManager;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 
-/** Add your docs here. */
+/**
+ * Constants for the swerve modules.
+ * This class contains the configurations for each swerve module.
+ */
 public enum SwerveModuleConstants {
-    FRONT_LEFT(1, 0,
-            2, new PIDGains(5, 0, 0),
-            new ControllerFeedForwards(2.7), 0.13716, 0.011902948,
+    FRONT_LEFT(2, 0 ,
+            // PID gains for the drive motor
+            3, new PIDGains(5, 0, 0),
+            // The feed forwards for the drive motor (the setpoint feed forward is the kV)
+            new ControllerFeedForwards(2.7),
+            0.011902948,
 
-            3, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
-            new ControllerFeedForwards(0, 0.35464), 1, 0.2,
-            new Translation2d(0.29, 0.29)),
+            // PID gains for the steer motor
+            4, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
+            //The feed forwards for the steer motor
+            new ControllerFeedForwards(0, 0.35464),
+            //The motor constants used in the simulation
+            0.1,0.2,
+            new Translation2d(0.29, 0.29)), //The translation of the modules relative to the center of the robot
 
-    FRONT_RIGHT(1, 0,
-            2, new PIDGains(5, 0, 0),
-            new ControllerFeedForwards(2.7), 0.13716, 0.011902948,
+    FRONT_RIGHT(5, 0,
+            // PID gains for the drive motor
+            6, new PIDGains(5, 0, 0),
+            // The feed forwards for the drive motor (the setpoint feed forward is the kV)
+            new ControllerFeedForwards(2.7),
+            0.011902948,
 
-            3, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
-            new ControllerFeedForwards(0, 0.35464), 1, 0.2,
+            // PID gains for the steer motor
+            7, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
+            //The feed forwards for the steer motor
+            new ControllerFeedForwards(0, 0.35464),
+            //The motor constants used in the simulation
+            0.1,0.2,
             new Translation2d(0.29, -0.29)),
 
-    BACK_LEFT(1, 0,
-            2, new PIDGains(5, 0, 0),
-            new ControllerFeedForwards(2.7), 0.13716, 0.011902948,
+    BACK_LEFT(8, 0,
+            // PID gains for the drive motor
+            9, new PIDGains(5, 0, 0),
+            // The feed forwards for the drive motor (the setpoint feed forward is the kV)
+            new ControllerFeedForwards(2.7),
+            0.011902948,
 
-            3, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
-            new ControllerFeedForwards(0, 0.35464), 1, 0.2,
+            // PID gains for the steer motor
+            10, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
+            //The feed forwards for the steer motor
+            new ControllerFeedForwards(0, 0.35464),
+            //The motor constants used in the simulation
+            0.1,0.2,
             new Translation2d(-0.29, 0.29)),
 
-    BACK_RIGHT(1, 0,
-            2, new PIDGains(5, 0, 0),
-            new ControllerFeedForwards(2.7), 0.13716, 0.011902948,
+    BACK_RIGHT(11, 0,
+            // PID gains for the drive motor
+            12, new PIDGains(5, 0, 0),
+            // The feed forwards for the drive motor (the setpoint feed forward is the kV)
+            new ControllerFeedForwards(2.7),
+            0.011902948,
 
-            3, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
-            new ControllerFeedForwards(0, 0.35464), 1, 0.2,
+            // PID gains for the steer motor
+            13, new PIDGains(20, 25, 0, 0.05, 4, 0.001),
+            //The feed forwards for the steer motor
+            new ControllerFeedForwards(0, 0.35464),
+            //The motor constants used in the simulation
+            0.1,0.2,
             new Translation2d(-0.29, -0.29));
 
     // Drive motor constants
@@ -62,7 +93,6 @@ public enum SwerveModuleConstants {
     // Common configurations for the drive motor
     private static BasicMotorConfig getDriveMotorCommonConfig() {
         var config = new BasicTalonFXConfig();
-        System.out.println(DRIVE_GEAR_RATIO);
 
         config.motorConfig.gearRatio = DRIVE_GEAR_RATIO;
         config.motorConfig.unitConversion = 2 * Math.PI * WHEEL_RADIUS_METERS;
@@ -81,7 +111,7 @@ public enum SwerveModuleConstants {
 
         config.motorConfig.gearRatio = 12.75; // Adjust based on your gear ratio
         config.motorConfig.idleMode = BasicMotor.IdleMode.BRAKE;
-        config.motorConfig.location = MotorManager.ControllerLocation.RIO;
+        config.motorConfig.location = MotorManager.ControllerLocation.RIO; //For the cancoder to be used directly
         config.motorConfig.motorType = DCMotor.getNEO(1); // Adjust based on your motor type
 
         config.currentLimitConfig.freeSpeedCurrentLimit = 40; // Adjust based on your motor's current limit
@@ -112,7 +142,6 @@ public enum SwerveModuleConstants {
             int driveMotorID,
             PIDGains drivePIDGains,
             ControllerFeedForwards driveFeedForwards,
-            double driveKV,
             double driveKA,
             int steerMotorID,
             PIDGains steerPIDGains,
@@ -136,7 +165,7 @@ public enum SwerveModuleConstants {
         DRIVE_MOTOR_CONFIG.motorConfig.id = driveMotorID;
         DRIVE_MOTOR_CONFIG.pidConfig.fromGains(drivePIDGains);
         DRIVE_MOTOR_CONFIG.feedForwardConfig.fromFeedForwards(driveFeedForwards);
-        DRIVE_MOTOR_CONFIG.simulationConfig.kV = driveKV;
+        DRIVE_MOTOR_CONFIG.simulationConfig.kV = driveFeedForwards.getSetpointFeedForward();
         DRIVE_MOTOR_CONFIG.simulationConfig.kA = driveKA;
 
         //apply specific configurations for the steer motor
@@ -148,6 +177,12 @@ public enum SwerveModuleConstants {
         STEER_MOTOR_CONFIG.simulationConfig.kA = steerKA;
     }
 
+    /**
+     * Gets the translations of all swerve modules.
+     * The translations are relative to the center of the robot.
+     * The order is: Front Left, Front Right, Back Left, Back Right.
+     * @return An array of Translation2d representing the locations of the swerve modules.
+     */
     public static Translation2d[] getTranslations(){
         ArrayList<Translation2d> translations = new ArrayList<>();
 

@@ -25,6 +25,11 @@ public class DriveTrainConstants {
      */
     public static final int pigeonID = 0; // The ID of the pigeon IMU
 
+    /**
+     * The PathPlanner holonomic drive controller.
+     * This holds the PID constants for the translation and rotation controllers.
+     * You can change the PID constants according to your needs.
+     */
     public static final PPHolonomicDriveController PATH_PLANNER_PID =
             new PPHolonomicDriveController(
                     new PIDConstants(1), //PID constants for the translation PID controller
@@ -62,8 +67,8 @@ public class DriveTrainConstants {
                         * In the Calculating MOI section.
                         */
                     new ModuleConfig(
-                            SwerveModuleConstants.WHEEL_RADIUS_METERS,
-                            SwerveModuleConstants.MAX_WHEEL_SPEED,
+                            SwerveModuleConstants.WHEEL_RADIUS_METERS, // The radius of the wheel in meters
+                            SwerveModuleConstants.MAX_WHEEL_SPEED, // The maximum wheel speed in meters per second
                             1, // This is the coefficient of friction for the wheel. Find it using testing.
                             SwerveModuleConstants.DRIVE_MOTOR_TYPE.withReduction(SwerveModuleConstants.DRIVE_GEAR_RATIO),
                             SwerveModuleConstants.DRIVE_CURRENT_LIMIT,

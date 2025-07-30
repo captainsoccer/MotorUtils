@@ -9,7 +9,12 @@ import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
-/** Add your docs here. */
+/**
+ * This class serves as an interface for the swerve module IO.
+ * This handles the communication between the robot and the swerve module,
+ * including setting the target state, updating the state and position,
+ * and updating the logs.
+ */
 public abstract class SwerveModuleIO {
     @AutoLog
     public static class SwerveModuleInputs{

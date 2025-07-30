@@ -19,8 +19,9 @@ public class Pigeon2IO implements GyroIO{
     }
 
     @Override
-    public void update(){
+    public Rotation2d update(){
         angle = gyro.getRotation2d();
+        return  angle;
     }
 
     @Override

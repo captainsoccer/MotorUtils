@@ -17,7 +17,12 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
-/** Add your docs here. */
+/**
+ * This class implements the SwerveModuleIO interface for a real swerve module.
+ * It handles the actual hardware interaction for a swerve module,
+ * including setting the target state,
+ * updating the state and position, and updating logs.
+ */
 public class SwerveModuleReal extends SwerveModuleIO{
     private final BasicMotor driveMotor;
     private final BasicMotor steerMotor;
