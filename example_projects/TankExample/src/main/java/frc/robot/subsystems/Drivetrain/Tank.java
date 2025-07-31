@@ -17,9 +17,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.Util.GyroIO;
 import frc.Util.Pigeon2IO;
 import frc.Util.SimGyroIO;
-import frc.robot.subsystems.TankInputsAutoLogged;
 import org.littletonrobotics.junction.Logger;
-
 import java.util.function.BiConsumer;
 
 /**
@@ -181,6 +179,8 @@ public class Tank extends SubsystemBase {
         checkWheelSpeeds(targetWheelSpeeds, TankConstants.MAX_VELOCITY_METERS_PER_SECOND);
 
         io.setTargetSpeeds(targetWheelSpeeds);
+
+        Logger.recordOutput("Tank/ChassisSpeeds", discretizedSpeeds);
     }
 
     /**
@@ -193,6 +193,15 @@ public class Tank extends SubsystemBase {
      */
     public void runVelocity(ChassisSpeeds chassisSpeeds) {
         runVelocity(chassisSpeeds, 0.02); // Default dt is 20ms
+    }
+
+    /**
+     * Sets the voltage for the left and right motors of the tank drive system.
+     * @param leftVoltage The voltage to apply to the left motors.
+     * @param rightVoltage The voltage to apply to the right motors.
+     */
+    public void runVoltage(double leftVoltage, double rightVoltage) {
+        io.setVoltage(leftVoltage, rightVoltage);
     }
 
     /**
@@ -219,7 +228,8 @@ public class Tank extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
-        inputs.gyroAngle = gyro.getAngle();
+        inputs.gyroAngle = gyro.update();
+        inputs.chassisSpeeds = getChassisSpeeds();
 
         Logger.processInputs("Tank", inputs);
 

@@ -15,14 +15,14 @@ import edu.wpi.first.wpilibj.DriverStation;
  */
 public enum TankConstants {
     LEFT(3, 4, false,
-            new PIDGains(), //The PID gains for the left side motors
-            new ControllerFeedForwards(), //The feed forwards for the left side motors
-            0.01), //The kA constant for the left side motors (kv is the setpoint feed forward)
+            new PIDGains(3, 0, 0), //The PID gains for the left side motors
+            new ControllerFeedForwards(4), //The feed forwards for the left side motors
+            0.4), //The kA constant for the left side motors (kv is the setpoint feed forward)
 
     RIGHT(5, 6, false,
-            new PIDGains(), //The PID gains for the right side motors
-            new ControllerFeedForwards(), //The feed forwards for the right side motors
-            0.01); //The kA constant for the right side motors (kv is the setpoint feed forward)
+            new PIDGains(3, 0, 0), //The PID gains for the right side motors
+            new ControllerFeedForwards(4), //The feed forwards for the right side motors
+            0.4); //The kA constant for the right side motors (kv is the setpoint feed forward)
 
     /**
      * The radius of the wheels in meters.

@@ -78,6 +78,8 @@ public class ArcadeDriveCommand extends Command {
         this.velocitySupplier = velocitySupplier;
         this.rotationSupplier = rotationSupplier;
         this.brakeSupplier = brakeSupplier;
+
+        addRequirements(tank);
     }
 
     /**

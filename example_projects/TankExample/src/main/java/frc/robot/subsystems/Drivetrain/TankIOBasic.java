@@ -26,26 +26,22 @@ public class TankIOBasic implements TankIO{
      * Constructor for the TankIOBasic class.
      */
     public TankIOBasic() {
-        BasicMotor leftFollower;
-        BasicMotor rightFollower;
-
         if(RobotBase.isReal()) {
             leadLeftMotor = new BasicSparkMAX(TankConstants.LEFT.leadMotorConfig);
             leadRightMotor = new BasicSparkMAX(TankConstants.RIGHT.leadMotorConfig);
 
-            leftFollower = new BasicSparkMAX(TankConstants.LEFT.followerMotorConfig);
-            rightFollower = new BasicSparkMAX(TankConstants.RIGHT.followerMotorConfig);
+            BasicMotor leftFollower = new BasicSparkMAX(TankConstants.LEFT.followerMotorConfig);
+            BasicMotor rightFollower = new BasicSparkMAX(TankConstants.RIGHT.followerMotorConfig);
+
+            leftFollower.followMotor(leadLeftMotor, TankConstants.followerInvertedToLead);
+            rightFollower.followMotor(leadRightMotor, TankConstants.followerInvertedToLead);
         }
         else{
             leadLeftMotor = new BasicSimMotor(TankConstants.LEFT.leadMotorConfig);
             leadRightMotor = new BasicSimMotor(TankConstants.RIGHT.leadMotorConfig);
-
-            leftFollower = new BasicSimMotor(TankConstants.LEFT.followerMotorConfig);
-            rightFollower = new BasicSimMotor(TankConstants.RIGHT.followerMotorConfig);
         }
 
-        leftFollower.followMotor(leadLeftMotor, TankConstants.followerInvertedToLead);
-        rightFollower.followMotor(leadRightMotor, TankConstants.followerInvertedToLead);
+        
     }
 
     @Override

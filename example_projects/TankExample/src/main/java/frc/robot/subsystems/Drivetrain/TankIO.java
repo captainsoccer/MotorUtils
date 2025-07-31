@@ -1,6 +1,7 @@
 package frc.robot.subsystems.Drivetrain;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelPositions;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import org.littletonrobotics.junction.AutoLog;
@@ -13,6 +14,8 @@ public interface TankIO {
         public DifferentialDriveWheelPositions wheelPositions = new DifferentialDriveWheelPositions(0, 0);
 
         public Rotation2d gyroAngle = new Rotation2d();
+
+        public ChassisSpeeds chassisSpeeds = new ChassisSpeeds();
     }
 
     /**

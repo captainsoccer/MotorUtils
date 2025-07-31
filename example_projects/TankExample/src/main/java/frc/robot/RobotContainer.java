@@ -5,16 +5,28 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.subsystems.Drivetrain.Tank;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
+import com.pathplanner.lib.auto.AutoBuilder;
 
 public class RobotContainer {
+  public static Tank tank;
+
+  public static LoggedDashboardChooser<Command> autoChooser;
+
   public RobotContainer() {
+    tank = new Tank();
+
     configureBindings();
+
+    autoChooser = new LoggedDashboardChooser<>("auto chooser", AutoBuilder.buildAutoChooser());
   }
 
-  private void configureBindings() {}
+  private void configureBindings() {
+  }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return autoChooser.get();
   }
 }
