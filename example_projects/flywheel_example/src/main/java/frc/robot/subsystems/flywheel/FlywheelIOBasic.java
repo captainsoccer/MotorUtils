@@ -2,13 +2,17 @@ package frc.robot.subsystems.flywheel;
 
 import com.basicMotor.BasicMotor;
 import com.basicMotor.controllers.Controller;
+import com.basicMotor.motors.simulation.BasicSimMotor;
 import com.basicMotor.motors.talonFX.BasicTalonFX;
+
+import edu.wpi.first.wpilibj.RobotBase;
 
 public class FlywheelIOBasic implements  FlywheelIO {
     private final BasicMotor motor;
 
     public FlywheelIOBasic() {
-        this.motor = new BasicTalonFX(FlywheelConstants.motorConfig);
+        this.motor = RobotBase.isReal() ? new BasicTalonFX(FlywheelConstants.motorConfig) :
+                        new BasicSimMotor(FlywheelConstants.motorConfig);
     }
 
     @Override
