@@ -2,6 +2,9 @@ package frc.robot.commands;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Drivetrain.Tank;
 import frc.robot.subsystems.Drivetrain.TankConstants;
 
@@ -75,6 +78,42 @@ public class ArcadeDriveCommand extends Command {
         this.velocitySupplier = velocitySupplier;
         this.rotationSupplier = rotationSupplier;
         this.brakeSupplier = brakeSupplier;
+    }
+
+    /**
+     * Constructor for the arcadeDriveCommand.
+     * @param tank the tank drive system that this command controls
+     * @param controller The PS5 controller used to control the tank drive system.
+     */
+    public ArcadeDriveCommand(Tank tank, CommandPS5Controller controller){
+        this(tank,
+                () -> -controller.getLeftY(),
+                () -> -controller.getRightX(),
+                controller::getR2Axis);
+    }
+
+    /**
+     * Constructor for the arcadeDriveCommand.
+     * @param tank the tank drive system that this command controls
+     * @param controller The PS4 controller used to control the tank drive system.
+     */
+    public ArcadeDriveCommand(Tank tank, CommandPS4Controller controller){
+        this(tank,
+                () -> -controller.getLeftY(),
+                () -> -controller.getRightX(),
+                controller::getR2Axis);
+    }
+
+    /**
+     * Constructor for the arcadeDriveCommand.
+     * @param tank the tank drive system that this command controls
+     * @param controller The Xbox controller used to control the tank drive system.
+     */
+    public ArcadeDriveCommand(Tank tank, CommandXboxController controller){
+        this(tank,
+                () -> -controller.getLeftY(),
+                () -> -controller.getRightX(),
+                controller::getRightTriggerAxis);
     }
 
     @Override
