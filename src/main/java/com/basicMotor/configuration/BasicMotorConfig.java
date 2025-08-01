@@ -190,7 +190,7 @@ public class BasicMotorConfig {
         public DCMotor motorType = DCMotor.getNEO(1);
 
         /**
-         * Copy's the motor configuration to a new instance.
+         * Copies the motor configuration into a new instance.
          *
          * @return A new instance of MotorConfig with the same values as this instance with no references to the original instance.
          */
