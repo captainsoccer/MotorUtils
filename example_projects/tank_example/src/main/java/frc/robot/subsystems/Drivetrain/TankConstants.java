@@ -3,6 +3,8 @@ package frc.robot.subsystems.Drivetrain;
 import com.basicMotor.BasicMotor;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.configuration.BasicSparkBaseConfig;
+import com.basicMotor.configuration.BasicMotorConfig.FeedForwardConfig;
+import com.basicMotor.configuration.BasicMotorConfig.PIDConfig;
 import com.basicMotor.gains.ControllerFeedForwards;
 import com.basicMotor.gains.PIDGains;
 import com.pathplanner.lib.config.ModuleConfig;
@@ -145,8 +147,8 @@ public enum TankConstants {
         leadMotorConfig.motorConfig.name = this.name() + " Lead Motor";
         leadMotorConfig.motorConfig.inverted = inverted;
 
-        leadMotorConfig.pidConfig.fromGains(pidGains);
-        leadMotorConfig.feedForwardConfig.fromFeedForwards(feedForwards);
+        leadMotorConfig.pidConfig = PIDConfig.fromGains(pidGains);
+        leadMotorConfig.feedForwardConfig = FeedForwardConfig.fromFeedForwards(feedForwards);
 
         leadMotorConfig.simulationConfig.kV = feedForwards.getSetpointFeedForward();
         leadMotorConfig.simulationConfig.kA = kA;

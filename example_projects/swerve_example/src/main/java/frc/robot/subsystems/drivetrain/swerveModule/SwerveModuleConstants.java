@@ -10,7 +10,8 @@ import com.basicMotor.BasicMotor;
 import com.basicMotor.configuration.BasicMotorConfig;
 import com.basicMotor.configuration.BasicSparkBaseConfig;
 import com.basicMotor.configuration.BasicTalonFXConfig;
-
+import com.basicMotor.configuration.BasicMotorConfig.FeedForwardConfig;
+import com.basicMotor.configuration.BasicMotorConfig.PIDConfig;
 import com.basicMotor.gains.ControllerConstraints;
 import com.basicMotor.gains.ControllerFeedForwards;
 import com.basicMotor.gains.PIDGains;
@@ -163,16 +164,16 @@ public enum SwerveModuleConstants {
         //apply specific configurations for the drive and steer motors
         DRIVE_MOTOR_CONFIG.motorConfig.name = NAME + " Drive Motor";
         DRIVE_MOTOR_CONFIG.motorConfig.id = driveMotorID;
-        DRIVE_MOTOR_CONFIG.pidConfig.fromGains(drivePIDGains);
-        DRIVE_MOTOR_CONFIG.feedForwardConfig.fromFeedForwards(driveFeedForwards);
+        DRIVE_MOTOR_CONFIG.pidConfig = PIDConfig.fromGains(drivePIDGains);
+        DRIVE_MOTOR_CONFIG.feedForwardConfig = FeedForwardConfig.fromFeedForwards(driveFeedForwards);
         DRIVE_MOTOR_CONFIG.simulationConfig.kV = driveFeedForwards.getSetpointFeedForward();
         DRIVE_MOTOR_CONFIG.simulationConfig.kA = driveKA;
 
         //apply specific configurations for the steer motor
         STEER_MOTOR_CONFIG.motorConfig.name = NAME + " Steer Motor";
         STEER_MOTOR_CONFIG.motorConfig.id = steerMotorID;
-        STEER_MOTOR_CONFIG.pidConfig.fromGains(steerPIDGains);
-        STEER_MOTOR_CONFIG.feedForwardConfig.fromFeedForwards(steerFeedForwards);
+        STEER_MOTOR_CONFIG.pidConfig = PIDConfig.fromGains(steerPIDGains);
+        STEER_MOTOR_CONFIG.feedForwardConfig = FeedForwardConfig.fromFeedForwards(steerFeedForwards);
         STEER_MOTOR_CONFIG.simulationConfig.kV = steerKV;
         STEER_MOTOR_CONFIG.simulationConfig.kA = steerKA;
     }
