@@ -10,7 +10,7 @@ import com.basicMotor.gains.currentLimits.CurrentLimitsTalonFX;
  * See the <a href="https://github.com/captainsoccer/MotorUtils/wiki">wiki</a> //TODO: add wiki link
  * for more information on how to use this class.
  */
-public class BasicTalonFXConfig extends BasicMotorConfig {
+public class BasicTalonFXConfig extends  BasicMotorConfig {
     /**
      * The current limits configuration for the TalonFX motor controller.
      * Use this to protect the motor from overheating and drawing too much current.
@@ -39,10 +39,25 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
      */
     public boolean waitForAllSignals = false;
 
+    @Override
+    public BasicTalonFXConfig copy() {
+        var copy = new BasicTalonFXConfig();
+
+        // Copy the basic motor configuration
+        super.copy(copy);
+
+        copy.currentLimitConfig = this.currentLimitConfig.copy();
+        copy.canBusName = this.canBusName;
+        copy.enableFOC = this.enableFOC;
+        copy.waitForAllSignals = this.waitForAllSignals;
+
+        return copy;
+    }
+
     /**
      * Handles the configuration for the current limits.
      */
-    public static class CurrentLimitConfig implements Cloneable {
+    public static class CurrentLimitConfig {
         /**
          * The maximum current output of the motor controller (in amps).
          * This is different from the supply current limit, and will usually be higher.
@@ -91,16 +106,20 @@ public class BasicTalonFXConfig extends BasicMotorConfig {
             this.lowerCurrentLimit = currentLimits.getSupplyLowerLimit();
         }
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
-        }
-    }
+        /**
+         * Creates a copy of the current limit configuration.
+         *
+         * @return A new CurrentLimitConfig object with the same values
+         */
+        public CurrentLimitConfig copy() {
+            var copy = new CurrentLimitConfig();
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        BasicTalonFXConfig cloned = (BasicTalonFXConfig) super.clone();
-        cloned.currentLimitConfig = (CurrentLimitConfig) currentLimitConfig.clone();
-        return cloned;
+            copy.statorCurrentLimit = this.statorCurrentLimit;
+            copy.supplyCurrentLimit = this.supplyCurrentLimit;
+            copy.lowerLimitTime = this.lowerLimitTime;
+            copy.lowerCurrentLimit = this.lowerCurrentLimit;
+
+            return copy;
+        }
     }
 }

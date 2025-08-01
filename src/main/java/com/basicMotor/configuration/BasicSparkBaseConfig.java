@@ -36,9 +36,30 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
     }
 
     /**
+     * Creates a copy of the BasicSparkBaseConfig.
+     * This method creates a new instance of BasicSparkBaseConfig and copies the values from the
+     * current instance to the new instance.
+     *
+     * @return A new BasicSparkBaseConfig object with the same values as this instance
+     */
+    @Override
+    public BasicSparkBaseConfig copy() {
+        BasicSparkBaseConfig copy = new BasicSparkBaseConfig();
+
+        // Copy the basic motor configuration
+        super.copy(copy);
+
+        copy.currentLimitConfig = this.currentLimitConfig.copy();
+        copy.externalEncoderConfig = this.externalEncoderConfig.copy();
+        copy.absoluteEncoderConfig = this.absoluteEncoderConfig.copy();
+
+        return copy;
+    }
+
+    /**
      * Handles configuration for the currentLimits, It has current limits specifically tailored to the spark base motor controllers.
      */
-    public static class CurrentLimitConfig implements Cloneable {
+    public static class CurrentLimitConfig {
         /**
          * The maximum current output (i.e. applied current and not current draw) of the motor controller while in free speed (in amps).
          * Free speed can be defined in {@link #freeSpeedRPM}.
@@ -77,27 +98,44 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
         }
 
         /**
-         * Sets the current limits of the motor controller from the given current limits.
+         * Creates a copy of the current limit configuration.
          *
-         * @param currentLimits The current limits to set
+         * @return A new CurrentLimitConfig object with the same values
          */
-        public void fromCurrentLimits(CurrentLimitsSparkBase currentLimits) {
-            this.freeSpeedCurrentLimit = currentLimits.getCurrentLimit();
-            this.stallCurrentLimit = currentLimits.getStallCurrentLimit();
-            this.freeSpeedRPM = currentLimits.getFreeSpeedRPM();
-            this.secondaryCurrentLimit = currentLimits.getSecondaryCurrentLimit();
+        public CurrentLimitConfig copy() {
+            CurrentLimitConfig copy = new CurrentLimitConfig();
+
+            copy.freeSpeedCurrentLimit = this.freeSpeedCurrentLimit;
+            copy.stallCurrentLimit = this.stallCurrentLimit;
+            copy.freeSpeedRPM = this.freeSpeedRPM;
+            copy.secondaryCurrentLimit = this.secondaryCurrentLimit;
+
+            return copy;
         }
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Creates a CurrentLimitConfig from the given CurrentLimitsSparkBase.
+         * This is useful for converting existing current limits to the configuration format.
+         *
+         * @param currentLimits The CurrentLimitsSparkBase to convert
+         * @return A new CurrentLimitConfig object with the values from the CurrentLimitsSparkBase
+         */
+        public static CurrentLimitConfig fromCurrentLimits(CurrentLimitsSparkBase currentLimits) {
+            var currentLimitConfig = new CurrentLimitConfig();
+
+            currentLimitConfig.freeSpeedCurrentLimit = currentLimits.getCurrentLimit();
+            currentLimitConfig.stallCurrentLimit = currentLimits.getStallCurrentLimit();
+            currentLimitConfig.freeSpeedRPM = currentLimits.getFreeSpeedRPM();
+            currentLimitConfig.secondaryCurrentLimit = currentLimits.getSecondaryCurrentLimit();
+
+            return currentLimitConfig;
         }
     }
 
     /**
      * Handles the configuration parameters for the external encoder
      */
-    public static class ExternalEncoderConfig implements Cloneable {
+    public static class ExternalEncoderConfig {
         /**
          * Should the motor use an external encoder (connected directly to the motor controller)?
          * Change this to true if you want to use an external encoder.
@@ -129,16 +167,28 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
          */
         public double mechanismToSensorRatio = 1.0;
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Copies the current configuration of the external encoder.
+         * This method creates a new instance of ExternalEncoderConfig and copies the values from the current instance to the new instance.
+         *
+         * @return A new ExternalEncoderConfig object with the same values as this instance
+         */
+        public ExternalEncoderConfig copy() {
+            ExternalEncoderConfig copy = new ExternalEncoderConfig();
+
+            copy.useExternalEncoder = this.useExternalEncoder;
+            copy.inverted = this.inverted;
+            copy.sensorToMotorRatio = this.sensorToMotorRatio;
+            copy.mechanismToSensorRatio = this.mechanismToSensorRatio;
+
+            return copy;
         }
     }
 
     /**
      * Handles the configuration parameters for an absolute encoder
      */
-    public static class AbsoluteEncoderConfig implements Cloneable {
+    public static class AbsoluteEncoderConfig {
         /**
          * Should the motor use an absolute encoder (connected directly to the motor controller)?
          * Change this to true if you want to use an absolute encoder.
@@ -175,9 +225,22 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
          */
         public AbsoluteEncoderRange absoluteEncoderRange = AbsoluteEncoderRange.ZERO_TO_ONE;
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Creates a copy of the absolute encoder configuration.
+         * This method creates a new instance of AbsoluteEncoderConfig and copies the values from the current instance to the new instance.
+         *
+         * @return A new AbsoluteEncoderConfig object with the same values as this instance
+         */
+        public AbsoluteEncoderConfig copy() {
+            AbsoluteEncoderConfig copy = new AbsoluteEncoderConfig();
+
+            copy.useAbsoluteEncoder = this.useAbsoluteEncoder;
+            copy.inverted = this.inverted;
+            copy.zeroOffset = this.zeroOffset;
+            copy.sensorToMotorRatio = this.sensorToMotorRatio;
+            copy.absoluteEncoderRange = this.absoluteEncoderRange;
+
+            return copy;
         }
 
         /**
@@ -202,16 +265,5 @@ public class BasicSparkBaseConfig extends BasicMotorConfig {
                 return this == HALF_REVOLUTION;
             }
         }
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        var object = (BasicSparkBaseConfig) super.clone();
-
-        object.absoluteEncoderConfig = (AbsoluteEncoderConfig) absoluteEncoderConfig.clone();
-        object.externalEncoderConfig = (ExternalEncoderConfig) externalEncoderConfig.clone();
-        object.currentLimitConfig = (CurrentLimitConfig) currentLimitConfig.clone();
-
-        return object;
     }
 }

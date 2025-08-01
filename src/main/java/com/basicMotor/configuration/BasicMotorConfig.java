@@ -19,7 +19,7 @@ import java.util.function.Function;
  * Refer to the <a href="https://github.com/captainsoccer/MotorUtils/wiki/Configuration">wiki</a>
  * for more information and examples.
  */
-public class BasicMotorConfig implements Cloneable {
+public class BasicMotorConfig {
 
     /**
      * The basic parameters of the motor controller
@@ -80,9 +80,41 @@ public class BasicMotorConfig implements Cloneable {
     }
 
     /**
+     * Creates a copy of the BasicMotorConfig instance.
+     * This is useful when you want to create a new instance with the same values as the original.
+     * The copy will have no references to the original instance, so changes to the copy will not affect the original.
+     *
+     * @param copy The BasicMotorConfig instance to copy values into.
+     * @return A new instance of BasicMotorConfig with the same values as this instance with no references to the original instance.
+     */
+    public BasicMotorConfig copy(BasicMotorConfig copy) {
+
+        copy.motorConfig = this.motorConfig.copy();
+        copy.pidConfig = this.pidConfig.copy();
+        copy.feedForwardConfig = this.feedForwardConfig.copy();
+        copy.constraintsConfig = this.constraintsConfig.copy();
+        copy.profileConfig = this.profileConfig.copy();
+        copy.simulationConfig = this.simulationConfig.copy();
+
+        return copy;
+    }
+
+    /**
+     * Creates a copy of the BasicMotorConfig instance.
+     * This is useful when you want to create a new instance with the same values as the original.
+     * The copy will have no references to the original instance, so changes to the copy will not affect the original.
+     *
+     * @return A new instance of BasicMotorConfig with the same values as this instance with no references to the original instance.
+     */
+    public BasicMotorConfig copy() {
+        return copy(new BasicMotorConfig());
+    }
+
+
+    /**
      * Handles the basic parameters of the motor controller.
      */
-    public static class MotorConfig implements Cloneable {
+    public static class MotorConfig {
         /**
          * The CANBUS id of the motor controller
          *
@@ -135,6 +167,7 @@ public class BasicMotorConfig implements Cloneable {
          * when not powered BRAKE means the motor will try to hold its position when not powered
          */
         public BasicMotor.IdleMode idleMode = BasicMotor.IdleMode.COAST;
+
         /**
          * The location of the motor controller
          *
@@ -156,16 +189,30 @@ public class BasicMotorConfig implements Cloneable {
          */
         public DCMotor motorType = DCMotor.getNEO(1);
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Copy's the motor configuration to a new instance.
+         *
+         * @return A new instance of MotorConfig with the same values as this instance with no references to the original instance.
+         */
+        public MotorConfig copy() {
+            var copy = new MotorConfig();
+            copy.id = this.id;
+            copy.name = this.name;
+            copy.gearRatio = this.gearRatio;
+            copy.unitConversion = this.unitConversion;
+            copy.inverted = this.inverted;
+            copy.idleMode = this.idleMode;
+            copy.location = this.location;
+            copy.motorType = this.motorType;
+
+            return copy;
         }
     }
 
     /**
      * Handles the PID configuration of the motor controller
      */
-    public static class PIDConfig implements Cloneable {
+    public static class PIDConfig {
         /**
          * The kp gain of the PID controller units are: (voltage / unit of control) <p>The value must be greater then zero
          */
@@ -214,22 +261,40 @@ public class BasicMotorConfig implements Cloneable {
         }
 
         /**
-         * Sets the PID configuration from the given PIDGains object.
+         * Creates a copy of the PIDConfig instance.
+         * This is useful when you want to create a new instance with the same values as the original.
          *
-         * @param gains The PIDGains object to set the configuration from.
+         * @return A new instance of PIDConfig with the same values as this instance with no references to the original instance.
          */
-        public void fromGains(PIDGains gains) {
-            this.kP = gains.getK_P();
-            this.kI = gains.getK_I();
-            this.kD = gains.getK_D();
-            this.iZone = gains.getI_Zone();
-            this.iMaxAccum = gains.getI_MaxAccum();
-            this.tolerance = gains.getTolerance();
+        public PIDConfig copy() {
+            var copy = new PIDConfig();
+            copy.kP = this.kP;
+            copy.kI = this.kI;
+            copy.kD = this.kD;
+            copy.iZone = this.iZone;
+            copy.iMaxAccum = this.iMaxAccum;
+            copy.tolerance = this.tolerance;
+
+            return copy;
         }
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Creates a PID configuration from the given PIDGains object.
+         *
+         * @param gains The PIDGains object to convert into a PIDConfig.
+         * @return The PIDConfig instance with the values from the PIDGains object.
+         */
+        public static PIDConfig fromGains(PIDGains gains) {
+            var config = new PIDConfig();
+
+            config.kP = gains.getK_P();
+            config.kI = gains.getK_I();
+            config.kD = gains.getK_D();
+            config.iZone = gains.getI_Zone();
+            config.iMaxAccum = gains.getI_MaxAccum();
+            config.tolerance = gains.getTolerance();
+
+            return config;
         }
     }
 
@@ -237,7 +302,7 @@ public class BasicMotorConfig implements Cloneable {
      * Handles the feed forward configuration of the motor controller.
      * Feed forwards are always calculated on the RIO, this is to ensure reliability and repeatability.
      */
-    public static class FeedForwardConfig implements Cloneable {
+    public static class FeedForwardConfig {
         /**
          * The friction feed forward gain of the motor controller units are: (voltage)
          *
@@ -281,27 +346,46 @@ public class BasicMotorConfig implements Cloneable {
         }
 
         /**
-         * Sets the feed forward configuration from the given ControllerFeedForwards object.
+         * Creates a copy of the FeedForwardConfig instance.
+         * This is useful when you want to create a new instance with the same values as the original.
+         * The only reference that is copied is the custom feed forward function,
+         * which will point to the same function as the original.
          *
-         * @param feedForwards The ControllerFeedForwards object to set the configuration from.
+         * @return A new instance of FeedForwardConfig with the same values as this instance.
          */
-        public void fromFeedForwards(ControllerFeedForwards feedForwards) {
-            this.simpleFeedForward = feedForwards.getSimpleFeedForward();
-            this.frictionFeedForward = feedForwards.getFrictionFeedForward();
-            this.setpointFeedForward = feedForwards.getSetpointFeedForward();
-            this.customFeedForward = feedForwards.getFeedForwardFunction();
+        public FeedForwardConfig copy() {
+            var copy = new FeedForwardConfig();
+
+            copy.simpleFeedForward = this.simpleFeedForward;
+            copy.frictionFeedForward = this.frictionFeedForward;
+            copy.setpointFeedForward = this.setpointFeedForward;
+            copy.customFeedForward = this.customFeedForward;
+
+            return copy;
         }
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Creates a feed forward configuration from the given ControllerFeedForwards object.
+         *
+         * @param feedForwards The ControllerFeedForwards object to convert into a FeedForwardConfig.
+         * @return The FeedForwardConfig instance with the values from the ControllerFeedForwards object.
+         */
+        public static FeedForwardConfig fromFeedForwards(ControllerFeedForwards feedForwards) {
+            var config = new FeedForwardConfig();
+
+            config.simpleFeedForward = feedForwards.getSimpleFeedForward();
+            config.frictionFeedForward = feedForwards.getFrictionFeedForward();
+            config.setpointFeedForward = feedForwards.getSetpointFeedForward();
+            config.customFeedForward = feedForwards.getFeedForwardFunction();
+
+            return config;
         }
     }
 
     /**
      * Handles the constraints configuration of the motor controller
      */
-    public static class ConstraintsConfig implements Cloneable {
+    public static class ConstraintsConfig {
         /**
          * The type of constraint to apply to the controller
          *
@@ -382,22 +466,41 @@ public class BasicMotorConfig implements Cloneable {
         }
 
         /**
-         * Sets the constraints configuration from the given ControllerConstraints object.
+         * Creates a copy of the ConstraintsConfig instance.
+         * This is useful when you want to create a new instance with the same values as the original.
          *
-         * @param constraints The ControllerConstraints object to set the configuration from.
+         * @return A new instance of ConstraintsConfig with the same values as this instance with no references to the original instance.
          */
-        public void fromConstraints(ControllerConstraints constraints) {
-            this.constraintType = constraints.getConstraintType();
-            this.minValue = constraints.getMinValue();
-            this.maxValue = constraints.getMaxValue();
-            this.maxOutput = constraints.getMaxMotorOutput();
-            this.minOutput = constraints.getMinMotorOutput();
-            this.voltageDeadband = constraints.getVoltageDeadband();
+        public ConstraintsConfig copy() {
+            var copy = new ConstraintsConfig();
+
+            copy.constraintType = this.constraintType;
+            copy.maxValue = this.maxValue;
+            copy.minValue = this.minValue;
+            copy.maxOutput = this.maxOutput;
+            copy.minOutput = this.minOutput;
+            copy.voltageDeadband = this.voltageDeadband;
+
+            return copy;
         }
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Creates a ConstraintsConfig from the given ControllerConstraints object.
+         *
+         * @param constraints The ControllerConstraints object to convert into a ConstraintsConfig.
+         * @return The ConstraintsConfig instance with the values from the ControllerConstraints object.
+         */
+        public static ConstraintsConfig fromConstraints(ControllerConstraints constraints) {
+            var config = new ConstraintsConfig();
+
+            config.constraintType = constraints.getConstraintType();
+            config.maxValue = constraints.getMaxValue();
+            config.minValue = constraints.getMinValue();
+            config.maxOutput = constraints.getMaxMotorOutput();
+            config.minOutput = constraints.getMinMotorOutput();
+            config.voltageDeadband = constraints.getVoltageDeadband();
+
+            return config;
         }
     }
 
@@ -407,7 +510,7 @@ public class BasicMotorConfig implements Cloneable {
      * For motion profiling to work, both of the maximum velocity and maximum acceleration must be set to a finite value.
      * Default values are set to {@link Double#POSITIVE_INFINITY} which means no motion profiling will be applied.
      */
-    public static class ProfileConfig implements Cloneable {
+    public static class ProfileConfig {
         /**
          * The maximum velocity of the motor controller units are: (unit of control per second).
          * This is used to create a motion profile for the motor controller.
@@ -437,18 +540,33 @@ public class BasicMotorConfig implements Cloneable {
         }
 
         /**
-         * Sets the profile configuration from the given TrapezoidProfile.Constraints object.
+         * Creates a copy of the ProfileConfig instance.
+         * This is useful when you want to create a new instance with the same values as the original.
          *
-         * @param constraints The TrapezoidProfile.Constraints object to set the configuration from.
+         * @return A new instance of ProfileConfig with the same values as this instance with no references to the original instance.
          */
-        public void fromProfileConstraints(TrapezoidProfile.Constraints constraints) {
-            this.maximumMeasurementVelocity = constraints.maxVelocity;
-            this.maximumMeasurementAcceleration = constraints.maxAcceleration;
+        public ProfileConfig copy() {
+
+            var copy = new ProfileConfig();
+            copy.maximumMeasurementVelocity = this.maximumMeasurementVelocity;
+            copy.maximumMeasurementAcceleration = this.maximumMeasurementAcceleration;
+
+            return copy;
         }
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            return super.clone();
+        /**
+         * Creates a ProfileConfig from the given TrapezoidProfile.Constraints object.
+         *
+         * @param constraints The TrapezoidProfile.Constraints object to convert into a ProfileConfig.
+         * @return The ProfileConfig instance with the values from the TrapezoidProfile.Constraints object.
+         */
+        public static ProfileConfig fromProfileConstraints(TrapezoidProfile.Constraints constraints) {
+            var config = new ProfileConfig();
+
+            config.maximumMeasurementVelocity = constraints.maxVelocity;
+            config.maximumMeasurementAcceleration = constraints.maxAcceleration;
+
+            return config;
         }
     }
 
@@ -458,7 +576,7 @@ public class BasicMotorConfig implements Cloneable {
      * To learn more about the simulation configuration, refer to the wiki:
      * <a href="https://github.com/captainsoccer/MotorUtils/wiki">wiki</a> //TODO: add wiki link
      */
-    public static class SimulationConfig implements Cloneable {
+    public static class SimulationConfig {
         /**
          * The kV gain of the motor controller units are: (voltage / unit of velocity).
          * Use this and {@link #kA} to simulate the motor controller or use {@link #momentOfInertia}.
@@ -515,20 +633,31 @@ public class BasicMotorConfig implements Cloneable {
          */
         public ArmSimConfig armSimConfig = new ArmSimConfig();
 
-        @Override
-        public Object clone() throws CloneNotSupportedException {
-            var object = (SimulationConfig) super.clone();
+        /**
+         * Creates a copy of the SimulationConfig instance.
+         * This is useful when you want to create a new instance with the same values as the original.
+         *
+         * @return A new instance of SimulationConfig with the same values as this instance with no references to the original instance.
+         */
+        public SimulationConfig copy() {
+            var copy = new SimulationConfig();
 
-            object.elevatorSimConfig = (ElevatorSimConfig) elevatorSimConfig.clone();
-            object.armSimConfig = (ArmSimConfig) armSimConfig.clone();
+            copy.kV = this.kV;
+            copy.kA = this.kA;
+            copy.momentOfInertia = this.momentOfInertia;
+            copy.positionStandardDeviation = this.positionStandardDeviation;
+            copy.velocityStandardDeviation = this.velocityStandardDeviation;
 
-            return object;
+            copy.elevatorSimConfig = this.elevatorSimConfig.copy();
+            copy.armSimConfig = this.armSimConfig.copy();
+
+            return copy;
         }
 
         /**
          * Handles elevator simulation parameters, used only when simulating an elevator system
          */
-        public static class ElevatorSimConfig implements Cloneable {
+        public static class ElevatorSimConfig {
             /**
              * If the elevator simulation should enable gravity simulation if true, there will be a force
              * acting on the elevator due to gravity if false, the elevator will not be affected by
@@ -553,16 +682,27 @@ public class BasicMotorConfig implements Cloneable {
              */
             public double pulleyRadiusMeters = 0;
 
-            @Override
-            public Object clone() throws CloneNotSupportedException {
-                return super.clone();
+            /**
+             * Creates a copy of the ElevatorSimConfig instance.
+             * This is useful when you want to create a new instance with the same values as the original.
+             *
+             * @return A new instance of ElevatorSimConfig with the same values as this instance with no references to the original instance.
+             */
+            public ElevatorSimConfig copy() {
+                var copy = new ElevatorSimConfig();
+
+                copy.enableGravitySimulation = this.enableGravitySimulation;
+                copy.massKG = this.massKG;
+                copy.pulleyRadiusMeters = this.pulleyRadiusMeters;
+
+                return copy;
             }
         }
 
         /**
          * Handles the arm simulation parameters, used only when simulating an arm system.
          */
-        public static class ArmSimConfig implements Cloneable {
+        public static class ArmSimConfig {
             /**
              * The length of the arm in meters taken from the pivot point to the end of the arm
              */
@@ -583,24 +723,21 @@ public class BasicMotorConfig implements Cloneable {
              */
             public double startingAngle = 0.0;
 
-            @Override
-            public Object clone() throws CloneNotSupportedException {
-                return super.clone();
+            /**
+             * Creates a copy of the ArmSimConfig instance.
+             * This is useful when you want to create a new instance with the same values as the original.
+             *
+             * @return A new instance of ArmSimConfig with the same values as this instance with no references to the original instance.
+             */
+            public ArmSimConfig copy() {
+                var copy = new ArmSimConfig();
+
+                copy.armlengthMeters = this.armlengthMeters;
+                copy.simulateGravity = this.simulateGravity;
+                copy.startingAngle = this.startingAngle;
+
+                return copy;
             }
         }
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        var object = (BasicMotorConfig) super.clone();
-
-        object.motorConfig = (MotorConfig) motorConfig.clone();
-        object.pidConfig = (PIDConfig) pidConfig.clone();
-        object.feedForwardConfig = (FeedForwardConfig) feedForwardConfig.clone();
-        object.constraintsConfig = (ConstraintsConfig) constraintsConfig.clone();
-        object.profileConfig = (ProfileConfig) profileConfig.clone();
-        object.simulationConfig = (SimulationConfig) simulationConfig.clone();
-
-        return object;
     }
 }

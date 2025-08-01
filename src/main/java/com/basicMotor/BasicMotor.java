@@ -183,7 +183,7 @@ public abstract class BasicMotor {
 
         this.name = name;
 
-        this.config = config;
+        this.config = config != null ? config.copy() : null;
 
         //register the motor with the motor manager
         MotorManager.getInstance()
